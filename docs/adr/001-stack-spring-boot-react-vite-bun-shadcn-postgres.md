@@ -43,6 +43,8 @@ dois maiores inimigos de um prazo de TCC. Concretamente:
 - **Banco**: PostgreSQL, com schema versionado por migrations Flyway em `src/main/resources/db/migration`.
 - **Front-end**: React + TypeScript com Vite, em `client/`, seguindo a divisão `pages / components / layout / lib / hooks / context`.
 - **Componentes**: shadcn/ui sobre Radix + Tailwind CSS, com os componentes copiados para `components/ui/`.
+- **Formulários**: React Hook Form para gerenciamento de estado de formulários, com Zod para definição e validação dos schemas. A validação de entrada acontece primariamente no frontend; o backend valida regras de negócio na camada de serviço, sem uso de Bean Validation (`@Valid`).
+- **Lint e formatação**: Biome, substituindo ESLint/Prettier/oxlint como ferramenta unificada de lint e formatação.
 - **Runtime/gerenciador do front**: **Bun**, no lugar do npm usado pelo SaleSheet.
 - **Layout**: monorepo único, com `client/` e `server/` lado a lado.
 
