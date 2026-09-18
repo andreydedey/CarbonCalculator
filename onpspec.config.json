@@ -1,14 +1,12 @@
 {
-  "testCommand": "node --test",
+  "testCommand": "node --test --test-reporter=tap \"client/src/**/*.test.ts\"",
   "reporter": "tap",
   "testGlobs": [
-    "test/**",
-    "tests/**",
-    "src/**/*.test.*",
-    "src/**/*.spec.*",
-    "__tests__/**"
+    "client/src/**/*.test.*",
+    "server/src/test/**"
   ],
   "srcGlobs": [
-    "src/**"
+    "client/src/**",
+    "server/src/main/**"
   ]
 }

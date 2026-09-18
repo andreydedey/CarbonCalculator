@@ -1,11 +1,62 @@
 {
   "feature": "instituicoes-e-laboratorios",
-  "timestamp": "2026-09-18T20:59:06.369Z",
-  "gitRev": "5439026",
-  "command": "node --test",
+  "timestamp": "2026-09-18T21:24:48.998Z",
+  "gitRev": "89b367f",
+  "command": "node --test --test-reporter=tap \"client/src/**/*.test.ts\"",
   "reporter": "tap",
   "exitCode": 0,
-  "testsParsed": 0,
-  "results": {},
+  "testsParsed": 51,
+  "results": {
+    "AC-001": {
+      "status": "pass",
+      "testName": "@spec:AC-001 Instituição criada com dados válidos — nome, sigla, cidade, UF e laboratório válidos não geram erros",
+      "method": "tap"
+    },
+    "AC-002": {
+      "status": "pass",
+      "testName": "@spec:AC-002 Sigla duplicada é rejeitada — erro 409 vira erro no campo Sigla com aviso de uso duplicado",
+      "method": "tap"
+    },
+    "AC-003": {
+      "status": "pass",
+      "testName": "@spec:AC-003 UF inválida é rejeitada — UF fora da lista das 27 unidades federativas gera erro no campo state",
+      "method": "tap"
+    },
+    "AC-004": {
+      "status": "pass",
+      "testName": "@spec:AC-004 laboratório criado com nome — nome válido é aceito, sem espaços nas pontas",
+      "method": "tap"
+    },
+    "AC-005": {
+      "status": "pass",
+      "testName": "@spec:AC-005 laboratório sem nome é rejeitado — nome vazio é recusado",
+      "method": "tap"
+    },
+    "AC-006": {
+      "status": "pass",
+      "testName": "@spec:AC-006 lista mostra apenas laboratórios ativos por padrão — sem toggle, nenhum parâmetro de inclusão é enviado",
+      "method": "tap"
+    },
+    "AC-007": {
+      "status": "pass",
+      "testName": "@spec:AC-007 laboratórios inativos podem ser incluídos na listagem — com toggle ligado, includeInactive é enviado",
+      "method": "tap"
+    },
+    "AC-008": {
+      "status": "pass",
+      "testName": "@spec:AC-008 isolamento por RLS entre instituições — trocar de instituição nunca mistura os dois ids",
+      "method": "tap"
+    },
+    "AC-009": {
+      "status": "pass",
+      "testName": "@spec:AC-009 requisição sem identificação de instituição é recusada — nenhum id salvo é lido como null",
+      "method": "tap"
+    },
+    "AC-011": {
+      "status": "pass",
+      "testName": "@spec:AC-011 desativação preserva o laboratório — mensagem cita o nome do laboratório",
+      "method": "tap"
+    }
+  },
   "principles": {}
 }

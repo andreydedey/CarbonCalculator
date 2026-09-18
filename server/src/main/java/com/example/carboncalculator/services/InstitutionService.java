@@ -47,7 +47,7 @@ public class InstitutionService {
                 .build();
         laboratoryRepository.save(laboratory);
 
-        return InstitutionMapper.toResponse(institution);
+        return InstitutionMapper.toDTO(institution);
     }
 
     private void validateState(String state) {

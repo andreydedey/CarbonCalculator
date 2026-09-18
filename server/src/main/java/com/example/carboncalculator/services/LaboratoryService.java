@@ -42,7 +42,7 @@ public class LaboratoryService {
                 .name(request.name())
                 .build();
 
-        return LaboratoryMapper.toResponse(laboratoryRepository.save(laboratory));
+        return LaboratoryMapper.toDTO(laboratoryRepository.save(laboratory));
     }
 
     public List<LaboratoryResponse> list(boolean includeInactive) {
@@ -50,14 +50,14 @@ public class LaboratoryService {
                 ? laboratoryRepository.findAll()
                 : laboratoryRepository.findByActiveTrue();
 
-        return laboratories.stream().map(LaboratoryMapper::toResponse).toList();
+        return laboratories.stream().map(LaboratoryMapper::toDTO).toList();
     }
 
     @Transactional
     public LaboratoryResponse deactivate(UUID id) {
         Laboratory laboratory = getOrThrow(id);
         laboratory.setActive(false);
-        return LaboratoryMapper.toResponse(laboratoryRepository.save(laboratory));
+        return LaboratoryMapper.toDTO(laboratoryRepository.save(laboratory));
     }
 
     @Transactional
