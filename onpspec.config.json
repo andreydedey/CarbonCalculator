@@ -8,5 +8,14 @@
   "srcGlobs": [
     "client/src/**",
     "server/src/main/**"
+  ],
+  "srcExclude": [
+    "client/src/App.tsx",
+    "client/src/assets/**",
+    "client/src/components/ui/button.tsx",
+    "client/src/index.css",
+    "client/src/lib/utils.ts",
+    "server/src/main/java/com/example/carboncalculator/CarboncalculatorApplication.java",
+    "server/src/main/resources/application.yaml"
   ]
 }
