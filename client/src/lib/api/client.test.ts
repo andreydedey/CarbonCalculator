@@ -112,8 +112,7 @@ describe('apiRequest', () => {
     })
   })
 
-  // @spec:AC-010 Acesso direto a laboratório de outra instituição é negado
-  test('traduz resposta 404 em NotFoundError', async () => {
+  test('@spec:AC-010 acesso direto a laboratório de outra instituição é negado — traduz resposta 404 em NotFoundError', async () => {
     globalThis.fetch = mock.fn(async () => jsonResponse(404, { message: 'não encontrado' })) as unknown as typeof fetch
 
     await assert.rejects(() => apiRequest('/laboratories/does-not-exist'), (error: unknown) => {

@@ -1,11 +1,11 @@
 {
   "feature": "instituicoes-e-laboratorios",
-  "timestamp": "2026-09-18T21:24:48.998Z",
-  "gitRev": "89b367f",
+  "timestamp": "2026-09-18T21:34:23.798Z",
+  "gitRev": "af66ae3",
   "command": "node --test --test-reporter=tap \"client/src/**/*.test.ts\"",
   "reporter": "tap",
   "exitCode": 0,
-  "testsParsed": 51,
+  "testsParsed": 52,
   "results": {
     "AC-001": {
       "status": "pass",
@@ -52,9 +52,24 @@
       "testName": "@spec:AC-009 requisição sem identificação de instituição é recusada — nenhum id salvo é lido como null",
       "method": "tap"
     },
+    "AC-010": {
+      "status": "pass",
+      "testName": "@spec:AC-010 acesso direto a laboratório de outra instituição é negado — traduz resposta 404 em NotFoundError",
+      "method": "tap"
+    },
     "AC-011": {
       "status": "pass",
       "testName": "@spec:AC-011 desativação preserva o laboratório — mensagem cita o nome do laboratório",
+      "method": "tap"
+    },
+    "AC-012": {
+      "status": "pass",
+      "testName": "@spec:AC-012 exclusão bloqueada quando há dependentes — deleteLaboratory rejeita com ConflictError ao receber 409",
+      "method": "tap"
+    },
+    "AC-013": {
+      "status": "pass",
+      "testName": "@spec:AC-013 exclusão permitida quando não há dependentes — deleteLaboratory faz DELETE e resolve sem corpo em 204",
       "method": "tap"
     }
   },

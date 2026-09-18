@@ -24,7 +24,7 @@
 
 ## T-005 — DTOs e Mappers [concluida]
 - Refs: US-001, US-002
-- Arquivos: server/src/main/java/com/example/carboncalculator/dto/CreateInstitutionRequest.java, server/src/main/java/com/example/carboncalculator/dto/InstitutionResponse.java, server/src/main/java/com/example/carboncalculator/dto/CreateLaboratoryRequest.java, server/src/main/java/com/example/carboncalculator/dto/LaboratoryResponse.java, server/src/main/java/com/example/carboncalculator/dto/UpdateInstitutionRequest.java, server/src/main/java/com/example/carboncalculator/dto/UpdateLaboratoryRequest.java, server/src/main/java/com/example/carboncalculator/mappers/InstitutionMapper.java, server/src/main/java/com/example/carboncalculator/mappers/LaboratoryMapper.java
+- Arquivos: server/src/main/java/com/example/carboncalculator/dto/CreateInstitutionRequest.java, server/src/main/java/com/example/carboncalculator/dto/InstitutionResponse.java, server/src/main/java/com/example/carboncalculator/dto/CreateLaboratoryRequest.java, server/src/main/java/com/example/carboncalculator/dto/LaboratoryResponse.java, server/src/main/java/com/example/carboncalculator/mappers/InstitutionMapper.java, server/src/main/java/com/example/carboncalculator/mappers/LaboratoryMapper.java
 - Notas: Records Java para DTOs. Mapper manual (sem MapStruct). Depende de T-002.
 
 ## T-006 — Services [concluida]
