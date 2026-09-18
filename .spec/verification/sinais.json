@@ -41,10 +41,10 @@
       "codigo": "ARQUIVO_INEXISTENTE",
       "feature": "instituicoes-e-laboratorios",
       "ref": "T-005",
-      "ocorrencias": 8,
+      "ocorrencias": 16,
       "primeiraVez": "2026-09-18T17:44:23.393Z",
-      "ultimaVez": "2026-09-18T17:44:23.393Z",
-      "gitRev": "8d9ad89"
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
     },
     "ARQUIVO_INEXISTENTE::instituicoes-e-laboratorios::T-006": {
       "codigo": "ARQUIVO_INEXISTENTE",
@@ -131,127 +131,217 @@
       "codigo": "AC_SEM_TESTE",
       "feature": "instituicoes-e-laboratorios",
       "ref": "AC-001",
-      "ocorrencias": 1,
+      "ocorrencias": 2,
       "primeiraVez": "2026-09-18T17:44:23.393Z",
-      "ultimaVez": "2026-09-18T17:44:23.393Z",
-      "gitRev": "8d9ad89"
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
     },
     "AC_SEM_TESTE::instituicoes-e-laboratorios::AC-002": {
       "codigo": "AC_SEM_TESTE",
       "feature": "instituicoes-e-laboratorios",
       "ref": "AC-002",
-      "ocorrencias": 1,
+      "ocorrencias": 2,
       "primeiraVez": "2026-09-18T17:44:23.393Z",
-      "ultimaVez": "2026-09-18T17:44:23.393Z",
-      "gitRev": "8d9ad89"
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
     },
     "AC_SEM_TESTE::instituicoes-e-laboratorios::AC-003": {
       "codigo": "AC_SEM_TESTE",
       "feature": "instituicoes-e-laboratorios",
       "ref": "AC-003",
-      "ocorrencias": 1,
+      "ocorrencias": 2,
       "primeiraVez": "2026-09-18T17:44:23.393Z",
-      "ultimaVez": "2026-09-18T17:44:23.393Z",
-      "gitRev": "8d9ad89"
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
     },
     "AC_SEM_TESTE::instituicoes-e-laboratorios::AC-004": {
       "codigo": "AC_SEM_TESTE",
       "feature": "instituicoes-e-laboratorios",
       "ref": "AC-004",
-      "ocorrencias": 1,
+      "ocorrencias": 2,
       "primeiraVez": "2026-09-18T17:44:23.393Z",
-      "ultimaVez": "2026-09-18T17:44:23.393Z",
-      "gitRev": "8d9ad89"
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
     },
     "AC_SEM_TESTE::instituicoes-e-laboratorios::AC-005": {
       "codigo": "AC_SEM_TESTE",
       "feature": "instituicoes-e-laboratorios",
       "ref": "AC-005",
-      "ocorrencias": 1,
+      "ocorrencias": 2,
       "primeiraVez": "2026-09-18T17:44:23.393Z",
-      "ultimaVez": "2026-09-18T17:44:23.393Z",
-      "gitRev": "8d9ad89"
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
     },
     "AC_SEM_TESTE::instituicoes-e-laboratorios::AC-006": {
       "codigo": "AC_SEM_TESTE",
       "feature": "instituicoes-e-laboratorios",
       "ref": "AC-006",
-      "ocorrencias": 1,
+      "ocorrencias": 2,
       "primeiraVez": "2026-09-18T17:44:23.393Z",
-      "ultimaVez": "2026-09-18T17:44:23.393Z",
-      "gitRev": "8d9ad89"
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
     },
     "AC_SEM_TESTE::instituicoes-e-laboratorios::AC-007": {
       "codigo": "AC_SEM_TESTE",
       "feature": "instituicoes-e-laboratorios",
       "ref": "AC-007",
-      "ocorrencias": 1,
+      "ocorrencias": 2,
       "primeiraVez": "2026-09-18T17:44:23.393Z",
-      "ultimaVez": "2026-09-18T17:44:23.393Z",
-      "gitRev": "8d9ad89"
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
     },
     "AC_SEM_TESTE::instituicoes-e-laboratorios::AC-008": {
       "codigo": "AC_SEM_TESTE",
       "feature": "instituicoes-e-laboratorios",
       "ref": "AC-008",
-      "ocorrencias": 1,
+      "ocorrencias": 2,
       "primeiraVez": "2026-09-18T17:44:23.393Z",
-      "ultimaVez": "2026-09-18T17:44:23.393Z",
-      "gitRev": "8d9ad89"
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
     },
     "AC_SEM_TESTE::instituicoes-e-laboratorios::AC-009": {
       "codigo": "AC_SEM_TESTE",
       "feature": "instituicoes-e-laboratorios",
       "ref": "AC-009",
-      "ocorrencias": 1,
+      "ocorrencias": 2,
       "primeiraVez": "2026-09-18T17:44:23.393Z",
-      "ultimaVez": "2026-09-18T17:44:23.393Z",
-      "gitRev": "8d9ad89"
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
     },
     "AC_SEM_TESTE::instituicoes-e-laboratorios::AC-010": {
       "codigo": "AC_SEM_TESTE",
       "feature": "instituicoes-e-laboratorios",
       "ref": "AC-010",
-      "ocorrencias": 1,
+      "ocorrencias": 2,
       "primeiraVez": "2026-09-18T17:44:23.393Z",
-      "ultimaVez": "2026-09-18T17:44:23.393Z",
-      "gitRev": "8d9ad89"
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
     },
     "AC_SEM_TESTE::instituicoes-e-laboratorios::AC-011": {
       "codigo": "AC_SEM_TESTE",
       "feature": "instituicoes-e-laboratorios",
       "ref": "AC-011",
-      "ocorrencias": 1,
+      "ocorrencias": 2,
       "primeiraVez": "2026-09-18T17:44:23.393Z",
-      "ultimaVez": "2026-09-18T17:44:23.393Z",
-      "gitRev": "8d9ad89"
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
     },
     "AC_SEM_TESTE::instituicoes-e-laboratorios::AC-012": {
       "codigo": "AC_SEM_TESTE",
       "feature": "instituicoes-e-laboratorios",
       "ref": "AC-012",
-      "ocorrencias": 1,
+      "ocorrencias": 2,
       "primeiraVez": "2026-09-18T17:44:23.393Z",
-      "ultimaVez": "2026-09-18T17:44:23.393Z",
-      "gitRev": "8d9ad89"
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
     },
     "AC_SEM_TESTE::instituicoes-e-laboratorios::AC-013": {
       "codigo": "AC_SEM_TESTE",
       "feature": "instituicoes-e-laboratorios",
       "ref": "AC-013",
-      "ocorrencias": 1,
+      "ocorrencias": 2,
       "primeiraVez": "2026-09-18T17:44:23.393Z",
-      "ultimaVez": "2026-09-18T17:44:23.393Z",
-      "gitRev": "8d9ad89"
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
     },
     "GLOB_SEM_ARQUIVOS::—::P-002": {
       "codigo": "GLOB_SEM_ARQUIVOS",
       "feature": "—",
       "ref": "P-002",
-      "ocorrencias": 1,
+      "ocorrencias": 2,
       "primeiraVez": "2026-09-18T17:44:23.393Z",
-      "ultimaVez": "2026-09-18T17:44:23.393Z",
-      "gitRev": "8d9ad89"
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
+    },
+    "TASK_CONCLUIDA_SEM_PROVA::instituicoes-e-laboratorios::T-001": {
+      "codigo": "TASK_CONCLUIDA_SEM_PROVA",
+      "feature": "instituicoes-e-laboratorios",
+      "ref": "T-001",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-18T20:59:06.507Z",
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
+    },
+    "TASK_CONCLUIDA_SEM_PROVA::instituicoes-e-laboratorios::T-003": {
+      "codigo": "TASK_CONCLUIDA_SEM_PROVA",
+      "feature": "instituicoes-e-laboratorios",
+      "ref": "T-003",
+      "ocorrencias": 3,
+      "primeiraVez": "2026-09-18T20:59:06.507Z",
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
+    },
+    "TASK_CONCLUIDA_SEM_PROVA::instituicoes-e-laboratorios::T-006": {
+      "codigo": "TASK_CONCLUIDA_SEM_PROVA",
+      "feature": "instituicoes-e-laboratorios",
+      "ref": "T-006",
+      "ocorrencias": 10,
+      "primeiraVez": "2026-09-18T20:59:06.507Z",
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
+    },
+    "TASK_CONCLUIDA_SEM_PROVA::instituicoes-e-laboratorios::T-007": {
+      "codigo": "TASK_CONCLUIDA_SEM_PROVA",
+      "feature": "instituicoes-e-laboratorios",
+      "ref": "T-007",
+      "ocorrencias": 3,
+      "primeiraVez": "2026-09-18T20:59:06.507Z",
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
+    },
+    "TASK_CONCLUIDA_SEM_PROVA::instituicoes-e-laboratorios::T-009": {
+      "codigo": "TASK_CONCLUIDA_SEM_PROVA",
+      "feature": "instituicoes-e-laboratorios",
+      "ref": "T-009",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-09-18T20:59:06.507Z",
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
+    },
+    "TASK_CONCLUIDA_SEM_PROVA::instituicoes-e-laboratorios::T-010": {
+      "codigo": "TASK_CONCLUIDA_SEM_PROVA",
+      "feature": "instituicoes-e-laboratorios",
+      "ref": "T-010",
+      "ocorrencias": 3,
+      "primeiraVez": "2026-09-18T20:59:06.507Z",
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
+    },
+    "TASK_CONCLUIDA_SEM_PROVA::instituicoes-e-laboratorios::T-011": {
+      "codigo": "TASK_CONCLUIDA_SEM_PROVA",
+      "feature": "instituicoes-e-laboratorios",
+      "ref": "T-011",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-09-18T20:59:06.507Z",
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
+    },
+    "TASK_CONCLUIDA_SEM_PROVA::instituicoes-e-laboratorios::T-012": {
+      "codigo": "TASK_CONCLUIDA_SEM_PROVA",
+      "feature": "instituicoes-e-laboratorios",
+      "ref": "T-012",
+      "ocorrencias": 3,
+      "primeiraVez": "2026-09-18T20:59:06.507Z",
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
+    },
+    "TASK_CONCLUIDA_SEM_PROVA::instituicoes-e-laboratorios::T-013": {
+      "codigo": "TASK_CONCLUIDA_SEM_PROVA",
+      "feature": "instituicoes-e-laboratorios",
+      "ref": "T-013",
+      "ocorrencias": 13,
+      "primeiraVez": "2026-09-18T20:59:06.507Z",
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
+    },
+    "TASK_CONCLUIDA_SEM_PROVA::instituicoes-e-laboratorios::T-014": {
+      "codigo": "TASK_CONCLUIDA_SEM_PROVA",
+      "feature": "instituicoes-e-laboratorios",
+      "ref": "T-014",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-09-18T20:59:06.507Z",
+      "ultimaVez": "2026-09-18T20:59:06.507Z",
+      "gitRev": "5439026"
     }
   }
 }

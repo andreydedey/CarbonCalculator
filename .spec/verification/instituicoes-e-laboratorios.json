@@ -1,0 +1,11 @@
+{
+  "feature": "instituicoes-e-laboratorios",
+  "timestamp": "2026-09-18T20:59:06.369Z",
+  "gitRev": "5439026",
+  "command": "node --test",
+  "reporter": "tap",
+  "exitCode": 0,
+  "testsParsed": 0,
+  "results": {},
+  "principles": {}
+}
