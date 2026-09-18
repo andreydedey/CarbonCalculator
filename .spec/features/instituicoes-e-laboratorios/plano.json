@@ -1,0 +1,394 @@
+{
+  "runId": "CarbonCalculatorTCC-instituicoes-e-laboratorios-mu7936ap",
+  "feature": "instituicoes-e-laboratorios",
+  "agent": "claude",
+  "modo": "paralelo",
+  "paralelizar": null,
+  "modeloForcado": null,
+  "esforcoForcado": null,
+  "geradoEm": "2026-09-18 17:46",
+  "branchTrabalho": "spec/instituicoes-e-laboratorios",
+  "baseDir": ".spec/features/instituicoes-e-laboratorios",
+  "specDir": ".spec",
+  "repoName": "CarbonCalculatorTCC",
+  "logsDir": "../onp-worktrees/CarbonCalculatorTCC-instituicoes-e-laboratorios-logs",
+  "ondas": [
+    [
+      "faixa-1",
+      "faixa-2",
+      "faixa-3"
+    ],
+    [
+      "faixa-4",
+      "faixa-5",
+      "faixa-6"
+    ],
+    [
+      "faixa-7",
+      "faixa-8",
+      "faixa-9"
+    ],
+    [
+      "faixa-10",
+      "faixa-11",
+      "faixa-12"
+    ],
+    [
+      "faixa-13",
+      "faixa-14"
+    ]
+  ],
+  "faixas": [
+    {
+      "id": "faixa-1",
+      "branch": "spec/instituicoes-e-laboratorios-faixa-1",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-instituicoes-e-laboratorios-faixa-1",
+      "tarefas": [
+        {
+          "id": "T-001",
+          "titulo": "Migrations Flyway (tabelas + RLS)",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "server/src/main/resources/db/migration/V1__create_institution_table.sql",
+            "server/src/main/resources/db/migration/V2__create_laboratory_table.sql",
+            "server/src/main/resources/db/migration/V3__enable_rls_laboratory.sql"
+          ],
+          "refs": [
+            "US-001",
+            "US-002",
+            "AC-008"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-2",
+      "branch": "spec/instituicoes-e-laboratorios-faixa-2",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-instituicoes-e-laboratorios-faixa-2",
+      "tarefas": [
+        {
+          "id": "T-002",
+          "titulo": "Entidades JPA",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "server/src/main/java/com/example/carboncalculator/entities/Institution.java",
+            "server/src/main/java/com/example/carboncalculator/entities/Laboratory.java"
+          ],
+          "refs": [
+            "US-001",
+            "US-002"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-3",
+      "branch": "spec/instituicoes-e-laboratorios-faixa-3",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-instituicoes-e-laboratorios-faixa-3",
+      "tarefas": [
+        {
+          "id": "T-003",
+          "titulo": "Tenant filter (servlet filter para RLS)",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "server/src/main/java/com/example/carboncalculator/config/TenantFilter.java",
+            "server/src/main/java/com/example/carboncalculator/config/TenantContext.java"
+          ],
+          "refs": [
+            "AC-008",
+            "AC-009",
+            "AC-010"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-4",
+      "branch": "spec/instituicoes-e-laboratorios-faixa-4",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-instituicoes-e-laboratorios-faixa-4",
+      "tarefas": [
+        {
+          "id": "T-004",
+          "titulo": "Repositories",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "server/src/main/java/com/example/carboncalculator/repositories/InstitutionRepository.java",
+            "server/src/main/java/com/example/carboncalculator/repositories/LaboratoryRepository.java"
+          ],
+          "refs": [
+            "US-001",
+            "US-002",
+            "US-003",
+            "US-005"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-5",
+      "branch": "spec/instituicoes-e-laboratorios-faixa-5",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-instituicoes-e-laboratorios-faixa-5",
+      "tarefas": [
+        {
+          "id": "T-005",
+          "titulo": "DTOs e Mappers",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "server/src/main/java/com/example/carboncalculator/dto/CreateInstitutionRequest.java",
+            "server/src/main/java/com/example/carboncalculator/dto/InstitutionResponse.java",
+            "server/src/main/java/com/example/carboncalculator/dto/CreateLaboratoryRequest.java",
+            "server/src/main/java/com/example/carboncalculator/dto/LaboratoryResponse.java",
+            "server/src/main/java/com/example/carboncalculator/dto/UpdateInstitutionRequest.java",
+            "server/src/main/java/com/example/carboncalculator/dto/UpdateLaboratoryRequest.java",
+            "server/src/main/java/com/example/carboncalculator/mappers/InstitutionMapper.java",
+            "server/src/main/java/com/example/carboncalculator/mappers/LaboratoryMapper.java"
+          ],
+          "refs": [
+            "US-001",
+            "US-002"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-6",
+      "branch": "spec/instituicoes-e-laboratorios-faixa-6",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-instituicoes-e-laboratorios-faixa-6",
+      "tarefas": [
+        {
+          "id": "T-006",
+          "titulo": "Services",
+          "modelo": "claude-sonnet-5",
+          "esforco": "high",
+          "arquivos": [
+            "server/src/main/java/com/example/carboncalculator/services/InstitutionService.java",
+            "server/src/main/java/com/example/carboncalculator/services/LaboratoryService.java"
+          ],
+          "refs": [
+            "US-001",
+            "US-002",
+            "US-003",
+            "US-005",
+            "AC-001",
+            "AC-002",
+            "AC-003",
+            "AC-004",
+            "AC-005",
+            "AC-006",
+            "AC-007",
+            "AC-011",
+            "AC-012",
+            "AC-013"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-7",
+      "branch": "spec/instituicoes-e-laboratorios-faixa-7",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-instituicoes-e-laboratorios-faixa-7",
+      "tarefas": [
+        {
+          "id": "T-007",
+          "titulo": "Controllers REST",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "server/src/main/java/com/example/carboncalculator/controllers/InstitutionController.java",
+            "server/src/main/java/com/example/carboncalculator/controllers/LaboratoryController.java"
+          ],
+          "refs": [
+            "US-001",
+            "US-002",
+            "US-003",
+            "US-005",
+            "AC-001",
+            "AC-004",
+            "AC-009"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-8",
+      "branch": "spec/instituicoes-e-laboratorios-faixa-8",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-instituicoes-e-laboratorios-faixa-8",
+      "tarefas": [
+        {
+          "id": "T-008",
+          "titulo": "Setup frontend (Biome, Zod, RHF, Router, HTTP client)",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "client/package.json",
+            "client/biome.json",
+            "client/src/lib/api/client.ts",
+            "client/src/lib/api/institutions.ts",
+            "client/src/lib/api/laboratories.ts",
+            "client/src/main.tsx"
+          ],
+          "refs": [
+            "US-001",
+            "US-004"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-9",
+      "branch": "spec/instituicoes-e-laboratorios-faixa-9",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-instituicoes-e-laboratorios-faixa-9",
+      "tarefas": [
+        {
+          "id": "T-009",
+          "titulo": "Contexto de instituição e layout",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "client/src/context/InstitutionContext.tsx",
+            "client/src/layout/AppLayout.tsx",
+            "client/src/layout/InstitutionSwitcher.tsx"
+          ],
+          "refs": [
+            "US-004",
+            "AC-008",
+            "AC-009"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-10",
+      "branch": "spec/instituicoes-e-laboratorios-faixa-10",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-instituicoes-e-laboratorios-faixa-10",
+      "tarefas": [
+        {
+          "id": "T-010",
+          "titulo": "Formulário de instituição",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "client/src/pages/institutions/InstitutionForm.tsx",
+            "client/src/lib/schemas/institutionSchema.ts"
+          ],
+          "refs": [
+            "US-001",
+            "AC-001",
+            "AC-002",
+            "AC-003"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-11",
+      "branch": "spec/instituicoes-e-laboratorios-faixa-11",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-instituicoes-e-laboratorios-faixa-11",
+      "tarefas": [
+        {
+          "id": "T-011",
+          "titulo": "Lista de laboratórios",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "client/src/pages/laboratories/LaboratoryList.tsx"
+          ],
+          "refs": [
+            "US-003",
+            "AC-006",
+            "AC-007"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-12",
+      "branch": "spec/instituicoes-e-laboratorios-faixa-12",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-instituicoes-e-laboratorios-faixa-12",
+      "tarefas": [
+        {
+          "id": "T-012",
+          "titulo": "Formulário de laboratório e desativação",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "client/src/pages/laboratories/LaboratoryForm.tsx",
+            "client/src/pages/laboratories/DeactivateDialog.tsx",
+            "client/src/lib/schemas/laboratorySchema.ts"
+          ],
+          "refs": [
+            "US-002",
+            "US-005",
+            "AC-004",
+            "AC-005",
+            "AC-011"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-13",
+      "branch": "spec/instituicoes-e-laboratorios-faixa-13",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-instituicoes-e-laboratorios-faixa-13",
+      "tarefas": [
+        {
+          "id": "T-013",
+          "titulo": "Testes de integração (backend + RLS)",
+          "modelo": "claude-sonnet-5",
+          "esforco": "high",
+          "arquivos": [
+            "server/src/test/java/com/example/carboncalculator/controllers/InstitutionControllerIntegrationTest.java",
+            "server/src/test/java/com/example/carboncalculator/controllers/LaboratoryControllerIntegrationTest.java"
+          ],
+          "refs": [
+            "AC-001",
+            "AC-002",
+            "AC-003",
+            "AC-004",
+            "AC-005",
+            "AC-006",
+            "AC-007",
+            "AC-008",
+            "AC-009",
+            "AC-010",
+            "AC-011",
+            "AC-012",
+            "AC-013"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-14",
+      "branch": "spec/instituicoes-e-laboratorios-faixa-14",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-instituicoes-e-laboratorios-faixa-14",
+      "tarefas": [
+        {
+          "id": "T-014",
+          "titulo": "Testes unitários (services)",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "server/src/test/java/com/example/carboncalculator/services/InstitutionServiceTest.java",
+            "server/src/test/java/com/example/carboncalculator/services/LaboratoryServiceTest.java"
+          ],
+          "refs": [
+            "AC-002",
+            "AC-003",
+            "AC-005",
+            "AC-012",
+            "AC-013"
+          ]
+        }
+      ]
+    }
+  ],
+  "sequenciais": [],
+  "concluidas": [],
+  "avisos": []
+}
