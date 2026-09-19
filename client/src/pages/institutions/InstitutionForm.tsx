@@ -63,7 +63,7 @@ export function mapCreateInstitutionError(error: unknown): SubmitFormError {
 
 // @pure-logic-boundary
 
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
 import {
@@ -74,6 +74,17 @@ import {
 } from "@/lib/schemas/institutionSchema"
 import { createInstitution, type Institution } from "@/lib/api/institutions"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { FieldError } from "@/components/ui/field-error"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export interface InstitutionFormProps {
   onCreated?: (institution: Institution) => void
@@ -86,6 +97,7 @@ export function InstitutionForm({ onCreated, onCancel }: InstitutionFormProps) {
     handleSubmit,
     setError,
     reset,
+    control,
     formState: { errors },
   } = useForm<InstitutionFormValues>({
     resolver: zodResolver(institutionFormSchema),
@@ -121,105 +133,96 @@ export function InstitutionForm({ onCreated, onCancel }: InstitutionFormProps) {
         <h1 className="font-heading text-2xl font-bold">Nova Instituição</h1>
       </div>
 
-      <section className="flex flex-col gap-4 rounded-lg border border-border p-4">
-        <div>
-          <h2 className="text-lg font-semibold">Dados da Instituição</h2>
-          <p className="text-sm text-muted-foreground">
+      <Card>
+        <CardHeader>
+          <CardTitle>Dados da Instituição</CardTitle>
+          <CardDescription>
             Informações gerais da universidade ou centro de pesquisa
-          </p>
-        </div>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="name">Nome da Instituição</Label>
+              <Input
+                id="name"
+                placeholder="Ex: Universidade Federal do Pará"
+                aria-invalid={!!errors.name}
+                {...register("name")}
+              />
+              <FieldError message={errors.name?.message} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="acronym">Sigla</Label>
+              <Input
+                id="acronym"
+                placeholder="Ex: UFPA"
+                aria-invalid={!!errors.acronym}
+                {...register("acronym")}
+              />
+              <FieldError message={errors.acronym?.message} />
+            </div>
+          </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1">
-            <label htmlFor="name" className="text-sm font-medium">
-              Nome da Instituição
-            </label>
-            <input
-              id="name"
-              className="h-9 rounded-lg border border-border bg-background px-3 text-sm"
-              placeholder="Ex: Universidade Federal do Pará"
-              {...register("name")}
-            />
-            {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="city">Cidade</Label>
+              <Input
+                id="city"
+                placeholder="Ex: Belém"
+                aria-invalid={!!errors.city}
+                {...register("city")}
+              />
+              <FieldError message={errors.city?.message} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>UF</Label>
+              <Controller
+                control={control}
+                name="state"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full" aria-invalid={!!errors.state}>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {BRAZILIAN_STATES.map((state) => (
+                        <SelectItem key={state} value={state}>
+                          {state}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              <FieldError message={errors.state?.message} />
+            </div>
           </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="acronym" className="text-sm font-medium">
-              Sigla
-            </label>
-            <input
-              id="acronym"
-              className="h-9 rounded-lg border border-border bg-background px-3 text-sm"
-              placeholder="Ex: UFPA"
-              {...register("acronym")}
-            />
-            {errors.acronym && (
-              <p className="text-xs text-destructive">{errors.acronym.message}</p>
-            )}
-          </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1">
-            <label htmlFor="city" className="text-sm font-medium">
-              Cidade
-            </label>
-            <input
-              id="city"
-              className="h-9 rounded-lg border border-border bg-background px-3 text-sm"
-              placeholder="Ex: Belém"
-              {...register("city")}
-            />
-            {errors.city && <p className="text-xs text-destructive">{errors.city.message}</p>}
-          </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="state" className="text-sm font-medium">
-              UF
-            </label>
-            <select
-              id="state"
-              className="h-9 rounded-lg border border-border bg-background px-3 text-sm"
-              defaultValue=""
-              {...register("state")}
-            >
-              <option value="" disabled>
-                Selecione
-              </option>
-              {BRAZILIAN_STATES.map((state) => (
-                <option key={state} value={state}>
-                  {state}
-                </option>
-              ))}
-            </select>
-            {errors.state && <p className="text-xs text-destructive">{errors.state.message}</p>}
-          </div>
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-4 rounded-lg border border-border p-4">
-        <div>
-          <h2 className="text-lg font-semibold">Laboratório Vinculado</h2>
-          <p className="text-sm text-muted-foreground">
+      <Card>
+        <CardHeader>
+          <CardTitle>Laboratório Vinculado</CardTitle>
+          <CardDescription>
             Configure o primeiro laboratório desta instituição
-          </p>
-        </div>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="laboratoryName">Nome do Laboratório</Label>
+            <Input
+              id="laboratoryName"
+              placeholder="Ex: LABCOMP-01"
+              aria-invalid={!!errors.laboratoryName}
+              {...register("laboratoryName")}
+            />
+            <FieldError message={errors.laboratoryName?.message} />
+          </div>
+        </CardContent>
+      </Card>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="laboratoryName" className="text-sm font-medium">
-            Nome do Laboratório
-          </label>
-          <input
-            id="laboratoryName"
-            className="h-9 rounded-lg border border-border bg-background px-3 text-sm"
-            placeholder="Ex: LABCOMP-01"
-            {...register("laboratoryName")}
-          />
-          {errors.laboratoryName && (
-            <p className="text-xs text-destructive">{errors.laboratoryName.message}</p>
-          )}
-        </div>
-      </section>
-
-      {rootError && <p className="text-sm text-destructive">{rootError}</p>}
+      <FieldError message={rootError} />
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel} disabled={mutation.isPending}>

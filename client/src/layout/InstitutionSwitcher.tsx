@@ -25,8 +25,14 @@ export function isValidInstitutionSelection(
 
 // @pure-logic-boundary
 
-import type { ChangeEvent } from "react"
 import { useInstitution } from "@/context/InstitutionContext"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export function InstitutionSwitcher({
   options = [],
@@ -35,28 +41,24 @@ export function InstitutionSwitcher({
 }) {
   const { institutionId, setInstitutionId } = useInstitution()
 
-  function handleChange(event: ChangeEvent<HTMLSelectElement>) {
-    const next = event.target.value
-    if (isValidInstitutionSelection(next, options)) {
-      setInstitutionId(next)
+  function handleChange(value: string) {
+    if (isValidInstitutionSelection(value, options)) {
+      setInstitutionId(value)
     }
   }
 
   return (
-    <select
-      aria-label="Instituição ativa"
-      className="h-8 rounded-lg border border-border bg-background px-2 text-sm"
-      value={institutionId ?? ""}
-      onChange={handleChange}
-    >
-      <option value="" disabled>
-        Selecione uma instituição
-      </option>
-      {options.map((option) => (
-        <option key={option.id} value={option.id}>
-          {option.name}
-        </option>
-      ))}
-    </select>
+    <Select value={institutionId ?? ""} onValueChange={handleChange}>
+      <SelectTrigger aria-label="Instituição ativa">
+        <SelectValue placeholder="Selecione uma instituição" />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => (
+          <SelectItem key={option.id} value={option.id}>
+            {option.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }

@@ -30,6 +30,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { useMutation } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
+import { FieldError } from '@/components/ui/field-error'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { ApiError } from '@/lib/api/client'
 import { createLaboratory, updateLaboratory } from '@/lib/api/laboratories'
 import { laboratoryFormSchema } from '@/lib/schemas/laboratorySchema'
@@ -67,32 +70,21 @@ export function LaboratoryForm({
     ? mutation.error instanceof ApiError
       ? mutation.error.message
       : 'Não foi possível salvar o laboratório.'
-    : null
+    : undefined
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3" noValidate>
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="laboratory-name" className="text-sm font-medium">
-          Nome do laboratório
-        </label>
-        <input
+        <Label htmlFor="laboratory-name">Nome do laboratório</Label>
+        <Input
           id="laboratory-name"
-          className="h-9 rounded-lg border border-border bg-background px-2.5 text-sm"
           placeholder="Ex.: LABCOMP-01"
-          aria-invalid={errors.name ? 'true' : 'false'}
+          aria-invalid={!!errors.name}
           {...register('name')}
         />
-        {errors.name && (
-          <p role="alert" className="text-sm text-destructive">
-            {errors.name.message}
-          </p>
-        )}
+        <FieldError message={errors.name?.message} />
       </div>
-      {submitError && (
-        <p role="alert" className="text-sm text-destructive">
-          {submitError}
-        </p>
-      )}
+      <FieldError message={submitError} />
       <Button type="submit" disabled={mutation.isPending}>
         {mode === 'edit' ? 'Salvar alterações' : 'Criar laboratório'}
       </Button>
