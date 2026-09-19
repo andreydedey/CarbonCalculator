@@ -1,6 +1,15 @@
 import { useMutation } from '@tanstack/react-query'
 import type React from 'react'
-import { Button } from '@/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { FieldError } from '@/components/ui/field-error'
 import { ApiError } from '@/lib/api/client'
 import { deactivateLaboratory, type Laboratory } from '@/lib/api/laboratories'
@@ -27,10 +36,6 @@ export const DeactivateDialog: React.FC<DeactivateDialogProps> = ({
     },
   })
 
-  if (!open) {
-    return null
-  }
-
   const errorMessage = mutation.error
     ? mutation.error instanceof ApiError
       ? mutation.error.message
@@ -38,31 +43,29 @@ export const DeactivateDialog: React.FC<DeactivateDialogProps> = ({
     : undefined
 
   return (
-    <div
-      role="alertdialog"
-      aria-modal="true"
-      className="fixed inset-0 flex items-center justify-center bg-black/40"
-    >
-      <div className="w-full max-w-sm rounded-lg border border-border bg-background p-4">
-        <p className="text-sm">{buildDeactivateConfirmationMessage(laboratory.name)}</p>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Desativar laboratório</AlertDialogTitle>
+          <AlertDialogDescription>
+            {buildDeactivateConfirmationMessage(laboratory.name)}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
         <FieldError message={errorMessage} />
-        <div className="mt-4 flex justify-end gap-2">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={mutation.isPending}
-          >
-            Cancelar
-          </Button>
-          <Button
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={mutation.isPending}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
             variant="destructive"
-            onClick={() => mutation.mutate()}
             disabled={mutation.isPending}
+            onClick={(e) => {
+              e.preventDefault()
+              mutation.mutate()
+            }}
           >
             Desativar
-          </Button>
-        </div>
-      </div>
-    </div>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }
