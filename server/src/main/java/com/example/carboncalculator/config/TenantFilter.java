@@ -39,7 +39,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @Component
 public class TenantFilter extends OncePerRequestFilter {
 
-    static final String TENANT_HEADER = "X-Institution-Id";
+    public static final String TENANT_HEADER = "X-Institution-Id";
 
     private static final List<String> EXCLUDED_PATH_PREFIXES = List.of("/api/v1/institutions");
 

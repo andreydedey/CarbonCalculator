@@ -15,4 +15,8 @@ import com.example.carboncalculator.entities.Laboratory;
 public interface LaboratoryRepository extends JpaRepository<Laboratory, UUID> {
 
     List<Laboratory> findByActiveTrue();
+
+    default boolean existsDependentsByLaboratoryId(UUID id) {
+        return false;
+    }
 }

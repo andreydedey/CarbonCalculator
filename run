@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")"
+
+export JAVA_HOME=$(/usr/libexec/java_home -v 25)
+
+set -a
+source .env
+set +a
+
+docker compose up -d db
+
+echo "Waiting for PostgreSQL..."
+until docker compose exec db pg_isready -U "$DATABASE_USERNAME" -q 2>/dev/null; do
+  sleep 1
+done
+echo "PostgreSQL ready."
+
+cd server
+./mvnw spring-boot:run
