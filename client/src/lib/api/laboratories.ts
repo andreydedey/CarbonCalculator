@@ -31,7 +31,10 @@ export function getLaboratory(id: string): Promise<Laboratory> {
   return api.get(`/laboratories/${id}`).then((r) => r.data)
 }
 
-export function updateLaboratory(id: string, payload: CreateLaboratoryPayload): Promise<Laboratory> {
+export function updateLaboratory(
+  id: string,
+  payload: CreateLaboratoryPayload,
+): Promise<Laboratory> {
   return api.put(`/laboratories/${id}`, payload).then((r) => r.data)
 }
 

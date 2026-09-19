@@ -1,9 +1,33 @@
 import { z } from 'zod'
 
 export const BRAZILIAN_STATES = [
-  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS',
-  'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC',
-  'SP', 'SE', 'TO',
+  'AC',
+  'AL',
+  'AP',
+  'AM',
+  'BA',
+  'CE',
+  'DF',
+  'ES',
+  'GO',
+  'MA',
+  'MT',
+  'MS',
+  'MG',
+  'PA',
+  'PB',
+  'PR',
+  'PE',
+  'PI',
+  'RJ',
+  'RN',
+  'RS',
+  'RO',
+  'RR',
+  'SC',
+  'SP',
+  'SE',
+  'TO',
 ] as const
 
 export type BrazilianState = (typeof BRAZILIAN_STATES)[number]
@@ -12,10 +36,13 @@ export const institutionFormSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   acronym: z.string().min(1, 'Sigla é obrigatória'),
   city: z.string(),
-  state: z.string().min(1, 'Selecione uma UF').refine(
-    (val) => (BRAZILIAN_STATES as readonly string[]).includes(val),
-    'UF inválida. Selecione uma das 27 unidades federativas.',
-  ),
+  state: z
+    .string()
+    .min(1, 'Selecione uma UF')
+    .refine(
+      (val) => (BRAZILIAN_STATES as readonly string[]).includes(val),
+      'UF inválida. Selecione uma das 27 unidades federativas.',
+    ),
   laboratoryName: z.string().min(1, 'Nome do laboratório é obrigatório'),
 })
 

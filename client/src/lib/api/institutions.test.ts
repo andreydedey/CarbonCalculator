@@ -1,5 +1,5 @@
-import { afterEach, describe, mock, test } from 'node:test'
 import assert from 'node:assert/strict'
+import { afterEach, describe, mock, test } from 'node:test'
 import { api } from './client.ts'
 import { createInstitution, listInstitutions } from './institutions.ts'
 

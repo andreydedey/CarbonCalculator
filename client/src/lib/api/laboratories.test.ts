@@ -1,5 +1,5 @@
-import { afterEach, describe, mock, test } from 'node:test'
 import assert from 'node:assert/strict'
+import { afterEach, describe, mock, test } from 'node:test'
 import { api, ConflictError } from './client.ts'
 import {
   createLaboratory,
@@ -67,14 +67,20 @@ describe('laboratories api', () => {
 
   test('@spec:AC-012 exclusão bloqueada quando há dependentes — deleteLaboratory rejeita com ConflictError ao receber 409', async () => {
     mock.method(api, 'delete', async () => {
-      throw new ConflictError(409, 'Laboratório possui registros dependentes; desative-o em vez de excluir')
+      throw new ConflictError(
+        409,
+        'Laboratório possui registros dependentes; desative-o em vez de excluir',
+      )
     })
 
-    await assert.rejects(() => deleteLaboratory('lab-1'), (error: unknown) => {
-      assert.ok(error instanceof ConflictError)
-      assert.equal((error as ConflictError).status, 409)
-      return true
-    })
+    await assert.rejects(
+      () => deleteLaboratory('lab-1'),
+      (error: unknown) => {
+        assert.ok(error instanceof ConflictError)
+        assert.equal((error as ConflictError).status, 409)
+        return true
+      },
+    )
   })
 
   test('@spec:AC-013 exclusão permitida quando não há dependentes — deleteLaboratory faz DELETE e resolve sem corpo', async () => {

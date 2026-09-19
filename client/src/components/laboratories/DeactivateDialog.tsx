@@ -1,37 +1,24 @@
-/**
- * Diálogo de confirmação de desativação de laboratório (US-005, AC-011).
- *
- * A lógica pura abaixo (antes do marcador `@pure-logic-boundary`) não usa
- * JSX, para poder ser verificada com `node --test` sem bundler.
- */
-
-/**
- * Mensagem de confirmação exibida antes de desativar. Deixa explícito que
- * a operação preserva o laboratório e seu histórico — não é uma exclusão
- * (@spec:AC-011).
- */
-export function buildDeactivateConfirmationMessage(laboratoryName: string): string {
-  return `Desativar "${laboratoryName}"? O laboratório e seu histórico serão preservados; ele deixará de aparecer na lista padrão, mas continuará disponível ao incluir inativos.`
-}
-
-// @pure-logic-boundary
-
 import { useMutation } from '@tanstack/react-query'
+import type React from 'react'
 import { Button } from '@/components/ui/button'
+import { FieldError } from '@/components/ui/field-error'
 import { ApiError } from '@/lib/api/client'
 import { deactivateLaboratory, type Laboratory } from '@/lib/api/laboratories'
+import { buildDeactivateConfirmationMessage } from '@/lib/laboratories/buildDeactivateMessage'
 
-export function DeactivateDialog({
-  laboratory,
-  open,
-  onOpenChange,
-  onDeactivated,
-}: {
+interface DeactivateDialogProps {
   laboratory: Laboratory
   open: boolean
   onOpenChange: (open: boolean) => void
   onDeactivated?: (laboratory: Laboratory) => void
-}) {
+}
+
+export const DeactivateDialog: React.FC<DeactivateDialogProps> = ({
+  laboratory,
+  open,
+  onOpenChange,
+  onDeactivated,
+}) => {
   const mutation = useMutation({
     mutationFn: () => deactivateLaboratory(laboratory.id),
     onSuccess: (deactivated) => {
@@ -48,7 +35,7 @@ export function DeactivateDialog({
     ? mutation.error instanceof ApiError
       ? mutation.error.message
       : 'Não foi possível desativar o laboratório.'
-    : null
+    : undefined
 
   return (
     <div
@@ -58,16 +45,20 @@ export function DeactivateDialog({
     >
       <div className="w-full max-w-sm rounded-lg border border-border bg-background p-4">
         <p className="text-sm">{buildDeactivateConfirmationMessage(laboratory.name)}</p>
-        {errorMessage && (
-          <p role="alert" className="mt-2 text-sm text-destructive">
-            {errorMessage}
-          </p>
-        )}
+        <FieldError message={errorMessage} />
         <div className="mt-4 flex justify-end gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={mutation.isPending}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={mutation.isPending}
+          >
             Cancelar
           </Button>
-          <Button variant="destructive" onClick={() => mutation.mutate()} disabled={mutation.isPending}>
+          <Button
+            variant="destructive"
+            onClick={() => mutation.mutate()}
+            disabled={mutation.isPending}
+          >
             Desativar
           </Button>
         </div>

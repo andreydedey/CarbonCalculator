@@ -1,5 +1,5 @@
-import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { test } from 'node:test'
 import { laboratoryFormSchema } from './laboratorySchema.ts'
 
 test('@spec:AC-004 laboratório criado com nome — nome válido é aceito, sem espaços nas pontas', () => {
