@@ -27,8 +27,8 @@ export function buildLaboratoryPayload(values: LaboratoryFormValues): CreateLabo
 // @pure-logic-boundary
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useMutation } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { ApiError } from '@/lib/api/client'
 import { createLaboratory, updateLaboratory } from '@/lib/api/laboratories'
@@ -42,31 +42,32 @@ export function LaboratoryForm({
   onSaved?: (laboratory: Laboratory) => void
 }) {
   const mode = resolveLaboratoryFormMode(laboratory)
-  const [submitError, setSubmitError] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<LaboratoryFormValues>({
     resolver: zodResolver(laboratoryFormSchema),
     defaultValues: { name: laboratory?.name ?? '' },
   })
 
-  async function onSubmit(values: LaboratoryFormValues) {
-    setSubmitError(null)
-    const payload = buildLaboratoryPayload(values)
-    try {
-      const saved =
-        mode === 'edit' && laboratory
-          ? await updateLaboratory(laboratory.id, payload)
-          : await createLaboratory(payload)
-      onSaved?.(saved)
-    } catch (error) {
-      setSubmitError(
-        error instanceof ApiError ? error.message : 'Não foi possível salvar o laboratório.',
-      )
-    }
+  const mutation = useMutation({
+    mutationFn: (payload: CreateLaboratoryPayload) =>
+      mode === 'edit' && laboratory
+        ? updateLaboratory(laboratory.id, payload)
+        : createLaboratory(payload),
+    onSuccess: (saved) => onSaved?.(saved),
+  })
+
+  function onSubmit(values: LaboratoryFormValues) {
+    mutation.mutate(buildLaboratoryPayload(values))
   }
+
+  const submitError = mutation.error
+    ? mutation.error instanceof ApiError
+      ? mutation.error.message
+      : 'Não foi possível salvar o laboratório.'
+    : null
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3" noValidate>
@@ -92,7 +93,7 @@ export function LaboratoryForm({
           {submitError}
         </p>
       )}
-      <Button type="submit" disabled={isSubmitting}>
+      <Button type="submit" disabled={mutation.isPending}>
         {mode === 'edit' ? 'Salvar alterações' : 'Criar laboratório'}
       </Button>
     </form>

@@ -30,13 +30,20 @@ export const NAV_ITEMS: readonly NavItem[] = [
 
 // @pure-logic-boundary
 
+import { useQuery } from "@tanstack/react-query"
 import type { ReactNode } from "react"
 import { useInstitution } from "@/context/InstitutionContext"
 import { InstitutionSwitcher } from "@/layout/InstitutionSwitcher"
+import { listInstitutions } from "@/lib/api/institutions"
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const { hasInstitution } = useInstitution()
   const view = resolveLayoutView(hasInstitution)
+
+  const { data: institutions = [] } = useQuery({
+    queryKey: ["institutions"],
+    queryFn: listInstitutions,
+  })
 
   return (
     <div className="flex min-h-svh">
@@ -57,7 +64,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between border-b border-border px-4 py-3">
           <span className="text-sm text-muted-foreground">Instituição ativa</span>
-          <InstitutionSwitcher />
+          <InstitutionSwitcher options={institutions.map((i) => ({ id: i.id, name: i.name }))} />
         </header>
         <main className="flex-1 p-4">
           {view === "content" ? (

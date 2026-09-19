@@ -12,8 +12,7 @@
  *
  * A lógica pura abaixo (antes do marcador `@pure-logic-boundary`) não
  * importa módulos externos, para poder ser verificada com `node --test`
- * sem depender de `node_modules` instalado (mesma convenção de
- * `InstitutionContext.tsx`, `AppLayout.tsx` e `InstitutionSwitcher.tsx`).
+ * sem depender de `node_modules` instalado.
  */
 
 export interface ApiErrorLike {
@@ -66,6 +65,7 @@ export function mapCreateInstitutionError(error: unknown): SubmitFormError {
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useMutation } from "@tanstack/react-query"
 import {
   BRAZILIAN_STATES,
   institutionFormSchema,
@@ -86,34 +86,38 @@ export function InstitutionForm({ onCreated, onCancel }: InstitutionFormProps) {
     handleSubmit,
     setError,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<InstitutionFormValues>({
     resolver: zodResolver(institutionFormSchema),
     defaultValues: { name: "", acronym: "", city: "", state: "", laboratoryName: "" },
   })
 
-  const rootError = errors.root?.message
-
-  async function onSubmit(values: InstitutionFormValues) {
-    try {
-      const payload = normalizeInstitutionForm(values)
-      const institution = await createInstitution(payload)
+  const mutation = useMutation({
+    mutationFn: createInstitution,
+    onSuccess: (institution) => {
       reset()
       onCreated?.(institution)
-    } catch (error) {
+    },
+    onError: (error) => {
       const mapped = mapCreateInstitutionError(error)
       if (mapped.field === "root") {
         setError("root", { type: "server", message: mapped.message })
       } else {
         setError(mapped.field, { type: "server", message: mapped.message })
       }
-    }
+    },
+  })
+
+  const rootError = errors.root?.message
+
+  function onSubmit(values: InstitutionFormValues) {
+    mutation.mutate(normalizeInstitutionForm(values))
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <p className="text-sm text-muted-foreground">Cadastro › Instituições</p>
+        <p className="text-sm text-muted-foreground">Cadastro &rsaquo; Instituições</p>
         <h1 className="font-heading text-2xl font-bold">Nova Instituição</h1>
       </div>
 
@@ -218,10 +222,10 @@ export function InstitutionForm({ onCreated, onCancel }: InstitutionFormProps) {
       {rootError && <p className="text-sm text-destructive">{rootError}</p>}
 
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={mutation.isPending}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={mutation.isPending}>
           Salvar
         </Button>
       </div>

@@ -37,27 +37,18 @@ export function toViewModel(laboratory: Laboratory): LaboratoryViewModel {
 
 // @pure-logic-boundary
 
-import { useCallback, useEffect, useState } from "react"
+import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { listLaboratories } from "@/lib/api/laboratories"
 
 export function LaboratoryList() {
   const [showInactive, setShowInactive] = useState(false)
-  const [laboratories, setLaboratories] = useState<LaboratoryViewModel[]>([])
-  const [isLoading, setIsLoading] = useState(true)
 
-  const loadLaboratories = useCallback(async (includeInactive: boolean) => {
-    setIsLoading(true)
-    try {
-      const result = await listLaboratories(buildListQuery(includeInactive))
-      setLaboratories(result.map(toViewModel))
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    loadLaboratories(showInactive)
-  }, [showInactive, loadLaboratories])
+  const { data: laboratories = [], isLoading } = useQuery({
+    queryKey: ["laboratories", showInactive],
+    queryFn: () => listLaboratories(buildListQuery(showInactive)),
+    select: (data) => data.map(toViewModel),
+  })
 
   return (
     <div className="flex flex-col gap-4">
