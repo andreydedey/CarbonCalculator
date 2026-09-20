@@ -20,12 +20,11 @@ export const InstitutionContext = createContext<InstitutionContextValue | undefi
 
 export const InstitutionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [institutionId, setInstitutionIdState] = useState<string | null>(() =>
-    typeof window === 'undefined' ? null : readStoredInstitutionId(window.localStorage),
+    readStoredInstitutionId(),
   )
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    writeStoredInstitutionId(window.localStorage, institutionId)
+    writeStoredInstitutionId(institutionId)
   }, [institutionId])
 
   const setInstitutionId = useCallback((next: string) => {

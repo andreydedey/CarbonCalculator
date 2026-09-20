@@ -1,20 +1,15 @@
-export const INSTITUTION_STORAGE_KEY = 'carbon-calculator:institution-id'
+const COOKIE_NAME = 'institution_id'
+const MAX_AGE_DAYS = 365
 
-export interface StorageLike {
-  getItem(key: string): string | null
-  setItem(key: string, value: string): void
-  removeItem(key: string): void
+export function readStoredInstitutionId(): string | null {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${COOKIE_NAME}=([^;]*)`))
+  return match?.[1] ?? null
 }
 
-export function readStoredInstitutionId(storage: StorageLike): string | null {
-  const raw = storage.getItem(INSTITUTION_STORAGE_KEY)
-  return raw && raw.trim().length > 0 ? raw : null
-}
-
-export function writeStoredInstitutionId(storage: StorageLike, institutionId: string | null): void {
-  if (institutionId && institutionId.trim().length > 0) {
-    storage.setItem(INSTITUTION_STORAGE_KEY, institutionId)
+export function writeStoredInstitutionId(institutionId: string | null): void {
+  if (institutionId) {
+    document.cookie = `${COOKIE_NAME}=${institutionId}; path=/; max-age=${MAX_AGE_DAYS * 86400}; SameSite=Strict`
   } else {
-    storage.removeItem(INSTITUTION_STORAGE_KEY)
+    document.cookie = `${COOKIE_NAME}=; path=/; max-age=0`
   }
 }
