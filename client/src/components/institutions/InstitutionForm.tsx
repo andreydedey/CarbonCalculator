@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
 import type React from 'react'
 import { Controller, useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FieldError } from '@/components/ui/field-error'
@@ -46,6 +47,7 @@ export const InstitutionForm: React.FC<InstitutionFormProps> = ({ onCreated, onC
     onSuccess: (institution) => {
       reset()
       onCreated?.(institution)
+      toast.success('Instituição criada.')
     },
     onError: (error) => {
       const mapped = mapCreateInstitutionError(error)
@@ -159,12 +161,12 @@ export const InstitutionForm: React.FC<InstitutionFormProps> = ({ onCreated, onC
 
       <FieldError message={rootError} />
 
-      <div className="flex justify-end gap-2">
+      <div className="flex justify-end gap-3">
         <Button type="button" variant="outline" onClick={onCancel} disabled={mutation.isPending}>
           Cancelar
         </Button>
         <Button type="submit" disabled={mutation.isPending}>
-          Salvar
+          Salvar Instituição
         </Button>
       </div>
     </form>

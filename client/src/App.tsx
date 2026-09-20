@@ -1,6 +1,7 @@
 import type React from 'react'
 import { Route, Routes, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { Toaster } from '@/components/ui/sonner'
 import { InstitutionProvider } from '@/context/InstitutionContext'
 import { InstitutionsPage } from '@/pages/institutions/InstitutionsPage'
 import { LaboratoriesPage } from '@/pages/laboratories/LaboratoriesPage'
@@ -24,5 +25,6 @@ export const App: React.FC = () => (
       <Route path="/institutions" element={<InstitutionsPage />} />
       <Route path="/laboratories" element={<LaboratoriesPage />} />
     </Routes>
+    <Toaster position="bottom-right" />
   </InstitutionProvider>
 )

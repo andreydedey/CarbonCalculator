@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import type React from 'react'
+import { toast } from 'sonner'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +34,7 @@ export const DeactivateDialog: React.FC<DeactivateDialogProps> = ({
     onSuccess: (deactivated) => {
       onDeactivated?.(deactivated)
       onOpenChange(false)
+      toast.success('Laboratório desativado.')
     },
   })
 
