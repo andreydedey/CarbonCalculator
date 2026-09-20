@@ -17,7 +17,12 @@ interface SummaryCardProps {
   variant?: 'accent' | 'default'
 }
 
-export const SummaryCard: React.FC<SummaryCardProps> = ({ value, label, icon, variant = 'default' }) => (
+export const SummaryCard: React.FC<SummaryCardProps> = ({
+  value,
+  label,
+  icon,
+  variant = 'default',
+}) => (
   <div
     className={`flex flex-1 items-center gap-3.5 rounded-[10px] border border-border p-5 ${
       variant === 'accent' ? 'bg-accent' : 'bg-card'
@@ -41,9 +46,7 @@ const StatusBadge: React.FC<{ active: boolean; label: string }> = ({ active, lab
       active ? 'bg-accent text-primary' : 'bg-muted text-muted-foreground'
     }`}
   >
-    <span
-      className={`size-1.5 rounded-full ${active ? 'bg-green-500' : 'bg-muted-foreground'}`}
-    />
+    <span className={`size-1.5 rounded-full ${active ? 'bg-green-500' : 'bg-muted-foreground'}`} />
     {label}
   </span>
 )
@@ -56,7 +59,13 @@ interface LabCardProps {
   onDelete: (lab: Laboratory) => void
 }
 
-export const LabCard: React.FC<LabCardProps> = ({ laboratory, statusLabel, onActivate, onDeactivate, onDelete }) => (
+export const LabCard: React.FC<LabCardProps> = ({
+  laboratory,
+  statusLabel,
+  onActivate,
+  onDeactivate,
+  onDelete,
+}) => (
   <div className="rounded-[10px] border border-border bg-card">
     {/* Top */}
     <div className="flex items-center justify-between px-6 py-5">
@@ -83,14 +92,9 @@ export const LabCard: React.FC<LabCardProps> = ({ laboratory, statusLabel, onAct
                 Desativar
               </DropdownMenuItem>
             ) : (
-              <DropdownMenuItem onClick={() => onActivate(laboratory)}>
-                Ativar
-              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onActivate(laboratory)}>Ativar</DropdownMenuItem>
             )}
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => onDelete(laboratory)}
-            >
+            <DropdownMenuItem className="text-destructive" onClick={() => onDelete(laboratory)}>
               Excluir
             </DropdownMenuItem>
           </DropdownMenuContent>

@@ -124,8 +124,8 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Selecione os modelos de equipamento cadastrados na instituição e informe a quantidade
-                em uso neste laboratório.
+                Selecione os modelos de equipamento cadastrados na instituição e informe a
+                quantidade em uso neste laboratório.
               </p>
               <div className="rounded-lg border">
                 <div className="flex items-center justify-center px-4 py-4">

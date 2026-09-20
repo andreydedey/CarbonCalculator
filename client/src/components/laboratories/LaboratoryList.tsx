@@ -10,7 +10,7 @@ import { LaboratoryForm } from '@/components/laboratories/LaboratoryForm'
 import { Button } from '@/components/ui/button'
 import { useInstitution } from '@/context/InstitutionContext'
 import { getInstitution } from '@/lib/api/institutions'
-import { activateLaboratory, listLaboratories, type Laboratory } from '@/lib/api/laboratories'
+import { activateLaboratory, type Laboratory, listLaboratories } from '@/lib/api/laboratories'
 
 function statusLabel(lab: Laboratory): string {
   return lab.active ? 'Operando' : 'Inativo'
@@ -29,7 +29,11 @@ export const LaboratoryList: React.FC = () => {
     enabled: !!institutionId,
   })
 
-  const { data: laboratories = [], isLoading, refetch } = useQuery({
+  const {
+    data: laboratories = [],
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ['laboratories', showInactive],
     queryFn: () => listLaboratories(showInactive ? { includeInactive: true } : {}),
   })
@@ -64,7 +68,9 @@ export const LaboratoryList: React.FC = () => {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-1">
-          <p className="text-xs font-normal text-muted-foreground">Cadastro &rsaquo; Laboratórios</p>
+          <p className="text-xs font-normal text-muted-foreground">
+            Cadastro &rsaquo; Laboratórios
+          </p>
           <h1 className="font-heading text-2xl font-bold">
             Laboratórios{institutionName ? ` — ${institutionName}` : ''}
           </h1>
