@@ -93,22 +93,3 @@
     @apply font-sans;
     }
 }
-
-/* Sonner toast type colors */
-.cn-toast-success {
-  --success-bg: #ecfdf5 !important;
-  --success-border: #a7f3d0 !important;
-  --success-text: #065f46 !important;
-}
-
-.cn-toast-error {
-  --error-bg: #fef2f2 !important;
-  --error-border: #fecaca !important;
-  --error-text: #991b1b !important;
-}
-
-.cn-toast-warning {
-  --warning-bg: #fffbeb !important;
-  --warning-border: #fde68a !important;
-  --warning-text: #92400e !important;
-}
