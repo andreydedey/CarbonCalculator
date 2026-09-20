@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Building2, FlaskConical } from 'lucide-react'
 import type React from 'react'
-import type { ReactNode } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, Outlet, useLocation } from 'react-router-dom'
 import { InstitutionSwitcher } from '@/components/layout/InstitutionSwitcher'
 import {
   Sidebar,
@@ -20,9 +19,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { useInstitution } from '@/context/InstitutionContext'
 import { listInstitutions } from '@/lib/api/institutions'
-import { resolveLayoutView } from '@/lib/layout/resolveLayoutView'
 
 const NAV_ITEMS = [
   { label: 'Instituições', href: '/institutions', icon: Building2 },
@@ -61,15 +58,7 @@ const AppSidebar: React.FC = () => {
   )
 }
 
-interface AppLayoutProps {
-  children: ReactNode
-  requireInstitution?: boolean
-}
-
-export const AppLayout: React.FC<AppLayoutProps> = ({ children, requireInstitution = true }) => {
-  const { hasInstitution } = useInstitution()
-  const showContent = !requireInstitution || resolveLayoutView(hasInstitution) === 'content'
-
+export const AppLayout: React.FC = () => {
   const { data: institutions = [] } = useQuery({
     queryKey: ['institutions'],
     queryFn: listInstitutions,
@@ -89,13 +78,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, requireInstituti
             </div>
           </header>
           <main className="flex-1 p-4">
-            {showContent ? (
-              children
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                Selecione uma instituição para continuar.
-              </p>
-            )}
+            <Outlet />
           </main>
         </SidebarInset>
       </SidebarProvider>

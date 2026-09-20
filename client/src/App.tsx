@@ -1,5 +1,6 @@
 import type React from 'react'
 import { Route, Routes, useNavigate } from 'react-router-dom'
+import { AppLayout } from '@/components/layout/AppLayout'
 import { Button } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/sonner'
 import { InstitutionProvider } from '@/context/InstitutionContext'
@@ -22,8 +23,10 @@ export const App: React.FC = () => (
   <InstitutionProvider>
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/institutions" element={<InstitutionsPage />} />
-      <Route path="/laboratories" element={<LaboratoriesPage />} />
+      <Route element={<AppLayout />}>
+        <Route path="/institutions" element={<InstitutionsPage />} />
+        <Route path="/laboratories" element={<LaboratoriesPage />} />
+      </Route>
     </Routes>
     <Toaster position="bottom-right" />
   </InstitutionProvider>
