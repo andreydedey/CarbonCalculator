@@ -23,8 +23,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.example.carboncalculator.dto.CreateInstitutionRequest;
 import com.example.carboncalculator.dto.CreateLaboratoryRequest;
-import com.example.carboncalculator.dto.InstitutionResponse;
-import com.example.carboncalculator.dto.LaboratoryResponse;
+import com.example.carboncalculator.dto.InstitutionDTO;
+import com.example.carboncalculator.dto.LaboratoryDTO;
 
 /**
  * Testes de integração de instituição (US-001) contra um PostgreSQL real via
@@ -45,10 +45,10 @@ class InstitutionControllerIntegrationTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    private ResponseEntity<InstitutionResponse> createInstitution(String acronym, String state, String labName) {
+    private ResponseEntity<InstitutionDTO> createInstitution(String acronym, String state, String labName) {
         CreateInstitutionRequest request = new CreateInstitutionRequest(
                 "Universidade Federal do Pará", acronym, "Belém", state, new CreateLaboratoryRequest(labName));
-        return restTemplate.postForEntity("/institutions", request, InstitutionResponse.class);
+        return restTemplate.postForEntity("/institutions", request, InstitutionDTO.class);
     }
 
     private String uniqueAcronym(String prefix) {
@@ -58,10 +58,10 @@ class InstitutionControllerIntegrationTest {
     // @spec:AC-001 Instituição criada com dados válidos
     @Test
     void deveCriarInstituicaoELaboratorioVinculadoNumaUnicaOperacao() {
-        ResponseEntity<InstitutionResponse> response = createInstitution(uniqueAcronym("UFPA"), "PA", "LABCOMP-01");
+        ResponseEntity<InstitutionDTO> response = createInstitution(uniqueAcronym("UFPA"), "PA", "LABCOMP-01");
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        InstitutionResponse institution = response.getBody();
+        InstitutionDTO institution = response.getBody();
         assertNotNull(institution);
         assertNotNull(institution.id());
         assertTrue(institution.active());
@@ -69,8 +69,8 @@ class InstitutionControllerIntegrationTest {
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Institution-Id", institution.id().toString());
-        ResponseEntity<LaboratoryResponse[]> laboratories = restTemplate.exchange(
-                "/laboratories", HttpMethod.GET, new HttpEntity<>(headers), LaboratoryResponse[].class);
+        ResponseEntity<LaboratoryDTO[]> laboratories = restTemplate.exchange(
+                "/laboratories", HttpMethod.GET, new HttpEntity<>(headers), LaboratoryDTO[].class);
 
         assertEquals(HttpStatus.OK, laboratories.getStatusCode());
         assertTrue(Arrays.stream(laboratories.getBody()).anyMatch(lab -> lab.name().equals("LABCOMP-01")));

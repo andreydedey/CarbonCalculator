@@ -31,8 +31,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.example.carboncalculator.dto.CreateInstitutionRequest;
 import com.example.carboncalculator.dto.CreateLaboratoryRequest;
-import com.example.carboncalculator.dto.InstitutionResponse;
-import com.example.carboncalculator.dto.LaboratoryResponse;
+import com.example.carboncalculator.dto.InstitutionDTO;
+import com.example.carboncalculator.dto.LaboratoryDTO;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
 
 /**
@@ -88,9 +88,9 @@ class LaboratoryControllerIntegrationTest {
         CreateInstitutionRequest request = new CreateInstitutionRequest(
                 "Instituição " + acronymPrefix, acronymPrefix + "-" + System.nanoTime(), "Cidade", "PA",
                 new CreateLaboratoryRequest("LABCOMP-01"));
-        ResponseEntity<InstitutionResponse> response = restTemplate.postForEntity(
-                "/institutions", request, InstitutionResponse.class);
-        InstitutionResponse institution = response.getBody();
+        ResponseEntity<InstitutionDTO> response = restTemplate.postForEntity(
+                "/institutions", request, InstitutionDTO.class);
+        InstitutionDTO institution = response.getBody();
         assertNotNull(institution);
         return institution.id();
     }
@@ -101,16 +101,16 @@ class LaboratoryControllerIntegrationTest {
         return headers;
     }
 
-    private ResponseEntity<LaboratoryResponse> createLaboratory(UUID institutionId, String name) {
+    private ResponseEntity<LaboratoryDTO> createLaboratory(UUID institutionId, String name) {
         return restTemplate.postForEntity("/laboratories",
                 new HttpEntity<>(new CreateLaboratoryRequest(name), headersFor(institutionId)),
-                LaboratoryResponse.class);
+                LaboratoryDTO.class);
     }
 
-    private ResponseEntity<LaboratoryResponse[]> listLaboratories(UUID institutionId, Boolean active) {
+    private ResponseEntity<LaboratoryDTO[]> listLaboratories(UUID institutionId, Boolean active) {
         String path = active == null ? "/laboratories" : "/api/v1/laboratories?active=" + active;
         return restTemplate.exchange(path, HttpMethod.GET, new HttpEntity<>(headersFor(institutionId)),
-                LaboratoryResponse[].class);
+                LaboratoryDTO[].class);
     }
 
     // @spec:AC-004 Laboratório criado com nome
@@ -118,13 +118,13 @@ class LaboratoryControllerIntegrationTest {
     void deveCriarLaboratorioInformandoApenasONome() {
         UUID institutionId = createInstitutionAndReturnId("UFPA");
 
-        ResponseEntity<LaboratoryResponse> response = createLaboratory(institutionId, "LABCOMP-02");
+        ResponseEntity<LaboratoryDTO> response = createLaboratory(institutionId, "LABCOMP-02");
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertEquals("LABCOMP-02", response.getBody().name());
         assertTrue(response.getBody().active());
 
-        ResponseEntity<LaboratoryResponse[]> list = listLaboratories(institutionId, null);
+        ResponseEntity<LaboratoryDTO[]> list = listLaboratories(institutionId, null);
         assertTrue(Arrays.stream(list.getBody()).anyMatch(lab -> lab.name().equals("LABCOMP-02")));
     }
 
@@ -143,13 +143,13 @@ class LaboratoryControllerIntegrationTest {
     @Test
     void deveListarApenasLaboratoriosAtivosPorPadrao() {
         UUID institutionId = createInstitutionAndReturnId("UFPA");
-        LaboratoryResponse inactive = createLaboratory(institutionId, "LABCOMP-INATIVO").getBody();
+        LaboratoryDTO inactive = createLaboratory(institutionId, "LABCOMP-INATIVO").getBody();
         restTemplate.exchange("/api/v1/laboratories/" + inactive.id() + "/deactivate", HttpMethod.PATCH,
-                new HttpEntity<>(headersFor(institutionId)), LaboratoryResponse.class);
+                new HttpEntity<>(headersFor(institutionId)), LaboratoryDTO.class);
 
-        ResponseEntity<LaboratoryResponse[]> list = listLaboratories(institutionId, null);
+        ResponseEntity<LaboratoryDTO[]> list = listLaboratories(institutionId, null);
 
-        assertTrue(Arrays.stream(list.getBody()).allMatch(LaboratoryResponse::active));
+        assertTrue(Arrays.stream(list.getBody()).allMatch(LaboratoryDTO::active));
         assertFalse(Arrays.stream(list.getBody()).anyMatch(lab -> lab.id().equals(inactive.id())));
     }
 
@@ -157,15 +157,15 @@ class LaboratoryControllerIntegrationTest {
     @Test
     void deveIncluirLaboratoriosInativosQuandoSolicitado() {
         UUID institutionId = createInstitutionAndReturnId("UFPA");
-        LaboratoryResponse inactive = createLaboratory(institutionId, "LABCOMP-INATIVO").getBody();
+        LaboratoryDTO inactive = createLaboratory(institutionId, "LABCOMP-INATIVO").getBody();
         restTemplate.exchange("/api/v1/laboratories/" + inactive.id() + "/deactivate", HttpMethod.PATCH,
-                new HttpEntity<>(headersFor(institutionId)), LaboratoryResponse.class);
+                new HttpEntity<>(headersFor(institutionId)), LaboratoryDTO.class);
 
-        ResponseEntity<LaboratoryResponse[]> list = listLaboratories(institutionId, false);
+        ResponseEntity<LaboratoryDTO[]> list = listLaboratories(institutionId, false);
 
         assertTrue(Arrays.stream(list.getBody())
                 .anyMatch(lab -> lab.id().equals(inactive.id()) && !lab.active()));
-        assertTrue(Arrays.stream(list.getBody()).anyMatch(LaboratoryResponse::active));
+        assertTrue(Arrays.stream(list.getBody()).anyMatch(LaboratoryDTO::active));
     }
 
     // @spec:AC-008 Isolamento por RLS entre instituições
@@ -173,10 +173,10 @@ class LaboratoryControllerIntegrationTest {
     void deveIsolarLaboratoriosPorInstituicaoViaRls() {
         UUID institutionA = createInstitutionAndReturnId("INST-A");
         UUID institutionB = createInstitutionAndReturnId("INST-B");
-        LaboratoryResponse labA = createLaboratory(institutionA, "LAB-A").getBody();
-        LaboratoryResponse labB = createLaboratory(institutionB, "LAB-B").getBody();
+        LaboratoryDTO labA = createLaboratory(institutionA, "LAB-A").getBody();
+        LaboratoryDTO labB = createLaboratory(institutionB, "LAB-B").getBody();
 
-        ResponseEntity<LaboratoryResponse[]> listFromA = listLaboratories(institutionA, true);
+        ResponseEntity<LaboratoryDTO[]> listFromA = listLaboratories(institutionA, true);
 
         assertTrue(Arrays.stream(listFromA.getBody()).anyMatch(lab -> lab.id().equals(labA.id())));
         assertFalse(Arrays.stream(listFromA.getBody()).anyMatch(lab -> lab.id().equals(labB.id())));
@@ -195,7 +195,7 @@ class LaboratoryControllerIntegrationTest {
     void deveNegarAcessoDiretoALaboratorioDeOutraInstituicaoComo404() {
         UUID institutionA = createInstitutionAndReturnId("INST-A");
         UUID institutionB = createInstitutionAndReturnId("INST-B");
-        LaboratoryResponse labA = createLaboratory(institutionA, "LAB-A").getBody();
+        LaboratoryDTO labA = createLaboratory(institutionA, "LAB-A").getBody();
 
         ResponseEntity<Object> response = restTemplate.exchange(
                 "/api/v1/laboratories/" + labA.id() + "/deactivate", HttpMethod.PATCH,
@@ -208,19 +208,19 @@ class LaboratoryControllerIntegrationTest {
     @Test
     void deveDesativarLaboratorioPreservandoSeusDados() {
         UUID institutionId = createInstitutionAndReturnId("UFPA");
-        LaboratoryResponse created = createLaboratory(institutionId, "LABCOMP-03").getBody();
+        LaboratoryDTO created = createLaboratory(institutionId, "LABCOMP-03").getBody();
 
-        ResponseEntity<LaboratoryResponse> deactivateResponse = restTemplate.exchange(
+        ResponseEntity<LaboratoryDTO> deactivateResponse = restTemplate.exchange(
                 "/api/v1/laboratories/" + created.id() + "/deactivate", HttpMethod.PATCH,
-                new HttpEntity<>(headersFor(institutionId)), LaboratoryResponse.class);
+                new HttpEntity<>(headersFor(institutionId)), LaboratoryDTO.class);
 
         assertEquals(HttpStatus.OK, deactivateResponse.getStatusCode());
-        LaboratoryResponse deactivated = deactivateResponse.getBody();
+        LaboratoryDTO deactivated = deactivateResponse.getBody();
         assertFalse(deactivated.active());
         assertEquals(created.id(), deactivated.id());
         assertEquals(created.name(), deactivated.name());
 
-        ResponseEntity<LaboratoryResponse[]> list = listLaboratories(institutionId, false);
+        ResponseEntity<LaboratoryDTO[]> list = listLaboratories(institutionId, false);
         assertTrue(Arrays.stream(list.getBody())
                 .anyMatch(lab -> lab.id().equals(created.id()) && lab.name().equals("LABCOMP-03") && !lab.active()));
     }
@@ -229,7 +229,7 @@ class LaboratoryControllerIntegrationTest {
     @Test
     void deveBloquearExclusaoQuandoLaboratorioPossuiDependentes() {
         UUID institutionId = createInstitutionAndReturnId("UFPA");
-        LaboratoryResponse created = createLaboratory(institutionId, "LABCOMP-COM-DEPENDENTE").getBody();
+        LaboratoryDTO created = createLaboratory(institutionId, "LABCOMP-COM-DEPENDENTE").getBody();
 
         // Esta feature não modela equipamentos/medições (ver "Fora de
         // escopo" no spec) — a entidade dependente pertence a um PRD
@@ -248,14 +248,14 @@ class LaboratoryControllerIntegrationTest {
     @Test
     void devePermitirExclusaoQuandoLaboratorioNaoPossuiDependentes() {
         UUID institutionId = createInstitutionAndReturnId("UFPA");
-        LaboratoryResponse created = createLaboratory(institutionId, "LABCOMP-SEM-DEPENDENTE").getBody();
+        LaboratoryDTO created = createLaboratory(institutionId, "LABCOMP-SEM-DEPENDENTE").getBody();
 
         ResponseEntity<Void> response = restTemplate.exchange("/api/v1/laboratories/" + created.id(),
                 HttpMethod.DELETE, new HttpEntity<>(headersFor(institutionId)), Void.class);
 
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
 
-        ResponseEntity<LaboratoryResponse[]> list = listLaboratories(institutionId, false);
+        ResponseEntity<LaboratoryDTO[]> list = listLaboratories(institutionId, false);
         assertFalse(Arrays.stream(list.getBody()).anyMatch(lab -> lab.id().equals(created.id())));
     }
 }

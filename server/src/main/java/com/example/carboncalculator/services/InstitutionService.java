@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.carboncalculator.dto.CreateInstitutionRequest;
-import com.example.carboncalculator.dto.InstitutionResponse;
+import com.example.carboncalculator.dto.InstitutionDTO;
 import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.Laboratory;
 import com.example.carboncalculator.mappers.InstitutionMapper;
@@ -32,19 +32,19 @@ public class InstitutionService {
         this.laboratoryRepository = laboratoryRepository;
     }
 
-    public List<InstitutionResponse> list() {
+    public List<InstitutionDTO> list() {
         return institutionRepository.findAll().stream()
                 .map(InstitutionMapper::toDTO)
                 .toList();
     }
 
-    public Optional<InstitutionResponse> getById(UUID id) {
+    public Optional<InstitutionDTO> getById(UUID id) {
         return institutionRepository.findById(id)
                 .map(InstitutionMapper::toDTO);
     }
 
     @Transactional
-    public InstitutionResponse create(CreateInstitutionRequest request) {
+    public InstitutionDTO create(CreateInstitutionRequest request) {
         validateState(request.state());
         validateAcronymNotDuplicate(request.acronym());
 

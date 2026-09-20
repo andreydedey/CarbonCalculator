@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import com.example.carboncalculator.dto.CreateInstitutionRequest;
 import com.example.carboncalculator.dto.CreateLaboratoryRequest;
-import com.example.carboncalculator.dto.InstitutionResponse;
+import com.example.carboncalculator.dto.InstitutionDTO;
 import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.Laboratory;
 import com.example.carboncalculator.repositories.InstitutionRepository;
@@ -53,7 +53,7 @@ class InstitutionServiceTest {
         when(institutionRepository.save(any(Institution.class))).thenReturn(savedInstitution);
         when(laboratoryRepository.save(any(Laboratory.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        InstitutionResponse response = service.create(validRequest());
+        InstitutionDTO response = service.create(validRequest());
 
         assertEquals("UFPA", response.acronym());
         assertEquals("Universidade Federal do Pará", response.name());

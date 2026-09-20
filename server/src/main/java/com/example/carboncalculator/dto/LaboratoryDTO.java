@@ -3,7 +3,7 @@ package com.example.carboncalculator.dto;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-public record LaboratoryResponse(
+public record LaboratoryDTO(
         UUID id,
         String name,
         boolean active,

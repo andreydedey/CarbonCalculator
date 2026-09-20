@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.carboncalculator.config.TenantContext;
 import com.example.carboncalculator.dto.CreateLaboratoryRequest;
-import com.example.carboncalculator.dto.LaboratoryResponse;
+import com.example.carboncalculator.dto.LaboratoryDTO;
 import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.Laboratory;
 import com.example.carboncalculator.mappers.LaboratoryMapper;
@@ -27,7 +27,7 @@ public class LaboratoryService {
     }
 
     @Transactional
-    public LaboratoryResponse create(CreateLaboratoryRequest request) {
+    public LaboratoryDTO create(CreateLaboratoryRequest request) {
         validateName(request.name());
 
         Institution institution = institutionRepository.getReferenceById(currentInstitutionId());
@@ -39,7 +39,7 @@ public class LaboratoryService {
         return LaboratoryMapper.toDTO(laboratoryRepository.save(laboratory));
     }
 
-    public List<LaboratoryResponse> list(boolean includeInactive) {
+    public List<LaboratoryDTO> list(boolean includeInactive) {
         List<Laboratory> laboratories = includeInactive
                 ? laboratoryRepository.findAll()
                 : laboratoryRepository.findByActiveTrue();
@@ -48,14 +48,14 @@ public class LaboratoryService {
     }
 
     @Transactional
-    public LaboratoryResponse activate(UUID id) {
+    public LaboratoryDTO activate(UUID id) {
         Laboratory laboratory = getOrThrow(id);
         laboratory.setActive(true);
         return LaboratoryMapper.toDTO(laboratoryRepository.save(laboratory));
     }
 
     @Transactional
-    public LaboratoryResponse deactivate(UUID id) {
+    public LaboratoryDTO deactivate(UUID id) {
         Laboratory laboratory = getOrThrow(id);
         laboratory.setActive(false);
         return LaboratoryMapper.toDTO(laboratoryRepository.save(laboratory));

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.carboncalculator.dto.CreateInstitutionRequest;
-import com.example.carboncalculator.dto.InstitutionResponse;
+import com.example.carboncalculator.dto.InstitutionDTO;
 import com.example.carboncalculator.services.InstitutionService;
 
 @RestController
@@ -29,20 +29,20 @@ public class InstitutionController {
     }
 
     @GetMapping
-    public List<InstitutionResponse> list() {
+    public List<InstitutionDTO> list() {
         return institutionService.list();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<InstitutionResponse> getById(@PathVariable UUID id) {
+    public ResponseEntity<InstitutionDTO> getById(@PathVariable UUID id) {
         return institutionService.getById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<InstitutionResponse> create(@RequestBody CreateInstitutionRequest request) {
-        InstitutionResponse response = institutionService.create(request);
+    public ResponseEntity<InstitutionDTO> create(@RequestBody CreateInstitutionRequest request) {
+        InstitutionDTO response = institutionService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

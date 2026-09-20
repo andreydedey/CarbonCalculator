@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import com.example.carboncalculator.config.TenantContext;
 import com.example.carboncalculator.dto.CreateLaboratoryRequest;
-import com.example.carboncalculator.dto.LaboratoryResponse;
+import com.example.carboncalculator.dto.LaboratoryDTO;
 import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.Laboratory;
 import com.example.carboncalculator.repositories.InstitutionRepository;
@@ -55,7 +55,7 @@ class LaboratoryServiceTest {
             return laboratory;
         });
 
-        LaboratoryResponse response = service.create(new CreateLaboratoryRequest("LABCOMP-02"));
+        LaboratoryDTO response = service.create(new CreateLaboratoryRequest("LABCOMP-02"));
 
         assertEquals("LABCOMP-02", response.name());
         assertTrue(response.active());
@@ -77,7 +77,7 @@ class LaboratoryServiceTest {
         Laboratory ativo = Laboratory.builder().id(UUID.randomUUID()).name("Ativo").active(true).build();
         when(laboratoryRepository.findByActiveTrue()).thenReturn(List.of(ativo));
 
-        List<LaboratoryResponse> result = service.list(false);
+        List<LaboratoryDTO> result = service.list(false);
 
         assertEquals(1, result.size());
         assertTrue(result.get(0).active());
@@ -91,7 +91,7 @@ class LaboratoryServiceTest {
         Laboratory inativo = Laboratory.builder().id(UUID.randomUUID()).name("Inativo").active(false).build();
         when(laboratoryRepository.findAll()).thenReturn(List.of(ativo, inativo));
 
-        List<LaboratoryResponse> result = service.list(true);
+        List<LaboratoryDTO> result = service.list(true);
 
         assertEquals(2, result.size());
         assertTrue(result.stream().anyMatch(lab -> !lab.active()));
@@ -106,7 +106,7 @@ class LaboratoryServiceTest {
         when(laboratoryRepository.findById(id)).thenReturn(Optional.of(laboratory));
         when(laboratoryRepository.save(any(Laboratory.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        LaboratoryResponse response = service.deactivate(id);
+        LaboratoryDTO response = service.deactivate(id);
 
         assertFalse(response.active());
         verify(laboratoryRepository, never()).delete(any(Laboratory.class));

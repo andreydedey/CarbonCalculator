@@ -3,7 +3,7 @@ package com.example.carboncalculator.dto;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-public record InstitutionResponse(
+public record InstitutionDTO(
         UUID id,
         String name,
         String acronym,
