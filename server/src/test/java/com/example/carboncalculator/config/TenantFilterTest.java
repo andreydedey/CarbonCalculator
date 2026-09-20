@@ -27,8 +27,8 @@ import jakarta.servlet.FilterChain;
 
 class TenantFilterTest {
 
-    private static final String LABORATORIES_PATH = "/api/v1/laboratories";
-    private static final String INSTITUTIONS_PATH = "/api/v1/institutions";
+    private static final String LABORATORIES_PATH = "/laboratories";
+    private static final String INSTITUTIONS_PATH = "/institutions";
 
     private final DataSource dataSource = mock(DataSource.class);
     private final Connection connection = mock(Connection.class);

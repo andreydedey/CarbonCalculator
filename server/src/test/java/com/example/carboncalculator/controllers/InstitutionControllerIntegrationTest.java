@@ -10,7 +10,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -23,8 +23,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.example.carboncalculator.dto.CreateInstitutionRequest;
 import com.example.carboncalculator.dto.CreateLaboratoryRequest;
-import com.example.carboncalculator.dto.InstitutionResponse;
-import com.example.carboncalculator.dto.LaboratoryResponse;
+import com.example.carboncalculator.dto.InstitutionDTO;
+import com.example.carboncalculator.dto.LaboratoryDTO;
 
 /**
  * Testes de integração de instituição (US-001) contra um PostgreSQL real via
@@ -45,10 +45,10 @@ class InstitutionControllerIntegrationTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    private ResponseEntity<InstitutionResponse> createInstitution(String acronym, String state, String labName) {
+    private ResponseEntity<InstitutionDTO> createInstitution(String acronym, String state, String labName) {
         CreateInstitutionRequest request = new CreateInstitutionRequest(
                 "Universidade Federal do Pará", acronym, "Belém", state, new CreateLaboratoryRequest(labName));
-        return restTemplate.postForEntity("/api/v1/institutions", request, InstitutionResponse.class);
+        return restTemplate.postForEntity("/institutions", request, InstitutionDTO.class);
     }
 
     private String uniqueAcronym(String prefix) {
@@ -58,10 +58,10 @@ class InstitutionControllerIntegrationTest {
     // @spec:AC-001 Instituição criada com dados válidos
     @Test
     void deveCriarInstituicaoELaboratorioVinculadoNumaUnicaOperacao() {
-        ResponseEntity<InstitutionResponse> response = createInstitution(uniqueAcronym("UFPA"), "PA", "LABCOMP-01");
+        ResponseEntity<InstitutionDTO> response = createInstitution(uniqueAcronym("UFPA"), "PA", "LABCOMP-01");
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        InstitutionResponse institution = response.getBody();
+        InstitutionDTO institution = response.getBody();
         assertNotNull(institution);
         assertNotNull(institution.id());
         assertTrue(institution.active());
@@ -69,8 +69,8 @@ class InstitutionControllerIntegrationTest {
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Institution-Id", institution.id().toString());
-        ResponseEntity<LaboratoryResponse[]> laboratories = restTemplate.exchange(
-                "/api/v1/laboratories", HttpMethod.GET, new HttpEntity<>(headers), LaboratoryResponse[].class);
+        ResponseEntity<LaboratoryDTO[]> laboratories = restTemplate.exchange(
+                "/laboratories", HttpMethod.GET, new HttpEntity<>(headers), LaboratoryDTO[].class);
 
         assertEquals(HttpStatus.OK, laboratories.getStatusCode());
         assertTrue(Arrays.stream(laboratories.getBody()).anyMatch(lab -> lab.name().equals("LABCOMP-01")));
@@ -82,7 +82,7 @@ class InstitutionControllerIntegrationTest {
         String acronym = uniqueAcronym("UFPA-DUP");
         assertEquals(HttpStatus.CREATED, createInstitution(acronym, "PA", "LABCOMP-01").getStatusCode());
 
-        ResponseEntity<Map> duplicate = restTemplate.postForEntity("/api/v1/institutions",
+        ResponseEntity<Map> duplicate = restTemplate.postForEntity("/institutions",
                 new CreateInstitutionRequest("Outra Instituição", acronym, "Belém", "PA",
                         new CreateLaboratoryRequest("LAB-02")),
                 Map.class);
@@ -93,7 +93,7 @@ class InstitutionControllerIntegrationTest {
     // @spec:AC-003 UF inválida é rejeitada
     @Test
     void deveRecusarCriacaoQuandoUfNaoEstaEntreAs27UnidadesFederativas() {
-        ResponseEntity<Map> response = restTemplate.postForEntity("/api/v1/institutions",
+        ResponseEntity<Map> response = restTemplate.postForEntity("/institutions",
                 new CreateInstitutionRequest("Instituição Teste", uniqueAcronym("IT"), "Cidade", "XX",
                         new CreateLaboratoryRequest("LAB-01")),
                 Map.class);

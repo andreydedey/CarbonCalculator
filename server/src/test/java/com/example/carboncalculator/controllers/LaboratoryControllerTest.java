@@ -29,7 +29,7 @@ import org.springframework.transaction.TransactionStatus;
 import com.example.carboncalculator.config.TenantContext;
 import com.example.carboncalculator.config.TenantFilter;
 import com.example.carboncalculator.dto.CreateLaboratoryRequest;
-import com.example.carboncalculator.dto.LaboratoryResponse;
+import com.example.carboncalculator.dto.LaboratoryDTO;
 import com.example.carboncalculator.services.LaboratoryService;
 
 /**
@@ -63,10 +63,10 @@ class LaboratoryControllerTest {
         when(connection.prepareStatement(anyString())).thenReturn(preparedStatement);
         when(transactionManager.getTransaction(any())).thenReturn(mock(TransactionStatus.class));
 
-        LaboratoryResponse response = new LaboratoryResponse(UUID.randomUUID(), "LABCOMP-02", true, OffsetDateTime.now());
+        LaboratoryDTO response = new LaboratoryDTO(UUID.randomUUID(), "LABCOMP-02", true, OffsetDateTime.now());
         when(laboratoryService.create(any(CreateLaboratoryRequest.class))).thenReturn(response);
 
-        mockMvc.perform(post("/api/v1/laboratories")
+        mockMvc.perform(post("/laboratories")
                         .header(TenantFilter.TENANT_HEADER, "550e8400-e29b-41d4-a716-446655440000")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\": \"LABCOMP-02\"}"))
@@ -78,7 +78,7 @@ class LaboratoryControllerTest {
     // @spec:AC-009 Requisição sem identificação de instituição é recusada
     @Test
     void deveRecusarRequisicaoDeLaboratorioSemHeaderXInstitutionId() throws Exception {
-        mockMvc.perform(get("/api/v1/laboratories"))
+        mockMvc.perform(get("/laboratories"))
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(laboratoryService);

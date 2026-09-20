@@ -8,19 +8,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.carboncalculator.config.TenantContext;
 import com.example.carboncalculator.dto.CreateLaboratoryRequest;
-import com.example.carboncalculator.dto.LaboratoryResponse;
+import com.example.carboncalculator.dto.LaboratoryDTO;
 import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.Laboratory;
 import com.example.carboncalculator.mappers.LaboratoryMapper;
 import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
 
-/**
- * Regras de negócio de laboratório (US-002, US-003, US-005). O isolamento
- * por instituição é garantido pelo RLS (ADR-004) — este service não filtra
- * manualmente por institutionId nas consultas, apenas resolve a instituição
- * ativa (via {@link TenantContext}) ao criar um novo laboratório.
- */
 @Service
 public class LaboratoryService {
 
@@ -33,7 +27,7 @@ public class LaboratoryService {
     }
 
     @Transactional
-    public LaboratoryResponse create(CreateLaboratoryRequest request) {
+    public LaboratoryDTO create(CreateLaboratoryRequest request) {
         validateName(request.name());
 
         Institution institution = institutionRepository.getReferenceById(currentInstitutionId());
@@ -45,7 +39,7 @@ public class LaboratoryService {
         return LaboratoryMapper.toDTO(laboratoryRepository.save(laboratory));
     }
 
-    public List<LaboratoryResponse> list(boolean includeInactive) {
+    public List<LaboratoryDTO> list(boolean includeInactive) {
         List<Laboratory> laboratories = includeInactive
                 ? laboratoryRepository.findAll()
                 : laboratoryRepository.findByActiveTrue();
@@ -54,7 +48,14 @@ public class LaboratoryService {
     }
 
     @Transactional
-    public LaboratoryResponse deactivate(UUID id) {
+    public LaboratoryDTO activate(UUID id) {
+        Laboratory laboratory = getOrThrow(id);
+        laboratory.setActive(true);
+        return LaboratoryMapper.toDTO(laboratoryRepository.save(laboratory));
+    }
+
+    @Transactional
+    public LaboratoryDTO deactivate(UUID id) {
         Laboratory laboratory = getOrThrow(id);
         laboratory.setActive(false);
         return LaboratoryMapper.toDTO(laboratoryRepository.save(laboratory));
@@ -83,32 +84,18 @@ public class LaboratoryService {
         return UUID.fromString(TenantContext.getInstitutionId());
     }
 
-    /**
-     * Sinaliza que o nome do laboratório, campo obrigatório, não foi
-     * informado. O controller (T-007) deve traduzir isto para 400 Bad Request.
-     */
     public static class MissingLaboratoryNameException extends RuntimeException {
         public MissingLaboratoryNameException() {
             super("O nome do laboratório é obrigatório");
         }
     }
 
-    /**
-     * Sinaliza que o laboratório não foi encontrado (ou pertence a outra
-     * instituição, escondido pelo RLS). O controller (T-007) deve traduzir
-     * isto para 404 Not Found.
-     */
     public static class LaboratoryNotFoundException extends RuntimeException {
         public LaboratoryNotFoundException(UUID id) {
             super("Laboratório não encontrado: " + id);
         }
     }
 
-    /**
-     * Sinaliza que o laboratório possui equipamentos ou medições vinculadas
-     * e por isso não pode ser excluído — apenas desativado. O controller
-     * (T-007) deve traduzir isto para 409 Conflict.
-     */
     public static class LaboratoryHasDependentsException extends RuntimeException {
         public LaboratoryHasDependentsException(UUID id) {
             super("Laboratório " + id + " possui registros dependentes; desative-o em vez de excluir");

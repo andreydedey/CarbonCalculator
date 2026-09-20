@@ -3,7 +3,7 @@ CREATE TABLE institution (
     name VARCHAR(255) NOT NULL,
     acronym VARCHAR(20) NOT NULL,
     city VARCHAR(255),
-    state CHAR(2) NOT NULL,
+    state VARCHAR(2) NOT NULL,
     active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()

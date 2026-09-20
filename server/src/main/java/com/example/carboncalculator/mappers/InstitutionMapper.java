@@ -1,7 +1,7 @@
 package com.example.carboncalculator.mappers;
 
 import com.example.carboncalculator.dto.CreateInstitutionRequest;
-import com.example.carboncalculator.dto.InstitutionResponse;
+import com.example.carboncalculator.dto.InstitutionDTO;
 import com.example.carboncalculator.entities.Institution;
 
 public final class InstitutionMapper {
@@ -18,8 +18,8 @@ public final class InstitutionMapper {
                 .build();
     }
 
-    public static InstitutionResponse toDTO(Institution entity) {
-        return new InstitutionResponse(
+    public static InstitutionDTO toDTO(Institution entity) {
+        return new InstitutionDTO(
                 entity.getId(),
                 entity.getName(),
                 entity.getAcronym(),

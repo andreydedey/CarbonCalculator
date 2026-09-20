@@ -1,23 +1,21 @@
 package com.example.carboncalculator.services;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.carboncalculator.dto.CreateInstitutionRequest;
-import com.example.carboncalculator.dto.InstitutionResponse;
+import com.example.carboncalculator.dto.InstitutionDTO;
 import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.Laboratory;
 import com.example.carboncalculator.mappers.InstitutionMapper;
 import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
 
-/**
- * Regras de negócio de instituição (US-001). A criação inclui o primeiro
- * laboratório vinculado numa única transação — ver TDD, seção "Decisões de
- * modelagem".
- */
 @Service
 public class InstitutionService {
 
@@ -34,8 +32,19 @@ public class InstitutionService {
         this.laboratoryRepository = laboratoryRepository;
     }
 
+    public List<InstitutionDTO> list() {
+        return institutionRepository.findAll().stream()
+                .map(InstitutionMapper::toDTO)
+                .toList();
+    }
+
+    public Optional<InstitutionDTO> getById(UUID id) {
+        return institutionRepository.findById(id)
+                .map(InstitutionMapper::toDTO);
+    }
+
     @Transactional
-    public InstitutionResponse create(CreateInstitutionRequest request) {
+    public InstitutionDTO create(CreateInstitutionRequest request) {
         validateState(request.state());
         validateAcronymNotDuplicate(request.acronym());
 
@@ -62,20 +71,12 @@ public class InstitutionService {
         }
     }
 
-    /**
-     * Sinaliza que a sigla informada já está em uso por outra instituição.
-     * O controller (T-007) deve traduzir isto para 409 Conflict.
-     */
     public static class DuplicateAcronymException extends RuntimeException {
         public DuplicateAcronymException(String acronym) {
             super("Já existe uma instituição com a sigla '" + acronym + "'");
         }
     }
 
-    /**
-     * Sinaliza que a UF informada não está entre as 27 unidades federativas.
-     * O controller (T-007) deve traduzir isto para 400 Bad Request.
-     */
     public static class InvalidStateException extends RuntimeException {
         public InvalidStateException(String state) {
             super("UF inválida: '" + state + "'");

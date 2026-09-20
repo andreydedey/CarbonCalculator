@@ -1,11 +1,5 @@
 package com.example.carboncalculator.config;
 
-/**
- * Guarda, em um ThreadLocal, a instituição (tenant) ativa da requisição HTTP
- * corrente. É preenchido pelo {@link TenantFilter} e lido por qualquer
- * componente (service, repository) que precise saber qual instituição está
- * no contexto — sem precisar recebê-la como parâmetro em toda a cadeia.
- */
 public final class TenantContext {
 
     private static final ThreadLocal<String> CURRENT_INSTITUTION_ID = new ThreadLocal<>();

@@ -1,11 +1,5 @@
-/**
- * HTTP client central da aplicação. Injeta o header `X-Institution-Id`
- * (multi-tenancy via RLS, ver ADR-004 e TDD 02) em toda requisição que não
- * seja de instituição, e traduz respostas de erro HTTP em exceções tipadas.
- */
+import axios from 'axios'
 
-const BASE_URL = '/api/v1'
-const INSTITUTION_HEADER = 'X-Institution-Id'
 const INSTITUTION_STORAGE_KEY = 'carbon-calculator:institution-id'
 
 export class ApiError extends Error {
@@ -27,16 +21,12 @@ function hasLocalStorage(): boolean {
 }
 
 export function getActiveInstitutionId(): string | null {
-  if (!hasLocalStorage()) {
-    return null
-  }
+  if (!hasLocalStorage()) return null
   return localStorage.getItem(INSTITUTION_STORAGE_KEY)
 }
 
 export function setActiveInstitutionId(institutionId: string | null): void {
-  if (!hasLocalStorage()) {
-    return
-  }
+  if (!hasLocalStorage()) return
   if (institutionId) {
     localStorage.setItem(INSTITUTION_STORAGE_KEY, institutionId)
   } else {
@@ -44,82 +34,33 @@ export function setActiveInstitutionId(institutionId: string | null): void {
   }
 }
 
-type Query = Record<string, string | boolean | undefined>
-
-export type RequestConfig = {
-  method?: string
-  body?: unknown
-  query?: Query
-  skipInstitutionHeader?: boolean
-}
-
-function buildQueryString(query?: Query): string {
-  if (!query) {
-    return ''
-  }
-  const params = new URLSearchParams()
-  for (const [key, value] of Object.entries(query)) {
-    if (value !== undefined) {
-      params.set(key, String(value))
-    }
-  }
-  const queryString = params.toString()
-  return queryString ? `?${queryString}` : ''
-}
-
-function errorForStatus(status: number, message: string): ApiError {
-  if (status === 400) {
-    return new ValidationError(status, message)
-  }
-  if (status === 404) {
-    return new NotFoundError(status, message)
-  }
-  if (status === 409) {
-    return new ConflictError(status, message)
-  }
+export function errorForStatus(status: number, message: string): ApiError {
+  if (status === 400) return new ValidationError(status, message)
+  if (status === 404) return new NotFoundError(status, message)
+  if (status === 409) return new ConflictError(status, message)
   return new ApiError(status, message)
 }
 
-async function readErrorMessage(response: Response): Promise<string> {
-  try {
-    const data = await response.json()
-    if (data && typeof data === 'object' && typeof data.message === 'string') {
-      return data.message
+export const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api/v1',
+})
+
+api.interceptors.request.use((config) => {
+  const institutionId = getActiveInstitutionId()
+  if (institutionId) {
+    config.headers['X-Institution-Id'] = institutionId
+  }
+  return config
+})
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (axios.isAxiosError(error) && error.response) {
+      const { status, data } = error.response
+      const message = (data as { message?: string })?.message || error.message
+      throw errorForStatus(status, message)
     }
-  } catch {
-    // corpo da resposta não é JSON — segue com a mensagem padrão
-  }
-  return response.statusText || `Erro HTTP ${response.status}`
-}
-
-/**
- * Executa uma requisição contra a API, injetando o header de instituição
- * ativa (AC-009) e convertendo erros HTTP em exceções tipadas (AC-002,
- * AC-003, AC-010).
- */
-export async function apiRequest<T>(path: string, config: RequestConfig = {}): Promise<T> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-
-  if (!config.skipInstitutionHeader) {
-    const institutionId = getActiveInstitutionId()
-    if (institutionId) {
-      headers[INSTITUTION_HEADER] = institutionId
-    }
-  }
-
-  const response = await fetch(`${BASE_URL}${path}${buildQueryString(config.query)}`, {
-    method: config.method ?? 'GET',
-    headers,
-    body: config.body !== undefined ? JSON.stringify(config.body) : undefined,
-  })
-
-  if (!response.ok) {
-    throw errorForStatus(response.status, await readErrorMessage(response))
-  }
-
-  if (response.status === 204) {
-    return undefined as T
-  }
-
-  return (await response.json()) as T
-}
+    throw error
+  },
+)

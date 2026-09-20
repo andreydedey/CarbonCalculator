@@ -17,7 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.example.carboncalculator.dto.CreateInstitutionRequest;
-import com.example.carboncalculator.dto.InstitutionResponse;
+import com.example.carboncalculator.dto.InstitutionDTO;
 import com.example.carboncalculator.services.InstitutionService;
 
 /**
@@ -34,11 +34,11 @@ class InstitutionControllerTest {
     // @spec:AC-001 Instituição criada com dados válidos
     @Test
     void deveCriarInstituicaoComLaboratorioVinculadoNumaUnicaRequisicao() throws Exception {
-        InstitutionResponse response = new InstitutionResponse(
+        InstitutionDTO response = new InstitutionDTO(
                 UUID.randomUUID(), "Universidade Federal do Pará", "UFPA", "Belém", "PA", true, OffsetDateTime.now());
         when(institutionService.create(any(CreateInstitutionRequest.class))).thenReturn(response);
 
-        mockMvc.perform(post("/api/v1/institutions")
+        mockMvc.perform(post("/institutions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
