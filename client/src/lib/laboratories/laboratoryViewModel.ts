@@ -16,6 +16,6 @@ export function toViewModel(laboratory: Laboratory): LaboratoryViewModel {
     id: laboratory.id,
     name: laboratory.name,
     active: laboratory.active,
-    statusLabel: laboratory.active ? 'Ativo' : 'Inativo',
+    statusLabel: laboratory.active ? 'Operando' : 'Inativo',
   }
 }

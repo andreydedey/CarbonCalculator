@@ -3,12 +3,14 @@ import { api } from './client.ts'
 export type Laboratory = {
   id: string
   name: string
+  description?: string
   active: boolean
   createdAt?: string
 }
 
 export type CreateLaboratoryPayload = {
   name: string
+  description?: string
 }
 
 export type ListLaboratoriesOptions = {

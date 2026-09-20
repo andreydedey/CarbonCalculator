@@ -2,10 +2,12 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/archivo";
+@import "@fontsource-variable/jetbrains-mono";
 
 @theme inline {
     --font-heading: var(--font-sans);
     --font-sans: 'Archivo Variable', sans-serif;
+    --font-mono: 'JetBrains Mono Variable', monospace;
     --color-warning: var(--warning);
     --color-success: var(--success);
     --color-sidebar-ring: var(--sidebar-ring);

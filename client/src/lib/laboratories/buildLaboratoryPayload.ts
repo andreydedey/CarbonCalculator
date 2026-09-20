@@ -8,5 +8,8 @@ export function resolveLaboratoryFormMode(laboratory?: Laboratory): LaboratoryFo
 }
 
 export function buildLaboratoryPayload(values: LaboratoryFormValues): CreateLaboratoryPayload {
-  return { name: values.name.trim() }
+  return {
+    name: values.name.trim(),
+    ...(values.description?.trim() ? { description: values.description.trim() } : {}),
+  }
 }

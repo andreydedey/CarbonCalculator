@@ -17,7 +17,7 @@ test('@spec:AC-006 lista mostra apenas laboratórios ativos por padrão — labo
     id: 'lab-1',
     name: 'LABCOMP-01',
     active: true,
-    statusLabel: 'Ativo',
+    statusLabel: 'Operando',
   })
 })
 
