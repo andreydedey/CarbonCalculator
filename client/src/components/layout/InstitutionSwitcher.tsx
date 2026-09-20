@@ -7,10 +7,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useInstitution } from '@/context/InstitutionContext'
-import {
-  type InstitutionOption,
-  isValidInstitutionSelection,
-} from '@/lib/layout/isValidInstitutionSelection'
+
+interface InstitutionOption {
+  id: string
+  name: string
+}
 
 interface InstitutionSwitcherProps {
   options?: readonly InstitutionOption[]
@@ -20,7 +21,7 @@ export const InstitutionSwitcher: React.FC<InstitutionSwitcherProps> = ({ option
   const { institutionId, setInstitutionId } = useInstitution()
 
   function handleChange(value: string) {
-    if (isValidInstitutionSelection(value, options)) {
+    if (options.some((option) => option.id === value)) {
       setInstitutionId(value)
     }
   }
