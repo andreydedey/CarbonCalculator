@@ -19,29 +19,12 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-/**
- * Servlet filter responsável pelo isolamento multi-tenant via Row-Level
- * Security (ADR-004). Lê o header {@code X-Institution-Id}, publica o valor
- * no {@link TenantContext} e o aplica na sessão do PostgreSQL via
- * {@code set_config('app.current_institution', <id>, true)} — o terceiro
- * argumento {@code true} equivale a {@code SET LOCAL}: o valor vale só para a
- * transação aberta por este filter, e é descartado ao final da requisição.
- *
- * <p>A transação é aberta aqui, e não no controller/service, para garantir
- * que a mesma conexão JDBC usada para o {@code set_config} seja reaproveitada
- * pelas queries do restante da requisição (que participam dela via
- * propagação padrão {@code REQUIRED}). Sem isso, o filtro poderia devolver a
- * conexão ao pool antes do controller pegar outra, perdendo o ajuste do RLS.
- *
- * <p>Endpoints de instituição não exigem o header, pois a tabela
- * {@code institution} não tem RLS habilitado.
- */
 @Component
 public class TenantFilter extends OncePerRequestFilter {
 
     public static final String TENANT_HEADER = "X-Institution-Id";
 
-    private static final List<String> EXCLUDED_PATH_PREFIXES = List.of("/api/v1/institutions");
+    private static final List<String> EXCLUDED_PATH_PREFIXES = List.of("/institutions");
 
     private final JdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
@@ -54,7 +37,7 @@ public class TenantFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        if (isExcluded(request.getRequestURI())) {
+        if (isExcluded(stripContextPath(request))) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -101,6 +84,15 @@ public class TenantFilter extends OncePerRequestFilter {
         });
     }
 
+    private String stripContextPath(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        if (contextPath != null && !contextPath.isEmpty() && uri.startsWith(contextPath)) {
+            return uri.substring(contextPath.length());
+        }
+        return uri;
+    }
+
     private boolean isExcluded(String path) {
         return EXCLUDED_PATH_PREFIXES.stream().anyMatch(path::startsWith);
     }
@@ -111,10 +103,6 @@ public class TenantFilter extends OncePerRequestFilter {
         response.getWriter().write("{\"message\":\"Header " + TENANT_HEADER + " é obrigatório\"}");
     }
 
-    /**
-     * Carrega uma exceção verificada (IOException/ServletException) através
-     * de {@link TransactionCallback}, que só permite {@link RuntimeException}.
-     */
     private static final class FilterChainException extends RuntimeException {
         FilterChainException(Exception cause) {
             super(cause);

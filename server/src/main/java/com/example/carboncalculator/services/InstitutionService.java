@@ -1,6 +1,9 @@
 package com.example.carboncalculator.services;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,11 +16,6 @@ import com.example.carboncalculator.mappers.InstitutionMapper;
 import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
 
-/**
- * Regras de negócio de instituição (US-001). A criação inclui o primeiro
- * laboratório vinculado numa única transação — ver TDD, seção "Decisões de
- * modelagem".
- */
 @Service
 public class InstitutionService {
 
@@ -32,6 +30,17 @@ public class InstitutionService {
     public InstitutionService(InstitutionRepository institutionRepository, LaboratoryRepository laboratoryRepository) {
         this.institutionRepository = institutionRepository;
         this.laboratoryRepository = laboratoryRepository;
+    }
+
+    public List<InstitutionResponse> list() {
+        return institutionRepository.findAll().stream()
+                .map(InstitutionMapper::toDTO)
+                .toList();
+    }
+
+    public Optional<InstitutionResponse> getById(UUID id) {
+        return institutionRepository.findById(id)
+                .map(InstitutionMapper::toDTO);
     }
 
     @Transactional
@@ -62,20 +71,12 @@ public class InstitutionService {
         }
     }
 
-    /**
-     * Sinaliza que a sigla informada já está em uso por outra instituição.
-     * O controller (T-007) deve traduzir isto para 409 Conflict.
-     */
     public static class DuplicateAcronymException extends RuntimeException {
         public DuplicateAcronymException(String acronym) {
             super("Já existe uma instituição com a sigla '" + acronym + "'");
         }
     }
 
-    /**
-     * Sinaliza que a UF informada não está entre as 27 unidades federativas.
-     * O controller (T-007) deve traduzir isto para 400 Bad Request.
-     */
     public static class InvalidStateException extends RuntimeException {
         public InvalidStateException(String state) {
             super("UF inválida: '" + state + "'");

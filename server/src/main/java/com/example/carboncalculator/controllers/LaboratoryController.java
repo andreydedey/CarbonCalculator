@@ -21,15 +21,8 @@ import com.example.carboncalculator.dto.CreateLaboratoryRequest;
 import com.example.carboncalculator.dto.LaboratoryResponse;
 import com.example.carboncalculator.services.LaboratoryService;
 
-/**
- * Endpoints REST de laboratório (US-002, US-003, US-005). Toda rota aqui
- * exige o header {@code X-Institution-Id} — a exigência é aplicada pelo
- * {@code TenantFilter} (T-003) antes da requisição chegar a este controller,
- * que por isso recusa com 400 (@spec:AC-009) sem nenhuma lógica adicional
- * aqui.
- */
 @RestController
-@RequestMapping("/api/v1/laboratories")
+@RequestMapping("/laboratories")
 public class LaboratoryController {
 
     private final LaboratoryService laboratoryService;
@@ -38,7 +31,6 @@ public class LaboratoryController {
         this.laboratoryService = laboratoryService;
     }
 
-    // @spec:AC-004 Laboratório criado com nome
     @PostMapping
     public ResponseEntity<LaboratoryResponse> create(@RequestBody CreateLaboratoryRequest request) {
         LaboratoryResponse response = laboratoryService.create(request);

@@ -38,7 +38,7 @@ class InstitutionControllerTest {
                 UUID.randomUUID(), "Universidade Federal do Pará", "UFPA", "Belém", "PA", true, OffsetDateTime.now());
         when(institutionService.create(any(CreateInstitutionRequest.class))).thenReturn(response);
 
-        mockMvc.perform(post("/api/v1/institutions")
+        mockMvc.perform(post("/institutions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {

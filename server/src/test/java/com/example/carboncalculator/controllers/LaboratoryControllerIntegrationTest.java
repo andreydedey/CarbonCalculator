@@ -89,7 +89,7 @@ class LaboratoryControllerIntegrationTest {
                 "Instituição " + acronymPrefix, acronymPrefix + "-" + System.nanoTime(), "Cidade", "PA",
                 new CreateLaboratoryRequest("LABCOMP-01"));
         ResponseEntity<InstitutionResponse> response = restTemplate.postForEntity(
-                "/api/v1/institutions", request, InstitutionResponse.class);
+                "/institutions", request, InstitutionResponse.class);
         InstitutionResponse institution = response.getBody();
         assertNotNull(institution);
         return institution.id();
@@ -102,13 +102,13 @@ class LaboratoryControllerIntegrationTest {
     }
 
     private ResponseEntity<LaboratoryResponse> createLaboratory(UUID institutionId, String name) {
-        return restTemplate.postForEntity("/api/v1/laboratories",
+        return restTemplate.postForEntity("/laboratories",
                 new HttpEntity<>(new CreateLaboratoryRequest(name), headersFor(institutionId)),
                 LaboratoryResponse.class);
     }
 
     private ResponseEntity<LaboratoryResponse[]> listLaboratories(UUID institutionId, Boolean active) {
-        String path = active == null ? "/api/v1/laboratories" : "/api/v1/laboratories?active=" + active;
+        String path = active == null ? "/laboratories" : "/api/v1/laboratories?active=" + active;
         return restTemplate.exchange(path, HttpMethod.GET, new HttpEntity<>(headersFor(institutionId)),
                 LaboratoryResponse[].class);
     }
@@ -133,7 +133,7 @@ class LaboratoryControllerIntegrationTest {
     void deveRecusarCriacaoDeLaboratorioSemNome() {
         UUID institutionId = createInstitutionAndReturnId("UFPA");
 
-        ResponseEntity<Object> response = restTemplate.postForEntity("/api/v1/laboratories",
+        ResponseEntity<Object> response = restTemplate.postForEntity("/laboratories",
                 new HttpEntity<>(new CreateLaboratoryRequest(""), headersFor(institutionId)), Object.class);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -185,7 +185,7 @@ class LaboratoryControllerIntegrationTest {
     // @spec:AC-009 Requisição sem identificação de instituição é recusada
     @Test
     void deveRecusarRequisicaoSemHeaderXInstitutionId() {
-        ResponseEntity<Object> response = restTemplate.getForEntity("/api/v1/laboratories", Object.class);
+        ResponseEntity<Object> response = restTemplate.getForEntity("/laboratories", Object.class);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
