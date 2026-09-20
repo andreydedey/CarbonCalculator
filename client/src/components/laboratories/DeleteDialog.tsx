@@ -11,7 +11,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { FieldError } from '@/components/ui/field-error'
 import { ApiError } from '@/lib/api/client'
 import { deleteLaboratory, type Laboratory } from '@/lib/api/laboratories'
 
@@ -35,13 +34,12 @@ export const DeleteDialog: React.FC<DeleteDialogProps> = ({
       onDeleted?.()
       toast.success('Laboratório excluído.')
     },
+    onError: (error) => {
+      toast.error(
+        error instanceof ApiError ? error.message : 'Não foi possível excluir o laboratório.',
+      )
+    },
   })
-
-  const errorMessage = mutation.error
-    ? mutation.error instanceof ApiError
-      ? mutation.error.message
-      : 'Não foi possível excluir o laboratório.'
-    : undefined
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -53,7 +51,6 @@ export const DeleteDialog: React.FC<DeleteDialogProps> = ({
             associados serão removidos permanentemente.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <FieldError message={errorMessage} />
         <AlertDialogFooter>
           <AlertDialogCancel disabled={mutation.isPending}>Cancelar</AlertDialogCancel>
           <AlertDialogAction

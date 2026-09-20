@@ -11,10 +11,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { FieldError } from '@/components/ui/field-error'
 import { ApiError } from '@/lib/api/client'
 import { deactivateLaboratory, type Laboratory } from '@/lib/api/laboratories'
-import { buildDeactivateConfirmationMessage } from '@/lib/laboratories/buildDeactivateMessage'
 
 interface DeactivateDialogProps {
   laboratory: Laboratory
@@ -36,13 +34,12 @@ export const DeactivateDialog: React.FC<DeactivateDialogProps> = ({
       onOpenChange(false)
       toast.success('Laboratório desativado.')
     },
+    onError: (error) => {
+      toast.error(
+        error instanceof ApiError ? error.message : 'Não foi possível desativar o laboratório.',
+      )
+    },
   })
-
-  const errorMessage = mutation.error
-    ? mutation.error instanceof ApiError
-      ? mutation.error.message
-      : 'Não foi possível desativar o laboratório.'
-    : undefined
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -50,10 +47,11 @@ export const DeactivateDialog: React.FC<DeactivateDialogProps> = ({
         <AlertDialogHeader>
           <AlertDialogTitle>Desativar laboratório</AlertDialogTitle>
           <AlertDialogDescription>
-            {buildDeactivateConfirmationMessage(laboratory.name)}
+            Desativar &ldquo;{laboratory.name}&rdquo;? O laboratório e seu histórico serão
+            preservados; ele deixará de aparecer na lista padrão, mas continuará disponível ao
+            incluir inativos.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <FieldError message={errorMessage} />
         <AlertDialogFooter>
           <AlertDialogCancel disabled={mutation.isPending}>Cancelar</AlertDialogCancel>
           <AlertDialogAction

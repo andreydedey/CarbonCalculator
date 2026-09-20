@@ -19,10 +19,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { ApiError } from '@/lib/api/client'
 import type { CreateLaboratoryPayload } from '@/lib/api/laboratories'
 import { createLaboratory, type Laboratory, updateLaboratory } from '@/lib/api/laboratories'
-import {
-  buildLaboratoryPayload,
-  resolveLaboratoryFormMode,
-} from '@/lib/laboratories/buildLaboratoryPayload'
 import { type LaboratoryFormValues, laboratoryFormSchema } from '@/lib/schemas/laboratorySchema'
 
 interface LaboratoryFormProps {
@@ -38,7 +34,7 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
   onOpenChange,
   onSaved,
 }) => {
-  const mode = resolveLaboratoryFormMode(laboratory)
+  const mode = laboratory ? 'edit' : 'create'
   const {
     register,
     handleSubmit,
@@ -60,10 +56,19 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
       onSaved?.(saved)
       toast.success(mode === 'edit' ? 'Laboratório atualizado.' : 'Laboratório criado.')
     },
+    onError: (error) => {
+      toast.error(
+        error instanceof ApiError ? error.message : 'Não foi possível salvar o laboratório.',
+      )
+    },
   })
 
   function onSubmit(values: LaboratoryFormValues) {
-    mutation.mutate(buildLaboratoryPayload(values))
+    const payload: CreateLaboratoryPayload = {
+      name: values.name.trim(),
+      ...(values.description?.trim() ? { description: values.description.trim() } : {}),
+    }
+    mutation.mutate(payload)
   }
 
   function handleOpenChange(nextOpen: boolean) {
@@ -73,12 +78,6 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
     }
     onOpenChange(nextOpen)
   }
-
-  const submitError = mutation.error
-    ? mutation.error instanceof ApiError
-      ? mutation.error.message
-      : 'Não foi possível salvar o laboratório.'
-    : undefined
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -136,8 +135,6 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
                 </div>
               </div>
             </div>
-
-            <FieldError message={submitError} />
           </div>
 
           <DialogFooter>
