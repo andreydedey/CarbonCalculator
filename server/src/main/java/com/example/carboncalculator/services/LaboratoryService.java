@@ -48,6 +48,13 @@ public class LaboratoryService {
     }
 
     @Transactional
+    public LaboratoryResponse activate(UUID id) {
+        Laboratory laboratory = getOrThrow(id);
+        laboratory.setActive(true);
+        return LaboratoryMapper.toDTO(laboratoryRepository.save(laboratory));
+    }
+
+    @Transactional
     public LaboratoryResponse deactivate(UUID id) {
         Laboratory laboratory = getOrThrow(id);
         laboratory.setActive(false);

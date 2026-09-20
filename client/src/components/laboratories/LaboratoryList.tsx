@@ -1,7 +1,8 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { Clock3, Cpu, EllipsisVertical, HardDrive, Leaf, Monitor, Plus } from 'lucide-react'
 import type React from 'react'
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { DeactivateDialog } from '@/components/laboratories/DeactivateDialog'
 import { DeleteDialog } from '@/components/laboratories/DeleteDialog'
 import { LaboratoryForm } from '@/components/laboratories/LaboratoryForm'
@@ -15,7 +16,7 @@ import {
 import { Progress } from '@/components/ui/progress'
 import { useInstitution } from '@/context/InstitutionContext'
 import { getInstitution } from '@/lib/api/institutions'
-import { listLaboratories, type Laboratory } from '@/lib/api/laboratories'
+import { activateLaboratory, listLaboratories, type Laboratory } from '@/lib/api/laboratories'
 import { buildListQuery, type LaboratoryViewModel, toViewModel } from '@/lib/laboratories/laboratoryViewModel'
 
 interface SummaryCardProps {
@@ -58,26 +59,33 @@ const StatusBadge: React.FC<{ active: boolean; label: string }> = ({ active, lab
 
 interface LabCardProps {
   laboratory: LaboratoryViewModel
+  onActivate: (lab: Laboratory) => void
   onDeactivate: (lab: Laboratory) => void
   onDelete: (lab: Laboratory) => void
 }
 
-const LabCard: React.FC<LabCardProps> = ({ laboratory, onDeactivate, onDelete }) => (
-  <div className="rounded-[10px] border border-border bg-card">
-    {/* Top */}
-    <div className="flex items-center justify-between px-6 py-5">
-      <div className="flex items-center gap-4">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent">
-          <Cpu className="size-5 text-primary" />
+const LabCard: React.FC<LabCardProps> = ({ laboratory, onActivate, onDeactivate, onDelete }) => {
+  const labData: Laboratory = {
+    id: laboratory.id,
+    name: laboratory.name,
+    active: laboratory.active,
+  }
+
+  return (
+    <div className="rounded-[10px] border border-border bg-card">
+      {/* Top */}
+      <div className="flex items-center justify-between px-6 py-5">
+        <div className="flex items-center gap-4">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent">
+            <Cpu className="size-5 text-primary" />
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-base font-semibold">{laboratory.name}</span>
+            <span className="text-[13px] text-muted-foreground">-</span>
+          </div>
         </div>
-        <div className="flex flex-col gap-0.5">
-          <span className="text-base font-semibold">{laboratory.name}</span>
-          <span className="text-[13px] text-muted-foreground">-</span>
-        </div>
-      </div>
-      <div className="flex items-center gap-2.5">
-        <StatusBadge active={laboratory.active} label={laboratory.statusLabel} />
-        {laboratory.active && (
+        <div className="flex items-center gap-2.5">
+          <StatusBadge active={laboratory.active} label={laboratory.statusLabel} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon" className="size-8">
@@ -85,34 +93,25 @@ const LabCard: React.FC<LabCardProps> = ({ laboratory, onDeactivate, onDelete })
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() =>
-                  onDeactivate({
-                    id: laboratory.id,
-                    name: laboratory.name,
-                    active: laboratory.active,
-                  })
-                }
-              >
-                Desativar
-              </DropdownMenuItem>
+              {laboratory.active ? (
+                <DropdownMenuItem onClick={() => onDeactivate(labData)}>
+                  Desativar
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={() => onActivate(labData)}>
+                  Ativar
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 className="text-destructive"
-                onClick={() =>
-                  onDelete({
-                    id: laboratory.id,
-                    name: laboratory.name,
-                    active: laboratory.active,
-                  })
-                }
+                onClick={() => onDelete(labData)}
               >
                 Excluir
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        )}
+        </div>
       </div>
-    </div>
 
     {/* Divider */}
     <div className="h-px w-full bg-border" />
@@ -157,7 +156,8 @@ const LabCard: React.FC<LabCardProps> = ({ laboratory, onDeactivate, onDelete })
       </div>
     </div>
   </div>
-)
+  )
+}
 
 export const LaboratoryList: React.FC = () => {
   const { institutionId } = useInstitution()
@@ -176,6 +176,14 @@ export const LaboratoryList: React.FC = () => {
     queryKey: ['laboratories', showInactive],
     queryFn: () => listLaboratories(buildListQuery(showInactive)),
     select: (data) => data.map(toViewModel),
+  })
+
+  const activateMutation = useMutation({
+    mutationFn: (lab: Laboratory) => activateLaboratory(lab.id),
+    onSuccess: () => {
+      refetch()
+      toast.success('Laboratório ativado.')
+    },
   })
 
   function handleSaved() {
@@ -253,6 +261,7 @@ export const LaboratoryList: React.FC = () => {
             <LabCard
               key={laboratory.id}
               laboratory={laboratory}
+              onActivate={(lab) => activateMutation.mutate(lab)}
               onDeactivate={setDeactivateTarget}
               onDelete={setDeleteTarget}
             />

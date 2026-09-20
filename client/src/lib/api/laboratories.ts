@@ -40,6 +40,10 @@ export function updateLaboratory(
   return api.put(`/laboratories/${id}`, payload).then((r) => r.data)
 }
 
+export function activateLaboratory(id: string): Promise<Laboratory> {
+  return api.patch(`/laboratories/${id}/activate`).then((r) => r.data)
+}
+
 export function deactivateLaboratory(id: string): Promise<Laboratory> {
   return api.patch(`/laboratories/${id}/deactivate`).then((r) => r.data)
 }

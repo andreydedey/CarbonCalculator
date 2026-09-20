@@ -44,6 +44,11 @@ public class LaboratoryController {
         return ResponseEntity.ok(laboratoryService.list(includeInactive));
     }
 
+    @PatchMapping("/{id}/activate")
+    public ResponseEntity<LaboratoryResponse> activate(@PathVariable UUID id) {
+        return ResponseEntity.ok(laboratoryService.activate(id));
+    }
+
     @PatchMapping("/{id}/deactivate")
     public ResponseEntity<LaboratoryResponse> deactivate(@PathVariable UUID id) {
         return ResponseEntity.ok(laboratoryService.deactivate(id));
