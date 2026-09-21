@@ -40,10 +40,10 @@ public class LaboratoryController {
     @GetMapping
     @PreAuthorize("hasRole('RESEARCHER')")
     public PageResponse<LaboratoryDTO> list(
-            @RequestParam(name = "active", required = false, defaultValue = "true") boolean active,
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) String name,
             Pageable pageable) {
-        boolean includeInactive = !active;
-        return PageResponse.from(laboratoryService.list(includeInactive, pageable));
+        return PageResponse.from(laboratoryService.list(active, name, pageable));
     }
 
     @PatchMapping("/{id}/activate")

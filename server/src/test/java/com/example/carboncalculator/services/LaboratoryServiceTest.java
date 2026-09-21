@@ -90,7 +90,7 @@ class LaboratoryServiceTest {
         when(laboratoryRepository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(ativo)));
 
-        Page<LaboratoryDTO> result = service.list(false, PageRequest.of(0, 10));
+        Page<LaboratoryDTO> result = service.list(true, null, PageRequest.of(0, 10));
 
         assertEquals(1, result.getTotalElements());
         assertTrue(result.getContent().get(0).active());
@@ -106,7 +106,7 @@ class LaboratoryServiceTest {
         when(laboratoryRepository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(ativo, inativo)));
 
-        Page<LaboratoryDTO> result = service.list(true, PageRequest.of(0, 10));
+        Page<LaboratoryDTO> result = service.list(null, null, PageRequest.of(0, 10));
 
         assertEquals(2, result.getTotalElements());
         assertTrue(result.getContent().stream().anyMatch(lab -> !lab.active()));

@@ -43,12 +43,14 @@ public class LaboratoryService {
         return LaboratoryMapper.toDTO(laboratoryRepository.save(laboratory));
     }
 
-    public Page<LaboratoryDTO> list(boolean includeInactive, Pageable pageable) {
+    public Page<LaboratoryDTO> list(Boolean active, String name, Pageable pageable) {
         Specification<Laboratory> spec = Specification.unrestricted();
-        if (!includeInactive) {
-            spec = spec.and(LaboratorySpecification.isActive());
+        if (active != null) {
+            spec = spec.and(LaboratorySpecification.hasActive(active));
         }
-
+        if (name != null && !name.isBlank()) {
+            spec = spec.and(LaboratorySpecification.nameContains(name));
+        }
         return laboratoryRepository.findAll(spec, pageable).map(LaboratoryMapper::toDTO);
     }
 
