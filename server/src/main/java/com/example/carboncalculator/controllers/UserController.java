@@ -1,6 +1,5 @@
 package com.example.carboncalculator.controllers;
 
-import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
@@ -9,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,11 +21,6 @@ import com.example.carboncalculator.dto.InviteRequest;
 import com.example.carboncalculator.dto.PageResponse;
 import com.example.carboncalculator.dto.UserMemberDTO;
 import com.example.carboncalculator.entities.AppUser;
-import com.example.carboncalculator.exceptions.CannotModifySelfException;
-import com.example.carboncalculator.exceptions.DuplicateInviteException;
-import com.example.carboncalculator.exceptions.InvalidRoleException;
-import com.example.carboncalculator.exceptions.LastManagerException;
-import com.example.carboncalculator.exceptions.MemberNotFoundException;
 import com.example.carboncalculator.services.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -69,28 +62,4 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    @ExceptionHandler(DuplicateInviteException.class)
-    public ResponseEntity<Map<String, String>> handleDuplicateInvite(DuplicateInviteException e) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage()));
-    }
-
-    @ExceptionHandler(MemberNotFoundException.class)
-    public ResponseEntity<Map<String, String>> handleMemberNotFound(MemberNotFoundException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
-    }
-
-    @ExceptionHandler(CannotModifySelfException.class)
-    public ResponseEntity<Map<String, String>> handleCannotModifySelf(CannotModifySelfException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
-    }
-
-    @ExceptionHandler(LastManagerException.class)
-    public ResponseEntity<Map<String, String>> handleLastManager(LastManagerException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
-    }
-
-    @ExceptionHandler(InvalidRoleException.class)
-    public ResponseEntity<Map<String, String>> handleInvalidRole(InvalidRoleException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
-    }
 }

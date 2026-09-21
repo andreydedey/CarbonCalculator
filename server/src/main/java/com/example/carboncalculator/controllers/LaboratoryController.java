@@ -1,14 +1,12 @@
 package com.example.carboncalculator.controllers;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,9 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.carboncalculator.dto.CreateLaboratoryRequest;
 import com.example.carboncalculator.dto.LaboratoryDTO;
-import com.example.carboncalculator.exceptions.LaboratoryHasDependentsException;
-import com.example.carboncalculator.exceptions.LaboratoryNotFoundException;
-import com.example.carboncalculator.exceptions.MissingLaboratoryNameException;
 import com.example.carboncalculator.services.LaboratoryService;
 
 import lombok.RequiredArgsConstructor;
@@ -68,18 +63,4 @@ public class LaboratoryController {
         return ResponseEntity.noContent().build();
     }
 
-    @ExceptionHandler(MissingLaboratoryNameException.class)
-    public ResponseEntity<Map<String, String>> handleMissingName(MissingLaboratoryNameException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", ex.getMessage()));
-    }
-
-    @ExceptionHandler(LaboratoryNotFoundException.class)
-    public ResponseEntity<Map<String, String>> handleNotFound(LaboratoryNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", ex.getMessage()));
-    }
-
-    @ExceptionHandler(LaboratoryHasDependentsException.class)
-    public ResponseEntity<Map<String, String>> handleHasDependents(LaboratoryHasDependentsException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", ex.getMessage()));
-    }
 }
