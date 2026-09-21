@@ -11,17 +11,25 @@ import static org.mockito.Mockito.when;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.sql.DataSource;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
+
+import com.example.carboncalculator.entities.AppUser;
+import com.example.carboncalculator.repositories.UserInstitutionRepository;
 
 import jakarta.servlet.FilterChain;
 
@@ -36,11 +44,22 @@ class TenantFilterTest {
     private final PlatformTransactionManager transactionManager = mock(PlatformTransactionManager.class);
     private final TransactionStatus transactionStatus = mock(TransactionStatus.class);
 
-    private final TenantFilter filter = new TenantFilter(dataSource, transactionManager);
+    private final UserInstitutionRepository membershipRepository = mock(UserInstitutionRepository.class);
+
+    private final TenantFilter filter = new TenantFilter(dataSource, transactionManager, membershipRepository);
+
+    // Admin users bypass the membership check, keeping these tests focused on tenant propagation.
+    @BeforeEach
+    void authenticateAsAdmin() {
+        AppUser admin = AppUser.builder().id(UUID.randomUUID()).email("admin@test.com").admin(true).build();
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(admin, null, List.of()));
+    }
 
     @AfterEach
     void clearLeakedContext() {
         TenantContext.clear();
+        SecurityContextHolder.clearContext();
     }
 
     private void stubJdbcInfrastructure() throws Exception {

@@ -17,6 +17,12 @@ import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import com.example.carboncalculator.config.TenantContext;
 import com.example.carboncalculator.dto.CreateLaboratoryRequest;
@@ -27,6 +33,10 @@ import com.example.carboncalculator.exceptions.LaboratoryHasDependentsException;
 import com.example.carboncalculator.exceptions.MissingLaboratoryNameException;
 import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
+
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 
 class LaboratoryServiceTest {
 
@@ -77,13 +87,15 @@ class LaboratoryServiceTest {
     @Test
     void deveListarApenasLaboratoriosAtivosPorPadrao() {
         Laboratory ativo = Laboratory.builder().id(UUID.randomUUID()).name("Ativo").active(true).build();
-        when(laboratoryRepository.findByActiveTrue()).thenReturn(List.of(ativo));
+        when(laboratoryRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(ativo)));
 
-        List<LaboratoryDTO> result = service.list(false);
+        Page<LaboratoryDTO> result = service.list(false, PageRequest.of(0, 10));
 
-        assertEquals(1, result.size());
-        assertTrue(result.get(0).active());
-        verify(laboratoryRepository, never()).findAll();
+        assertEquals(1, result.getTotalElements());
+        assertTrue(result.getContent().get(0).active());
+        CriteriaBuilder cb = applyCapturedSpecification();
+        verify(cb).isTrue(any());
     }
 
     // @spec:AC-007 Laboratórios inativos podem ser incluídos na listagem
@@ -91,13 +103,29 @@ class LaboratoryServiceTest {
     void deveIncluirLaboratoriosInativosQuandoSolicitado() {
         Laboratory ativo = Laboratory.builder().id(UUID.randomUUID()).name("Ativo").active(true).build();
         Laboratory inativo = Laboratory.builder().id(UUID.randomUUID()).name("Inativo").active(false).build();
-        when(laboratoryRepository.findAll()).thenReturn(List.of(ativo, inativo));
+        when(laboratoryRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(ativo, inativo)));
 
-        List<LaboratoryDTO> result = service.list(true);
+        Page<LaboratoryDTO> result = service.list(true, PageRequest.of(0, 10));
 
-        assertEquals(2, result.size());
-        assertTrue(result.stream().anyMatch(lab -> !lab.active()));
-        verify(laboratoryRepository, never()).findByActiveTrue();
+        assertEquals(2, result.getTotalElements());
+        assertTrue(result.getContent().stream().anyMatch(lab -> !lab.active()));
+        CriteriaBuilder cb = applyCapturedSpecification();
+        verify(cb, never()).isTrue(any());
+    }
+
+    // Evaluates the Specification passed to the repository against mocks,
+    // so tests can assert whether the "active" filter was applied.
+    @SuppressWarnings("unchecked")
+    private CriteriaBuilder applyCapturedSpecification() {
+        ArgumentCaptor<Specification<Laboratory>> captor = ArgumentCaptor.forClass(Specification.class);
+        verify(laboratoryRepository).findAll(captor.capture(), any(Pageable.class));
+
+        Root<Laboratory> root = mock(Root.class);
+        CriteriaQuery<?> query = mock(CriteriaQuery.class);
+        CriteriaBuilder cb = mock(CriteriaBuilder.class);
+        captor.getValue().toPredicate(root, query, cb);
+        return cb;
     }
 
     // @spec:AC-011 Desativação preserva o laboratório

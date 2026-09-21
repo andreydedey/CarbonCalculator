@@ -44,9 +44,10 @@ public class LaboratoryService {
     }
 
     public Page<LaboratoryDTO> list(boolean includeInactive, Pageable pageable) {
-        Specification<Laboratory> spec = includeInactive
-                ? Specification.where((Specification<Laboratory>) null)
-                : LaboratorySpecification.isActive();
+        Specification<Laboratory> spec = Specification.unrestricted();
+        if (!includeInactive) {
+            spec = spec.and(LaboratorySpecification.isActive());
+        }
 
         return laboratoryRepository.findAll(spec, pageable).map(LaboratoryMapper::toDTO);
     }

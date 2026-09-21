@@ -14,13 +14,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import javax.sql.DataSource;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -30,6 +34,8 @@ import com.example.carboncalculator.config.TenantContext;
 import com.example.carboncalculator.config.TenantFilter;
 import com.example.carboncalculator.dto.CreateLaboratoryRequest;
 import com.example.carboncalculator.dto.LaboratoryDTO;
+import com.example.carboncalculator.entities.AppUser;
+import com.example.carboncalculator.repositories.UserInstitutionRepository;
 import com.example.carboncalculator.services.LaboratoryService;
 
 /**
@@ -43,15 +49,25 @@ class LaboratoryControllerTest {
     private final LaboratoryService laboratoryService = mock(LaboratoryService.class);
     private final DataSource dataSource = mock(DataSource.class);
     private final PlatformTransactionManager transactionManager = mock(PlatformTransactionManager.class);
-    private final TenantFilter tenantFilter = new TenantFilter(dataSource, transactionManager);
+    private final UserInstitutionRepository membershipRepository = mock(UserInstitutionRepository.class);
+    private final TenantFilter tenantFilter = new TenantFilter(dataSource, transactionManager, membershipRepository);
 
     private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new LaboratoryController(laboratoryService))
             .addFilters(tenantFilter)
             .build();
 
+    // Admin users bypass the membership check in TenantFilter.
+    @BeforeEach
+    void authenticateAsAdmin() {
+        AppUser admin = AppUser.builder().id(UUID.randomUUID()).email("admin@test.com").admin(true).build();
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(admin, null, List.of()));
+    }
+
     @AfterEach
     void clearLeakedContext() {
         TenantContext.clear();
+        SecurityContextHolder.clearContext();
     }
 
     // @spec:AC-004 Laboratório criado com nome

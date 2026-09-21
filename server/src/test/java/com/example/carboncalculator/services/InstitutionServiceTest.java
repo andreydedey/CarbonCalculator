@@ -22,19 +22,17 @@ import com.example.carboncalculator.exceptions.DuplicateAcronymException;
 import com.example.carboncalculator.exceptions.InvalidStateException;
 import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
-import com.example.carboncalculator.repositories.UserInstitutionRepository;
 
 class InstitutionServiceTest {
 
     private final InstitutionRepository institutionRepository = mock(InstitutionRepository.class);
     private final LaboratoryRepository laboratoryRepository = mock(LaboratoryRepository.class);
-    private final UserInstitutionRepository membershipRepository = mock(UserInstitutionRepository.class);
 
     private InstitutionService service;
 
     @BeforeEach
     void setUp() {
-        service = new InstitutionService(institutionRepository, laboratoryRepository, membershipRepository);
+        service = new InstitutionService(institutionRepository, laboratoryRepository);
     }
 
     private CreateInstitutionRequest validRequest() {

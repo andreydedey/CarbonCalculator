@@ -10,5 +10,4 @@ public final class LaboratorySpecification {
 
     public static Specification<Laboratory> isActive() {
         return (root, query, cb) -> cb.isTrue(root.get("active"));
-    }
-}
+    }}

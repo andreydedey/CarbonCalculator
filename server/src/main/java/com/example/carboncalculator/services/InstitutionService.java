@@ -1,12 +1,12 @@
 package com.example.carboncalculator.services;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,13 +15,11 @@ import com.example.carboncalculator.dto.InstitutionDTO;
 import com.example.carboncalculator.entities.AppUser;
 import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.Laboratory;
-import com.example.carboncalculator.entities.MembershipStatus;
 import com.example.carboncalculator.exceptions.DuplicateAcronymException;
 import com.example.carboncalculator.exceptions.InvalidStateException;
 import com.example.carboncalculator.mappers.InstitutionMapper;
 import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
-import com.example.carboncalculator.repositories.UserInstitutionRepository;
 import com.example.carboncalculator.specifications.InstitutionSpecification;
 
 import lombok.RequiredArgsConstructor;
@@ -37,21 +35,14 @@ public class InstitutionService {
 
     private final InstitutionRepository institutionRepository;
     private final LaboratoryRepository laboratoryRepository;
-    private final UserInstitutionRepository membershipRepository;
 
     public Page<InstitutionDTO> listForUser(AppUser user, Pageable pageable) {
-        if (user.isAdmin()) {
-            return institutionRepository.findAll(pageable)
-                    .map(InstitutionMapper::toDTO);
+        Specification<Institution> spec = Specification.unrestricted();
+        if (!user.isAdmin()) {
+            spec = spec.and(InstitutionSpecification.hasActiveMember(user.getId()));
         }
 
-        List<UUID> ids = membershipRepository.findByUserId(user.getId()).stream()
-                .filter(m -> m.getStatus() == MembershipStatus.ACTIVE)
-                .map(m -> m.getInstitution().getId())
-                .toList();
-
-        return institutionRepository.findAll(InstitutionSpecification.hasIdIn(ids), pageable)
-                .map(InstitutionMapper::toDTO);
+        return institutionRepository.findAll(spec, pageable).map(InstitutionMapper::toDTO);
     }
 
     public Optional<InstitutionDTO> getById(UUID id) {
