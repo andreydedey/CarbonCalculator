@@ -3,6 +3,7 @@ import type React from 'react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
+import { AuthBrandPanel } from '@/components/auth/AuthBrandPanel'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -40,15 +41,7 @@ export const RegisterPage: React.FC = () => {
 
   return (
     <div className="flex min-h-svh">
-      <div className="bg-primary hidden flex-col justify-between p-10 text-white lg:flex lg:w-1/2">
-        <div>
-          <h1 className="font-heading text-3xl font-bold">EcoScope</h1>
-          <p className="mt-2 text-primary-foreground/80">Carbon Calculator</p>
-        </div>
-        <p className="text-primary-foreground/60 text-sm">
-          Plataforma de gestão de emissões de carbono para instituições de ensino.
-        </p>
-      </div>
+      <AuthBrandPanel />
 
       <div className="flex w-full flex-col items-center justify-center px-6 lg:w-1/2">
         <div className="w-full max-w-sm space-y-6">
