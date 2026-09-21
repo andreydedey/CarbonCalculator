@@ -1,8 +1,10 @@
 package com.example.carboncalculator.services;
 
-import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +19,7 @@ import com.example.carboncalculator.exceptions.MissingLaboratoryNameException;
 import com.example.carboncalculator.mappers.LaboratoryMapper;
 import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
+import com.example.carboncalculator.specifications.LaboratorySpecification;
 
 import lombok.RequiredArgsConstructor;
 
@@ -40,12 +43,12 @@ public class LaboratoryService {
         return LaboratoryMapper.toDTO(laboratoryRepository.save(laboratory));
     }
 
-    public List<LaboratoryDTO> list(boolean includeInactive) {
-        List<Laboratory> laboratories = includeInactive
-                ? laboratoryRepository.findAll()
-                : laboratoryRepository.findByActiveTrue();
+    public Page<LaboratoryDTO> list(boolean includeInactive, Pageable pageable) {
+        Specification<Laboratory> spec = includeInactive
+                ? Specification.where((Specification<Laboratory>) null)
+                : LaboratorySpecification.isActive();
 
-        return laboratories.stream().map(LaboratoryMapper::toDTO).toList();
+        return laboratoryRepository.findAll(spec, pageable).map(LaboratoryMapper::toDTO);
     }
 
     @Transactional

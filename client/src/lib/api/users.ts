@@ -1,4 +1,5 @@
 import { api } from './client'
+import type { PageResponse } from './types'
 
 export type UserMember = {
   id: string
@@ -17,7 +18,7 @@ export type ChangeRolePayload = {
   role: string
 }
 
-export function listMembers(): Promise<UserMember[]> {
+export function listMembers(): Promise<PageResponse<UserMember>> {
   return api.get('/users').then((r) => r.data)
 }
 

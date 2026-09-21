@@ -51,12 +51,13 @@ export const UsersPage: React.FC = () => {
   const [inviteOpen, setInviteOpen] = useState(false)
 
   const {
-    data: members = [],
+    data: membersPage,
     refetch,
   } = useQuery({
     queryKey: ['users'],
     queryFn: listMembers,
   })
+  const members = membersPage?.content ?? []
 
   const inviteForm = useForm<InviteFormData>({
     resolver: zodResolver(inviteSchema),

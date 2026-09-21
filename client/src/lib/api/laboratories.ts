@@ -1,4 +1,5 @@
 import { api } from './client.ts'
+import type { PageResponse } from './types'
 
 export type Laboratory = {
   id: string
@@ -17,7 +18,7 @@ export type ListLaboratoriesOptions = {
   includeInactive?: boolean
 }
 
-export function listLaboratories(options: ListLaboratoriesOptions = {}): Promise<Laboratory[]> {
+export function listLaboratories(options: ListLaboratoriesOptions = {}): Promise<PageResponse<Laboratory>> {
   return api
     .get('/laboratories', {
       params: options.includeInactive ? { active: false } : undefined,

@@ -93,10 +93,11 @@ const AppSidebar: React.FC = () => {
 
 export const AppLayout: React.FC = () => {
   const { user, logout } = useAuth()
-  const { data: institutions = [] } = useQuery({
+  const { data: institutionsPage } = useQuery({
     queryKey: ['institutions'],
     queryFn: listInstitutions,
   })
+  const institutions = institutionsPage?.content ?? []
 
   return (
     <TooltipProvider>

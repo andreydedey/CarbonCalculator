@@ -30,13 +30,15 @@ export const LaboratoryList: React.FC = () => {
   })
 
   const {
-    data: laboratories = [],
+    data: laboratoriesPage,
     isLoading,
     refetch,
   } = useQuery({
     queryKey: ['laboratories', showInactive],
     queryFn: () => listLaboratories(showInactive ? { includeInactive: true } : {}),
   })
+
+  const laboratories = laboratoriesPage?.content ?? []
 
   const activateMutation = useMutation({
     mutationFn: (lab: Laboratory) => activateLaboratory(lab.id),

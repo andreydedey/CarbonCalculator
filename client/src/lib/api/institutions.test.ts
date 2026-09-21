@@ -39,13 +39,13 @@ describe('institutions api', () => {
 
   test('listInstitutions faz GET em /institutions', async () => {
     const mockGet = mock.method(api, 'get', async () => ({
-      data: [],
+      data: { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 },
     }))
 
     const result = await listInstitutions()
 
     assert.equal(mockGet.mock.callCount(), 1)
     assert.equal(mockGet.mock.calls[0].arguments[0], '/institutions')
-    assert.deepEqual(result, [])
+    assert.deepEqual(result.content, [])
   })
 })
