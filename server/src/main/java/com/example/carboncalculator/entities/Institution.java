@@ -46,6 +46,10 @@ public class Institution {
     @Column(nullable = false)
     private boolean active = true;
 
+    @Builder.Default
+    @Column(name = "public_results", nullable = false)
+    private boolean publicResults = false;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 

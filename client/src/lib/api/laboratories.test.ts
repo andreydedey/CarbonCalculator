@@ -16,20 +16,21 @@ describe('laboratories api', () => {
   // @spec:AC-006 Lista mostra apenas laboratórios ativos por padrão
   test('listLaboratories não envia params por padrão', async () => {
     const mockGet = mock.method(api, 'get', async () => ({
-      data: [],
+      data: { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 },
     }))
 
-    await listLaboratories()
+    const result = await listLaboratories()
 
     assert.equal(mockGet.mock.callCount(), 1)
     assert.equal(mockGet.mock.calls[0].arguments[0], '/laboratories')
     assert.equal(mockGet.mock.calls[0].arguments[1]?.params, undefined)
+    assert.deepEqual(result.content, [])
   })
 
   // @spec:AC-007 Laboratórios inativos podem ser incluídos na listagem
   test('listLaboratories envia params { active: false } quando includeInactive é true', async () => {
     const mockGet = mock.method(api, 'get', async () => ({
-      data: [],
+      data: { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 },
     }))
 
     await listLaboratories({ includeInactive: true })

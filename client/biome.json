@@ -1,12 +1,13 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
     "useIgnoreFile": true
   },
   "files": {
-    "ignoreUnknown": false
+    "ignoreUnknown": false,
+    "includes": ["src/**", "biome.json"]
   },
   "formatter": {
     "enabled": true,
@@ -17,10 +18,17 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "correctness": {
         "useHookAtTopLevel": "error"
       }
+    }
+  },
+  "css": {
+    "parser": {
+      "allowWrongLineComments": false,
+      "cssModules": false,
+      "tailwindDirectives": true
     }
   },
   "javascript": {

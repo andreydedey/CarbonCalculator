@@ -1,4 +1,5 @@
 import { api } from './client.ts'
+import type { PageResponse } from './types'
 
 export type Laboratory = {
   id: string
@@ -13,14 +14,29 @@ export type CreateLaboratoryPayload = {
   description?: string
 }
 
+export type LabStatusFilter = 'all' | 'active' | 'inactive'
+
 export type ListLaboratoriesOptions = {
-  includeInactive?: boolean
+  status?: LabStatusFilter
+  search?: string
+  page?: number
+  size?: number
 }
 
-export function listLaboratories(options: ListLaboratoriesOptions = {}): Promise<Laboratory[]> {
+export function listLaboratories(
+  options: ListLaboratoriesOptions = {},
+): Promise<PageResponse<Laboratory>> {
+  const { status, search, page = 0, size = 10 } = options
+  const activeParam =
+    status === 'active' ? { active: true } : status === 'inactive' ? { active: false } : {}
   return api
     .get('/laboratories', {
-      params: options.includeInactive ? { active: false } : undefined,
+      params: {
+        ...activeParam,
+        ...(search ? { name: search } : {}),
+        page,
+        size,
+      },
     })
     .then((r) => r.data)
 }

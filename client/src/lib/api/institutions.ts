@@ -1,4 +1,5 @@
 import { api } from './client.ts'
+import type { PageResponse } from './types'
 
 export type CreateLaboratoryPayload = {
   name: string
@@ -33,7 +34,7 @@ export function createInstitution(payload: CreateInstitutionPayload): Promise<In
   return api.post('/institutions', payload).then((r) => r.data)
 }
 
-export function listInstitutions(): Promise<Institution[]> {
+export function listInstitutions(): Promise<PageResponse<Institution>> {
   return api.get('/institutions').then((r) => r.data)
 }
 

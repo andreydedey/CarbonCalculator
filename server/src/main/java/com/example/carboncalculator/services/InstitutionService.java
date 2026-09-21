@@ -1,22 +1,31 @@
 package com.example.carboncalculator.services;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.carboncalculator.dto.CreateInstitutionRequest;
 import com.example.carboncalculator.dto.InstitutionDTO;
+import com.example.carboncalculator.entities.AppUser;
 import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.Laboratory;
+import com.example.carboncalculator.exceptions.DuplicateAcronymException;
+import com.example.carboncalculator.exceptions.InvalidStateException;
 import com.example.carboncalculator.mappers.InstitutionMapper;
 import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
+import com.example.carboncalculator.specifications.InstitutionSpecification;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class InstitutionService {
 
     private static final Set<String> VALID_STATES = Set.of(
@@ -27,15 +36,13 @@ public class InstitutionService {
     private final InstitutionRepository institutionRepository;
     private final LaboratoryRepository laboratoryRepository;
 
-    public InstitutionService(InstitutionRepository institutionRepository, LaboratoryRepository laboratoryRepository) {
-        this.institutionRepository = institutionRepository;
-        this.laboratoryRepository = laboratoryRepository;
-    }
+    public Page<InstitutionDTO> listForUser(AppUser user, Pageable pageable) {
+        Specification<Institution> spec = Specification.unrestricted();
+        if (!user.isAdmin()) {
+            spec = spec.and(InstitutionSpecification.hasActiveMember(user.getId()));
+        }
 
-    public List<InstitutionDTO> list() {
-        return institutionRepository.findAll().stream()
-                .map(InstitutionMapper::toDTO)
-                .toList();
+        return institutionRepository.findAll(spec, pageable).map(InstitutionMapper::toDTO);
     }
 
     public Optional<InstitutionDTO> getById(UUID id) {
@@ -68,18 +75,6 @@ public class InstitutionService {
     private void validateAcronymNotDuplicate(String acronym) {
         if (institutionRepository.existsByAcronym(acronym)) {
             throw new DuplicateAcronymException(acronym);
-        }
-    }
-
-    public static class DuplicateAcronymException extends RuntimeException {
-        public DuplicateAcronymException(String acronym) {
-            super("Já existe uma instituição com a sigla '" + acronym + "'");
-        }
-    }
-
-    public static class InvalidStateException extends RuntimeException {
-        public InvalidStateException(String state) {
-            super("UF inválida: '" + state + "'");
         }
     }
 }

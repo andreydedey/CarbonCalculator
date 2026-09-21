@@ -41,10 +41,10 @@
       "codigo": "ARQUIVO_INEXISTENTE",
       "feature": "instituicoes-e-laboratorios",
       "ref": "T-005",
-      "ocorrencias": 18,
+      "ocorrencias": 20,
       "primeiraVez": "2026-09-18T17:44:23.393Z",
-      "ultimaVez": "2026-09-18T21:27:33.202Z",
-      "gitRev": "af66ae3"
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
     },
     "ARQUIVO_INEXISTENTE::instituicoes-e-laboratorios::T-006": {
       "codigo": "ARQUIVO_INEXISTENTE",
@@ -77,37 +77,37 @@
       "codigo": "ARQUIVO_INEXISTENTE",
       "feature": "instituicoes-e-laboratorios",
       "ref": "T-009",
-      "ocorrencias": 3,
+      "ocorrencias": 5,
       "primeiraVez": "2026-09-18T17:44:23.393Z",
-      "ultimaVez": "2026-09-18T17:44:23.393Z",
-      "gitRev": "8d9ad89"
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
     },
     "ARQUIVO_INEXISTENTE::instituicoes-e-laboratorios::T-010": {
       "codigo": "ARQUIVO_INEXISTENTE",
       "feature": "instituicoes-e-laboratorios",
       "ref": "T-010",
-      "ocorrencias": 2,
+      "ocorrencias": 3,
       "primeiraVez": "2026-09-18T17:44:23.393Z",
-      "ultimaVez": "2026-09-18T17:44:23.393Z",
-      "gitRev": "8d9ad89"
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
     },
     "ARQUIVO_INEXISTENTE::instituicoes-e-laboratorios::T-011": {
       "codigo": "ARQUIVO_INEXISTENTE",
       "feature": "instituicoes-e-laboratorios",
       "ref": "T-011",
-      "ocorrencias": 1,
+      "ocorrencias": 2,
       "primeiraVez": "2026-09-18T17:44:23.393Z",
-      "ultimaVez": "2026-09-18T17:44:23.393Z",
-      "gitRev": "8d9ad89"
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
     },
     "ARQUIVO_INEXISTENTE::instituicoes-e-laboratorios::T-012": {
       "codigo": "ARQUIVO_INEXISTENTE",
       "feature": "instituicoes-e-laboratorios",
       "ref": "T-012",
-      "ocorrencias": 3,
+      "ocorrencias": 5,
       "primeiraVez": "2026-09-18T17:44:23.393Z",
-      "ultimaVez": "2026-09-18T17:44:23.393Z",
-      "gitRev": "8d9ad89"
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
     },
     "ARQUIVO_INEXISTENTE::instituicoes-e-laboratorios::T-013": {
       "codigo": "ARQUIVO_INEXISTENTE",
@@ -248,10 +248,10 @@
       "codigo": "GLOB_SEM_ARQUIVOS",
       "feature": "—",
       "ref": "P-002",
-      "ocorrencias": 9,
+      "ocorrencias": 10,
       "primeiraVez": "2026-09-18T17:44:23.393Z",
-      "ultimaVez": "2026-09-19T01:40:52.994Z",
-      "gitRev": "e13bda2"
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
     },
     "TASK_CONCLUIDA_SEM_PROVA::instituicoes-e-laboratorios::T-001": {
       "codigo": "TASK_CONCLUIDA_SEM_PROVA",
@@ -383,28 +383,28 @@
       "codigo": "ARQUIVO_ORFAO",
       "feature": "—",
       "ref": "client/src/assets/hero.png",
-      "ocorrencias": 7,
+      "ocorrencias": 8,
       "primeiraVez": "2026-09-18T21:27:33.202Z",
-      "ultimaVez": "2026-09-19T01:40:52.994Z",
-      "gitRev": "e13bda2"
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
     },
     "ARQUIVO_ORFAO::—::client/src/assets/vite.svg": {
       "codigo": "ARQUIVO_ORFAO",
       "feature": "—",
       "ref": "client/src/assets/vite.svg",
-      "ocorrencias": 7,
+      "ocorrencias": 8,
       "primeiraVez": "2026-09-18T21:27:33.202Z",
-      "ultimaVez": "2026-09-19T01:40:52.994Z",
-      "gitRev": "e13bda2"
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
     },
     "ARQUIVO_ORFAO::—::client/src/components/ui/button.tsx": {
       "codigo": "ARQUIVO_ORFAO",
       "feature": "—",
       "ref": "client/src/components/ui/button.tsx",
-      "ocorrencias": 7,
+      "ocorrencias": 8,
       "primeiraVez": "2026-09-18T21:27:33.202Z",
-      "ultimaVez": "2026-09-19T01:40:52.994Z",
-      "gitRev": "e13bda2"
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
     },
     "ARQUIVO_ORFAO::—::client/src/context/.gitkeep": {
       "codigo": "ARQUIVO_ORFAO",
@@ -428,10 +428,10 @@
       "codigo": "ARQUIVO_ORFAO",
       "feature": "—",
       "ref": "client/src/index.css",
-      "ocorrencias": 7,
+      "ocorrencias": 8,
       "primeiraVez": "2026-09-18T21:27:33.202Z",
-      "ultimaVez": "2026-09-19T01:40:52.994Z",
-      "gitRev": "e13bda2"
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
     },
     "ARQUIVO_ORFAO::—::client/src/layout/.gitkeep": {
       "codigo": "ARQUIVO_ORFAO",
@@ -455,10 +455,10 @@
       "codigo": "ARQUIVO_ORFAO",
       "feature": "—",
       "ref": "client/src/lib/utils.ts",
-      "ocorrencias": 7,
+      "ocorrencias": 8,
       "primeiraVez": "2026-09-18T21:27:33.202Z",
-      "ultimaVez": "2026-09-19T01:40:52.994Z",
-      "gitRev": "e13bda2"
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
     },
     "ARQUIVO_ORFAO::—::client/src/pages/.gitkeep": {
       "codigo": "ARQUIVO_ORFAO",
@@ -473,10 +473,10 @@
       "codigo": "ARQUIVO_ORFAO",
       "feature": "—",
       "ref": "server/src/main/java/com/example/carboncalculator/CarboncalculatorApplication.java",
-      "ocorrencias": 7,
+      "ocorrencias": 8,
       "primeiraVez": "2026-09-18T21:27:33.202Z",
-      "ultimaVez": "2026-09-19T01:40:52.994Z",
-      "gitRev": "e13bda2"
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
     },
     "ARQUIVO_ORFAO::—::server/src/main/java/com/example/carboncalculator/config/.gitkeep": {
       "codigo": "ARQUIVO_ORFAO",
@@ -576,6 +576,564 @@
       "primeiraVez": "2026-09-18T21:27:33.202Z",
       "ultimaVez": "2026-09-18T21:35:19.242Z",
       "gitRev": "250a0c7"
+    },
+    "ARQUIVO_INEXISTENTE::acesso-e-papeis::T-006": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "acesso-e-papeis",
+      "ref": "T-006",
+      "ocorrencias": 9,
+      "primeiraVez": "2026-09-21T02:57:38.740Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_INEXISTENTE::acesso-e-papeis::T-007": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "acesso-e-papeis",
+      "ref": "T-007",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_INEXISTENTE::acesso-e-papeis::T-009": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "acesso-e-papeis",
+      "ref": "T-009",
+      "ocorrencias": 6,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_INEXISTENTE::acesso-e-papeis::T-010": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "acesso-e-papeis",
+      "ref": "T-010",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_INEXISTENTE::acesso-e-papeis::T-013": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "acesso-e-papeis",
+      "ref": "T-013",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_INEXISTENTE::acesso-e-papeis::T-014": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "acesso-e-papeis",
+      "ref": "T-014",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_INEXISTENTE::acesso-e-papeis::T-015": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "acesso-e-papeis",
+      "ref": "T-015",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_INEXISTENTE::acesso-e-papeis::T-016": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "acesso-e-papeis",
+      "ref": "T-016",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_INEXISTENTE::acesso-e-papeis::T-017": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "acesso-e-papeis",
+      "ref": "T-017",
+      "ocorrencias": 5,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_INEXISTENTE::acesso-e-papeis::T-018": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "acesso-e-papeis",
+      "ref": "T-018",
+      "ocorrencias": 2,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_INEXISTENTE::acesso-e-papeis::T-019": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "acesso-e-papeis",
+      "ref": "T-019",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_INEXISTENTE::acesso-e-papeis::T-020": {
+      "codigo": "ARQUIVO_INEXISTENTE",
+      "feature": "acesso-e-papeis",
+      "ref": "T-020",
+      "ocorrencias": 3,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "AC_SEM_TESTE::acesso-e-papeis::AC-014": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "acesso-e-papeis",
+      "ref": "AC-014",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "AC_SEM_TESTE::acesso-e-papeis::AC-015": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "acesso-e-papeis",
+      "ref": "AC-015",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "AC_SEM_TESTE::acesso-e-papeis::AC-016": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "acesso-e-papeis",
+      "ref": "AC-016",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "AC_SEM_TESTE::acesso-e-papeis::AC-017": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "acesso-e-papeis",
+      "ref": "AC-017",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "AC_SEM_TESTE::acesso-e-papeis::AC-018": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "acesso-e-papeis",
+      "ref": "AC-018",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "AC_SEM_TESTE::acesso-e-papeis::AC-019": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "acesso-e-papeis",
+      "ref": "AC-019",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "AC_SEM_TESTE::acesso-e-papeis::AC-020": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "acesso-e-papeis",
+      "ref": "AC-020",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "AC_SEM_TESTE::acesso-e-papeis::AC-021": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "acesso-e-papeis",
+      "ref": "AC-021",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "AC_SEM_TESTE::acesso-e-papeis::AC-022": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "acesso-e-papeis",
+      "ref": "AC-022",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "AC_SEM_TESTE::acesso-e-papeis::AC-023": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "acesso-e-papeis",
+      "ref": "AC-023",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "AC_SEM_TESTE::acesso-e-papeis::AC-024": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "acesso-e-papeis",
+      "ref": "AC-024",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "AC_SEM_TESTE::acesso-e-papeis::AC-025": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "acesso-e-papeis",
+      "ref": "AC-025",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "AC_SEM_TESTE::acesso-e-papeis::AC-026": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "acesso-e-papeis",
+      "ref": "AC-026",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "AC_SEM_TESTE::acesso-e-papeis::AC-027": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "acesso-e-papeis",
+      "ref": "AC-027",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "AC_SEM_TESTE::acesso-e-papeis::AC-028": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "acesso-e-papeis",
+      "ref": "AC-028",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "AC_SEM_TESTE::acesso-e-papeis::AC-029": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "acesso-e-papeis",
+      "ref": "AC-029",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "AC_SEM_TESTE::acesso-e-papeis::AC-030": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "acesso-e-papeis",
+      "ref": "AC-030",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "AC_SEM_TESTE::acesso-e-papeis::AC-031": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "acesso-e-papeis",
+      "ref": "AC-031",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "AC_SEM_TESTE::acesso-e-papeis::AC-032": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "acesso-e-papeis",
+      "ref": "AC-032",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "AC_SEM_TESTE::acesso-e-papeis::AC-033": {
+      "codigo": "AC_SEM_TESTE",
+      "feature": "acesso-e-papeis",
+      "ref": "AC-033",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "VERIFY_OBSOLETO::instituicoes-e-laboratorios::—": {
+      "codigo": "VERIFY_OBSOLETO",
+      "feature": "instituicoes-e-laboratorios",
+      "ref": "—",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/laboratories/DeactivateDialog.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/laboratories/DeactivateDialog.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/laboratories/DeleteDialog.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/laboratories/DeleteDialog.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/laboratories/LabCard.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/laboratories/LabCard.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/laboratories/LaboratoryForm.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/laboratories/LaboratoryForm.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/laboratories/LaboratoryList.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/laboratories/LaboratoryList.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/ui/alert-dialog.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/ui/alert-dialog.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/ui/badge.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/ui/badge.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/ui/card.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/ui/card.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/ui/dialog.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/ui/dialog.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/ui/dropdown-menu.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/ui/dropdown-menu.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/ui/field-error.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/ui/field-error.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/ui/input.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/ui/input.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/ui/label.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/ui/label.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/ui/progress.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/ui/progress.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/ui/select.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/ui/select.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/ui/separator.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/ui/separator.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/ui/sheet.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/ui/sheet.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/ui/sidebar.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/ui/sidebar.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/ui/skeleton.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/ui/skeleton.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/ui/sonner.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/ui/sonner.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/ui/textarea.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/ui/textarea.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/components/ui/tooltip.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/components/ui/tooltip.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/hooks/use-mobile.ts": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/hooks/use-mobile.ts",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/lib/context/institutionStorage.ts": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/lib/context/institutionStorage.ts",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/lib/institutions/mapCreateInstitutionError.ts": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/lib/institutions/mapCreateInstitutionError.ts",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/pages/institutions/InstitutionsPage.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/pages/institutions/InstitutionsPage.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::client/src/pages/laboratories/LaboratoriesPage.tsx": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "client/src/pages/laboratories/LaboratoriesPage.tsx",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::server/src/main/java/com/example/carboncalculator/dto/InstitutionDTO.java": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "server/src/main/java/com/example/carboncalculator/dto/InstitutionDTO.java",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
+    },
+    "ARQUIVO_ORFAO::—::server/src/main/java/com/example/carboncalculator/dto/LaboratoryDTO.java": {
+      "codigo": "ARQUIVO_ORFAO",
+      "feature": "—",
+      "ref": "server/src/main/java/com/example/carboncalculator/dto/LaboratoryDTO.java",
+      "ocorrencias": 1,
+      "primeiraVez": "2026-09-21T02:57:38.744Z",
+      "ultimaVez": "2026-09-21T02:57:38.744Z",
+      "gitRev": "5b88a58"
     }
   }
 }

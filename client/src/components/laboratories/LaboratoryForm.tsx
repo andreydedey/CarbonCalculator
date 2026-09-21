@@ -42,7 +42,7 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
     formState: { errors },
   } = useForm<LaboratoryFormValues>({
     resolver: zodResolver(laboratoryFormSchema),
-    defaultValues: { name: laboratory?.name ?? '', description: laboratory?.description ?? '' },
+    values: { name: laboratory?.name ?? '', description: laboratory?.description ?? '' },
   })
 
   const mutation = useMutation({
@@ -137,7 +137,7 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="mx-0 mb-0">
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
               Cancelar
             </Button>

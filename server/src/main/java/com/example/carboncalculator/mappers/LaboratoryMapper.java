@@ -12,6 +12,7 @@ public final class LaboratoryMapper {
         return new LaboratoryDTO(
                 entity.getId(),
                 entity.getName(),
+                entity.getDescription(),
                 entity.isActive(),
                 entity.getCreatedAt());
     }

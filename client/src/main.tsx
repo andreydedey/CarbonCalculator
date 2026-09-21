@@ -7,6 +7,7 @@ import './index.css'
 
 const queryClient = new QueryClient()
 
+// biome-ignore lint/style/noNonNullAssertion: standard React entry point pattern
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>

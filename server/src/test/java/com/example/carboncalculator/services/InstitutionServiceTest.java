@@ -18,6 +18,8 @@ import com.example.carboncalculator.dto.CreateLaboratoryRequest;
 import com.example.carboncalculator.dto.InstitutionDTO;
 import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.Laboratory;
+import com.example.carboncalculator.exceptions.DuplicateAcronymException;
+import com.example.carboncalculator.exceptions.InvalidStateException;
 import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
 
@@ -35,7 +37,7 @@ class InstitutionServiceTest {
 
     private CreateInstitutionRequest validRequest() {
         return new CreateInstitutionRequest("Universidade Federal do Pará", "UFPA", "Belém", "PA",
-                new CreateLaboratoryRequest("LABCOMP-01"));
+                new CreateLaboratoryRequest("LABCOMP-01", null));
     }
 
     // @spec:AC-001 Instituição criada com dados válidos
@@ -68,7 +70,7 @@ class InstitutionServiceTest {
     void deveRecusarCriacaoQuandoSiglaJaExiste() {
         when(institutionRepository.existsByAcronym("UFPA")).thenReturn(true);
 
-        assertThrows(InstitutionService.DuplicateAcronymException.class, () -> service.create(validRequest()));
+        assertThrows(DuplicateAcronymException.class, () -> service.create(validRequest()));
 
         verify(institutionRepository, never()).save(any(Institution.class));
         verify(laboratoryRepository, never()).save(any(Laboratory.class));
@@ -78,9 +80,9 @@ class InstitutionServiceTest {
     @Test
     void deveRecusarCriacaoQuandoUfNaoEstaEntreAs27UnidadesFederativas() {
         CreateInstitutionRequest request = new CreateInstitutionRequest("Instituição Teste", "IT", "Cidade", "XX",
-                new CreateLaboratoryRequest("LAB-01"));
+                new CreateLaboratoryRequest("LAB-01", null));
 
-        assertThrows(InstitutionService.InvalidStateException.class, () -> service.create(request));
+        assertThrows(InvalidStateException.class, () -> service.create(request));
 
         verify(institutionRepository, never()).save(any(Institution.class));
         verify(laboratoryRepository, never()).save(any(Laboratory.class));

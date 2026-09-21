@@ -1,4 +1,4 @@
 package com.example.carboncalculator.dto;
 
-public record CreateLaboratoryRequest(String name) {
+public record CreateLaboratoryRequest(String name, String description) {
 }

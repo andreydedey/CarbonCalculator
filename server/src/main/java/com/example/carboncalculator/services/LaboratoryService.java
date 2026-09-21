@@ -1,8 +1,10 @@
 package com.example.carboncalculator.services;
 
-import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,20 +13,22 @@ import com.example.carboncalculator.dto.CreateLaboratoryRequest;
 import com.example.carboncalculator.dto.LaboratoryDTO;
 import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.Laboratory;
+import com.example.carboncalculator.exceptions.LaboratoryHasDependentsException;
+import com.example.carboncalculator.exceptions.LaboratoryNotFoundException;
+import com.example.carboncalculator.exceptions.MissingLaboratoryNameException;
 import com.example.carboncalculator.mappers.LaboratoryMapper;
 import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
+import com.example.carboncalculator.specifications.LaboratorySpecification;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class LaboratoryService {
 
     private final LaboratoryRepository laboratoryRepository;
     private final InstitutionRepository institutionRepository;
-
-    public LaboratoryService(LaboratoryRepository laboratoryRepository, InstitutionRepository institutionRepository) {
-        this.laboratoryRepository = laboratoryRepository;
-        this.institutionRepository = institutionRepository;
-    }
 
     @Transactional
     public LaboratoryDTO create(CreateLaboratoryRequest request) {
@@ -34,17 +38,34 @@ public class LaboratoryService {
         Laboratory laboratory = Laboratory.builder()
                 .institution(institution)
                 .name(request.name())
+                .description(request.description())
                 .build();
 
         return LaboratoryMapper.toDTO(laboratoryRepository.save(laboratory));
     }
 
-    public List<LaboratoryDTO> list(boolean includeInactive) {
-        List<Laboratory> laboratories = includeInactive
-                ? laboratoryRepository.findAll()
-                : laboratoryRepository.findByActiveTrue();
+    public LaboratoryDTO getById(UUID id) {
+        return LaboratoryMapper.toDTO(getOrThrow(id));
+    }
 
-        return laboratories.stream().map(LaboratoryMapper::toDTO).toList();
+    @Transactional
+    public LaboratoryDTO update(UUID id, CreateLaboratoryRequest request) {
+        validateName(request.name());
+        Laboratory laboratory = getOrThrow(id);
+        laboratory.setName(request.name());
+        laboratory.setDescription(request.description());
+        return LaboratoryMapper.toDTO(laboratoryRepository.save(laboratory));
+    }
+
+    public Page<LaboratoryDTO> list(Boolean active, String name, Pageable pageable) {
+        Specification<Laboratory> spec = Specification.unrestricted();
+        if (active != null) {
+            spec = spec.and(LaboratorySpecification.hasActive(active));
+        }
+        if (name != null && !name.isBlank()) {
+            spec = spec.and(LaboratorySpecification.nameContains(name));
+        }
+        return laboratoryRepository.findAll(spec, pageable).map(LaboratoryMapper::toDTO);
     }
 
     @Transactional
@@ -82,23 +103,5 @@ public class LaboratoryService {
 
     private UUID currentInstitutionId() {
         return UUID.fromString(TenantContext.getInstitutionId());
-    }
-
-    public static class MissingLaboratoryNameException extends RuntimeException {
-        public MissingLaboratoryNameException() {
-            super("O nome do laboratório é obrigatório");
-        }
-    }
-
-    public static class LaboratoryNotFoundException extends RuntimeException {
-        public LaboratoryNotFoundException(UUID id) {
-            super("Laboratório não encontrado: " + id);
-        }
-    }
-
-    public static class LaboratoryHasDependentsException extends RuntimeException {
-        public LaboratoryHasDependentsException(UUID id) {
-            super("Laboratório " + id + " possui registros dependentes; desative-o em vez de excluir");
-        }
     }
 }

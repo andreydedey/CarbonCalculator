@@ -40,6 +40,9 @@ public class Laboratory {
     @Column(nullable = false)
     private String name;
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
     @Builder.Default
     @Column(nullable = false)
     private boolean active = true;
