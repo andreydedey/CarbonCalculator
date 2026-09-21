@@ -38,8 +38,22 @@ public class LaboratoryService {
         Laboratory laboratory = Laboratory.builder()
                 .institution(institution)
                 .name(request.name())
+                .description(request.description())
                 .build();
 
+        return LaboratoryMapper.toDTO(laboratoryRepository.save(laboratory));
+    }
+
+    public LaboratoryDTO getById(UUID id) {
+        return LaboratoryMapper.toDTO(getOrThrow(id));
+    }
+
+    @Transactional
+    public LaboratoryDTO update(UUID id, CreateLaboratoryRequest request) {
+        validateName(request.name());
+        Laboratory laboratory = getOrThrow(id);
+        laboratory.setName(request.name());
+        laboratory.setDescription(request.description());
         return LaboratoryMapper.toDTO(laboratoryRepository.save(laboratory));
     }
 

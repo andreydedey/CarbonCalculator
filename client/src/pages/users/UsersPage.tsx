@@ -2,7 +2,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { UserPlus } from 'lucide-react'
 import type React from 'react'
-import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -13,8 +12,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
+import { useDialog } from '@/hooks/use-dialog'
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -48,7 +47,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export const UsersPage: React.FC = () => {
   const { user: currentUser } = useAuth()
-  const [inviteOpen, setInviteOpen] = useState(false)
+  const inviteDialog = useDialog()
 
   const {
     data: membersPage,
@@ -68,7 +67,7 @@ export const UsersPage: React.FC = () => {
     mutationFn: (data: InviteFormData) => inviteUser(data),
     onSuccess: () => {
       refetch()
-      setInviteOpen(false)
+      inviteDialog.closeDialog()
       inviteForm.reset()
       toast.success('Convite enviado')
     },
@@ -119,61 +118,59 @@ export const UsersPage: React.FC = () => {
           </p>
         </div>
 
-        <Dialog open={inviteOpen} onOpenChange={(open) => {
-          setInviteOpen(open)
-          if (!open) inviteForm.reset()
-        }}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <UserPlus className="mr-2 h-4 w-4" />
-              Convidar
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Convidar Membro</DialogTitle>
-            </DialogHeader>
-            <form
-              onSubmit={inviteForm.handleSubmit((data) => inviteMutation.mutate(data))}
-              className="space-y-4"
-            >
-              <div className="space-y-2">
-                <Label htmlFor="invite-email">Email</Label>
-                <Input
-                  id="invite-email"
-                  type="email"
-                  placeholder="email@universidade.br"
-                  {...inviteForm.register('email')}
-                />
-                {inviteForm.formState.errors.email && (
-                  <FieldError message={inviteForm.formState.errors.email.message} />
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="invite-role">Papel</Label>
-                <Controller
-                  control={inviteForm.control}
-                  name="role"
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="MANAGER">Gestor</SelectItem>
-                        <SelectItem value="RESEARCHER">Pesquisador</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={inviteMutation.isPending}>
-                {inviteMutation.isPending ? 'Enviando...' : 'Enviar Convite'}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <Button size="sm" onClick={() => inviteDialog.openDialog()}>
+          <UserPlus className="mr-2 h-4 w-4" />
+          Convidar
+        </Button>
       </div>
+
+      <Dialog open={inviteDialog.open} onOpenChange={(open) => {
+        if (!open) { inviteDialog.closeDialog(); inviteForm.reset() }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Convidar Membro</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={inviteForm.handleSubmit((data) => inviteMutation.mutate(data))}
+            className="space-y-4"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="invite-email">Email</Label>
+              <Input
+                id="invite-email"
+                type="email"
+                placeholder="email@universidade.br"
+                {...inviteForm.register('email')}
+              />
+              {inviteForm.formState.errors.email && (
+                <FieldError message={inviteForm.formState.errors.email.message} />
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="invite-role">Papel</Label>
+              <Controller
+                control={inviteForm.control}
+                name="role"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MANAGER">Gestor</SelectItem>
+                      <SelectItem value="RESEARCHER">Pesquisador</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={inviteMutation.isPending}>
+              {inviteMutation.isPending ? 'Enviando...' : 'Enviar Convite'}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>

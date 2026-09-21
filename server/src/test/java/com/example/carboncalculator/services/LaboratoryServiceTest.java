@@ -67,7 +67,7 @@ class LaboratoryServiceTest {
             return laboratory;
         });
 
-        LaboratoryDTO response = service.create(new CreateLaboratoryRequest("LABCOMP-02"));
+        LaboratoryDTO response = service.create(new CreateLaboratoryRequest("LABCOMP-02", null));
 
         assertEquals("LABCOMP-02", response.name());
         assertTrue(response.active());
@@ -78,7 +78,7 @@ class LaboratoryServiceTest {
     @Test
     void deveRecusarCriacaoDeLaboratorioSemNome() {
         assertThrows(MissingLaboratoryNameException.class,
-                () -> service.create(new CreateLaboratoryRequest(" ")));
+                () -> service.create(new CreateLaboratoryRequest(" ", null)));
 
         verify(laboratoryRepository, never()).save(any(Laboratory.class));
     }

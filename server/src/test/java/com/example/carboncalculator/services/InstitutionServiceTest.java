@@ -37,7 +37,7 @@ class InstitutionServiceTest {
 
     private CreateInstitutionRequest validRequest() {
         return new CreateInstitutionRequest("Universidade Federal do Pará", "UFPA", "Belém", "PA",
-                new CreateLaboratoryRequest("LABCOMP-01"));
+                new CreateLaboratoryRequest("LABCOMP-01", null));
     }
 
     // @spec:AC-001 Instituição criada com dados válidos
@@ -80,7 +80,7 @@ class InstitutionServiceTest {
     @Test
     void deveRecusarCriacaoQuandoUfNaoEstaEntreAs27UnidadesFederativas() {
         CreateInstitutionRequest request = new CreateInstitutionRequest("Instituição Teste", "IT", "Cidade", "XX",
-                new CreateLaboratoryRequest("LAB-01"));
+                new CreateLaboratoryRequest("LAB-01", null));
 
         assertThrows(InvalidStateException.class, () -> service.create(request));
 

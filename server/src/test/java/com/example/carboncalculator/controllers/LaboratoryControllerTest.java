@@ -79,7 +79,7 @@ class LaboratoryControllerTest {
         when(connection.prepareStatement(anyString())).thenReturn(preparedStatement);
         when(transactionManager.getTransaction(any())).thenReturn(mock(TransactionStatus.class));
 
-        LaboratoryDTO response = new LaboratoryDTO(UUID.randomUUID(), "LABCOMP-02", true, OffsetDateTime.now());
+        LaboratoryDTO response = new LaboratoryDTO(UUID.randomUUID(), "LABCOMP-02", null, true, OffsetDateTime.now());
         when(laboratoryService.create(any(CreateLaboratoryRequest.class))).thenReturn(response);
 
         mockMvc.perform(post("/laboratories")

@@ -1,7 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
 import { Cpu, Leaf, Monitor, Plus, Search } from 'lucide-react'
 import type React from 'react'
-import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useDebounce } from 'use-debounce'
@@ -19,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useDialog } from '@/hooks/use-dialog'
 import { useInstitution } from '@/context/InstitutionContext'
 import { getInstitution } from '@/lib/api/institutions'
 import {
@@ -41,10 +41,9 @@ function statusLabel(lab: Laboratory): string {
 export const LaboratoryList: React.FC = () => {
   const { institutionId } = useInstitution()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [formOpen, setFormOpen] = useState(false)
-  const [editTarget, setEditTarget] = useState<Laboratory | null>(null)
-  const [deactivateTarget, setDeactivateTarget] = useState<Laboratory | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<Laboratory | null>(null)
+  const form = useDialog<Laboratory>()
+  const deactivateDialog = useDialog<Laboratory>()
+  const deleteDialog = useDialog<Laboratory>()
 
   const search = searchParams.get('q') ?? ''
   const statusFilter = (searchParams.get('status') ?? 'all') as LabStatusFilter
@@ -105,34 +104,18 @@ export const LaboratoryList: React.FC = () => {
     },
   })
 
-  function openCreate() {
-    setEditTarget(null)
-    setFormOpen(true)
-  }
-
-  function openEdit(lab: Laboratory) {
-    setEditTarget(lab)
-    setFormOpen(true)
-  }
-
-  function handleFormOpenChange(open: boolean) {
-    setFormOpen(open)
-    if (!open) setEditTarget(null)
-  }
-
   function handleSaved() {
-    setFormOpen(false)
-    setEditTarget(null)
+    form.closeDialog()
     refetch()
   }
 
   function handleDeactivated() {
-    setDeactivateTarget(null)
+    deactivateDialog.closeDialog()
     refetch()
   }
 
   function handleDeleted() {
-    setDeleteTarget(null)
+    deleteDialog.closeDialog()
     refetch()
   }
 
@@ -150,16 +133,16 @@ export const LaboratoryList: React.FC = () => {
             Laboratórios{institutionName ? ` — ${institutionName}` : ''}
           </h1>
         </div>
-        <Button onClick={openCreate}>
+        <Button onClick={() => form.openDialog()}>
           <Plus className="size-4" />
           Novo Laboratório
         </Button>
       </div>
 
       <LaboratoryForm
-        laboratory={editTarget ?? undefined}
-        open={formOpen}
-        onOpenChange={handleFormOpenChange}
+        laboratory={form.data ?? undefined}
+        open={form.open}
+        onOpenChange={(open) => !open && form.closeDialog()}
         onSaved={handleSaved}
       />
 
@@ -217,10 +200,10 @@ export const LaboratoryList: React.FC = () => {
               key={laboratory.id}
               laboratory={laboratory}
               statusLabel={statusLabel(laboratory)}
-              onEdit={openEdit}
+              onEdit={(lab) => form.openDialog(lab)}
               onActivate={(lab) => activateMutation.mutate(lab)}
-              onDeactivate={setDeactivateTarget}
-              onDelete={setDeleteTarget}
+              onDeactivate={(lab) => deactivateDialog.openDialog(lab)}
+              onDelete={(lab) => deleteDialog.openDialog(lab)}
             />
           ))}
         </div>
@@ -232,20 +215,20 @@ export const LaboratoryList: React.FC = () => {
         isFetchingNextPage={isFetchingNextPage}
       />
 
-      {deactivateTarget && (
+      {deactivateDialog.data && (
         <DeactivateDialog
-          laboratory={deactivateTarget}
-          open={!!deactivateTarget}
-          onOpenChange={(open) => !open && setDeactivateTarget(null)}
+          laboratory={deactivateDialog.data}
+          open={deactivateDialog.open}
+          onOpenChange={(open) => !open && deactivateDialog.closeDialog()}
           onDeactivated={handleDeactivated}
         />
       )}
 
-      {deleteTarget && (
+      {deleteDialog.data && (
         <DeleteDialog
-          laboratory={deleteTarget}
-          open={!!deleteTarget}
-          onOpenChange={(open) => !open && setDeleteTarget(null)}
+          laboratory={deleteDialog.data}
+          open={deleteDialog.open}
+          onOpenChange={(open) => !open && deleteDialog.closeDialog()}
           onDeleted={handleDeleted}
         />
       )}

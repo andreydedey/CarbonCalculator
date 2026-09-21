@@ -47,7 +47,7 @@ class InstitutionControllerIntegrationTest {
 
     private ResponseEntity<InstitutionDTO> createInstitution(String acronym, String state, String labName) {
         CreateInstitutionRequest request = new CreateInstitutionRequest(
-                "Universidade Federal do Pará", acronym, "Belém", state, new CreateLaboratoryRequest(labName));
+                "Universidade Federal do Pará", acronym, "Belém", state, new CreateLaboratoryRequest(labName, null));
         return restTemplate.postForEntity("/institutions", request, InstitutionDTO.class);
     }
 
@@ -84,7 +84,7 @@ class InstitutionControllerIntegrationTest {
 
         ResponseEntity<Map> duplicate = restTemplate.postForEntity("/institutions",
                 new CreateInstitutionRequest("Outra Instituição", acronym, "Belém", "PA",
-                        new CreateLaboratoryRequest("LAB-02")),
+                        new CreateLaboratoryRequest("LAB-02", null)),
                 Map.class);
 
         assertEquals(HttpStatus.CONFLICT, duplicate.getStatusCode());
@@ -95,7 +95,7 @@ class InstitutionControllerIntegrationTest {
     void deveRecusarCriacaoQuandoUfNaoEstaEntreAs27UnidadesFederativas() {
         ResponseEntity<Map> response = restTemplate.postForEntity("/institutions",
                 new CreateInstitutionRequest("Instituição Teste", uniqueAcronym("IT"), "Cidade", "XX",
-                        new CreateLaboratoryRequest("LAB-01")),
+                        new CreateLaboratoryRequest("LAB-01", null)),
                 Map.class);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());

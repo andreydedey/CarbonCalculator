@@ -87,7 +87,7 @@ class LaboratoryControllerIntegrationTest {
     private UUID createInstitutionAndReturnId(String acronymPrefix) {
         CreateInstitutionRequest request = new CreateInstitutionRequest(
                 "Instituição " + acronymPrefix, acronymPrefix + "-" + System.nanoTime(), "Cidade", "PA",
-                new CreateLaboratoryRequest("LABCOMP-01"));
+                new CreateLaboratoryRequest("LABCOMP-01", null));
         ResponseEntity<InstitutionDTO> response = restTemplate.postForEntity(
                 "/institutions", request, InstitutionDTO.class);
         InstitutionDTO institution = response.getBody();
@@ -103,7 +103,7 @@ class LaboratoryControllerIntegrationTest {
 
     private ResponseEntity<LaboratoryDTO> createLaboratory(UUID institutionId, String name) {
         return restTemplate.postForEntity("/laboratories",
-                new HttpEntity<>(new CreateLaboratoryRequest(name), headersFor(institutionId)),
+                new HttpEntity<>(new CreateLaboratoryRequest(name, null), headersFor(institutionId)),
                 LaboratoryDTO.class);
     }
 
@@ -134,7 +134,7 @@ class LaboratoryControllerIntegrationTest {
         UUID institutionId = createInstitutionAndReturnId("UFPA");
 
         ResponseEntity<Object> response = restTemplate.postForEntity("/laboratories",
-                new HttpEntity<>(new CreateLaboratoryRequest(""), headersFor(institutionId)), Object.class);
+                new HttpEntity<>(new CreateLaboratoryRequest("", null), headersFor(institutionId)), Object.class);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }

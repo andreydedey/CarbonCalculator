@@ -6,6 +6,7 @@ import java.util.UUID;
 public record LaboratoryDTO(
         UUID id,
         String name,
+        String description,
         boolean active,
         OffsetDateTime createdAt) {
 }
