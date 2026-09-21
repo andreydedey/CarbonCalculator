@@ -1,0 +1,383 @@
+{
+  "runId": "CarbonCalculatorTCC-acesso-e-papeis-muanoueq",
+  "feature": "acesso-e-papeis",
+  "agent": "claude",
+  "modo": "paralelo",
+  "paralelizar": [
+    "T-010",
+    "T-011",
+    "T-012",
+    "T-015",
+    "T-016",
+    "T-017",
+    "T-018"
+  ],
+  "modeloForcado": null,
+  "esforcoForcado": null,
+  "geradoEm": "2026-09-21 02:58",
+  "branchTrabalho": "spec/acesso-e-papeis",
+  "baseDir": ".spec/features/acesso-e-papeis",
+  "specDir": ".spec",
+  "repoName": "CarbonCalculatorTCC",
+  "logsDir": "../onp-worktrees/CarbonCalculatorTCC-acesso-e-papeis-logs",
+  "ondas": [
+    [
+      "faixa-1",
+      "faixa-2",
+      "faixa-3"
+    ],
+    [
+      "faixa-4",
+      "faixa-5",
+      "faixa-6"
+    ],
+    [
+      "faixa-7"
+    ]
+  ],
+  "faixas": [
+    {
+      "id": "faixa-1",
+      "branch": "spec/acesso-e-papeis-faixa-1",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-acesso-e-papeis-faixa-1",
+      "tarefas": [
+        {
+          "id": "T-010",
+          "titulo": "Google OAuth2",
+          "modelo": "claude-sonnet-5",
+          "esforco": "high",
+          "arquivos": [
+            "server/pom.xml",
+            "server/src/main/java/com/example/carboncalculator/security/OAuth2SuccessHandler.java",
+            "server/src/main/resources/application.yaml"
+          ],
+          "refs": [
+            "US-008",
+            "AC-020"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-2",
+      "branch": "spec/acesso-e-papeis-faixa-2",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-acesso-e-papeis-faixa-2",
+      "tarefas": [
+        {
+          "id": "T-011",
+          "titulo": "TenantFilter: validar vínculo user↔institution",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "server/src/main/java/com/example/carboncalculator/config/TenantFilter.java"
+          ],
+          "refs": [
+            "US-009",
+            "AC-021",
+            "AC-024"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-3",
+      "branch": "spec/acesso-e-papeis-faixa-3",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-acesso-e-papeis-faixa-3",
+      "tarefas": [
+        {
+          "id": "T-012",
+          "titulo": "@PreAuthorize em controllers existentes",
+          "modelo": "claude-sonnet-5",
+          "esforco": "low",
+          "arquivos": [
+            "server/src/main/java/com/example/carboncalculator/controllers/InstitutionController.java",
+            "server/src/main/java/com/example/carboncalculator/controllers/LaboratoryController.java"
+          ],
+          "refs": [
+            "US-009",
+            "AC-021",
+            "AC-022",
+            "AC-023",
+            "AC-025"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-4",
+      "branch": "spec/acesso-e-papeis-faixa-4",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-acesso-e-papeis-faixa-4",
+      "tarefas": [
+        {
+          "id": "T-015",
+          "titulo": "Frontend: página de login",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "client/src/pages/auth/LoginPage.tsx",
+            "client/src/lib/schemas/loginSchema.ts"
+          ],
+          "refs": [
+            "US-006",
+            "US-008",
+            "AC-014",
+            "AC-015",
+            "AC-020"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-5",
+      "branch": "spec/acesso-e-papeis-faixa-5",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-acesso-e-papeis-faixa-5",
+      "tarefas": [
+        {
+          "id": "T-016",
+          "titulo": "Frontend: página de registro",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "client/src/pages/auth/RegisterPage.tsx",
+            "client/src/lib/schemas/registerSchema.ts"
+          ],
+          "refs": [
+            "US-007",
+            "US-008",
+            "AC-017",
+            "AC-018",
+            "AC-020"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-6",
+      "branch": "spec/acesso-e-papeis-faixa-6",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-acesso-e-papeis-faixa-6",
+      "tarefas": [
+        {
+          "id": "T-017",
+          "titulo": "Frontend: página de gestão de usuários",
+          "modelo": "claude-sonnet-5",
+          "esforco": "high",
+          "arquivos": [
+            "client/src/pages/users/UsersPage.tsx",
+            "client/src/components/users/UsersTable.tsx",
+            "client/src/components/users/InviteDialog.tsx",
+            "client/src/lib/api/users.ts",
+            "client/src/lib/schemas/inviteSchema.ts"
+          ],
+          "refs": [
+            "US-010",
+            "AC-026",
+            "AC-027",
+            "AC-028",
+            "AC-029",
+            "AC-030",
+            "AC-031"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-7",
+      "branch": "spec/acesso-e-papeis-faixa-7",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-acesso-e-papeis-faixa-7",
+      "tarefas": [
+        {
+          "id": "T-018",
+          "titulo": "Frontend: página admin de instituições",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "client/src/pages/admin/AdminInstitutionsPage.tsx",
+            "client/src/components/admin/InstitutionCard.tsx"
+          ],
+          "refs": [
+            "US-009",
+            "AC-021"
+          ]
+        }
+      ]
+    }
+  ],
+  "sequenciais": [
+    {
+      "id": "T-006",
+      "titulo": "Migrations e entidades JPA (app_user, user_institution, public_results)",
+      "modelo": "claude-sonnet-5",
+      "esforco": "medium",
+      "arquivos": [
+        "server/src/main/resources/db/migration/V4__create_app_user_table.sql",
+        "server/src/main/resources/db/migration/V5__create_user_institution_table.sql",
+        "server/src/main/resources/db/migration/V6__add_public_results_to_institution.sql",
+        "server/src/main/java/com/example/carboncalculator/models/AppUser.java",
+        "server/src/main/java/com/example/carboncalculator/models/UserInstitution.java",
+        "server/src/main/java/com/example/carboncalculator/models/InstitutionRole.java",
+        "server/src/main/java/com/example/carboncalculator/models/MembershipStatus.java",
+        "server/src/main/java/com/example/carboncalculator/repositories/AppUserRepository.java",
+        "server/src/main/java/com/example/carboncalculator/repositories/UserInstitutionRepository.java"
+      ],
+      "refs": [
+        "US-006",
+        "US-007",
+        "US-009",
+        "US-010"
+      ]
+    },
+    {
+      "id": "T-007",
+      "titulo": "JWT service (geração, validação, refresh)",
+      "modelo": "claude-sonnet-5",
+      "esforco": "high",
+      "arquivos": [
+        "server/pom.xml",
+        "server/src/main/java/com/example/carboncalculator/security/JwtService.java",
+        "server/src/main/java/com/example/carboncalculator/security/JwtAuthFilter.java",
+        "server/src/main/resources/application.yaml"
+      ],
+      "refs": [
+        "US-006",
+        "AC-014",
+        "AC-015",
+        "US-011",
+        "AC-032",
+        "AC-033"
+      ]
+    },
+    {
+      "id": "T-008",
+      "titulo": "SecurityFilterChain e role hierarchy",
+      "modelo": "claude-sonnet-5",
+      "esforco": "medium",
+      "arquivos": [
+        "server/src/main/java/com/example/carboncalculator/config/SecurityConfig.java"
+      ],
+      "refs": [
+        "US-009",
+        "AC-016",
+        "AC-025"
+      ]
+    },
+    {
+      "id": "T-009",
+      "titulo": "AuthController (register, login, refresh, me)",
+      "modelo": "claude-sonnet-5",
+      "esforco": "high",
+      "arquivos": [
+        "server/src/main/java/com/example/carboncalculator/controllers/AuthController.java",
+        "server/src/main/java/com/example/carboncalculator/services/AuthService.java",
+        "server/src/main/java/com/example/carboncalculator/dto/LoginRequest.java",
+        "server/src/main/java/com/example/carboncalculator/dto/RegisterRequest.java",
+        "server/src/main/java/com/example/carboncalculator/dto/AuthResponse.java",
+        "server/src/main/java/com/example/carboncalculator/dto/UserProfileDTO.java"
+      ],
+      "refs": [
+        "US-006",
+        "US-007",
+        "US-011",
+        "AC-014",
+        "AC-015",
+        "AC-016",
+        "AC-017",
+        "AC-018",
+        "AC-019",
+        "AC-032",
+        "AC-033"
+      ]
+    },
+    {
+      "id": "T-013",
+      "titulo": "UserController e UserService (gestão de membros)",
+      "modelo": "claude-sonnet-5",
+      "esforco": "high",
+      "arquivos": [
+        "server/src/main/java/com/example/carboncalculator/controllers/UserController.java",
+        "server/src/main/java/com/example/carboncalculator/services/UserService.java",
+        "server/src/main/java/com/example/carboncalculator/dto/InviteRequest.java",
+        "server/src/main/java/com/example/carboncalculator/dto/ChangeRoleRequest.java",
+        "server/src/main/java/com/example/carboncalculator/dto/MemberDTO.java"
+      ],
+      "refs": [
+        "US-010",
+        "AC-026",
+        "AC-027",
+        "AC-028",
+        "AC-029",
+        "AC-030",
+        "AC-031"
+      ]
+    },
+    {
+      "id": "T-014",
+      "titulo": "Frontend: AuthContext, interceptor e rotas protegidas",
+      "modelo": "claude-sonnet-5",
+      "esforco": "high",
+      "arquivos": [
+        "client/src/context/AuthContext.tsx",
+        "client/src/components/auth/ProtectedRoute.tsx",
+        "client/src/lib/api/client.ts",
+        "client/src/App.tsx"
+      ],
+      "refs": [
+        "US-006",
+        "US-007",
+        "US-011",
+        "AC-014",
+        "AC-016",
+        "AC-032"
+      ]
+    },
+    {
+      "id": "T-019",
+      "titulo": "Frontend: atualizações no layout (sidebar, topbar, institution switcher)",
+      "modelo": "claude-sonnet-5",
+      "esforco": "medium",
+      "arquivos": [
+        "client/src/components/layout/AppLayout.tsx",
+        "client/src/components/layout/AppSidebar.tsx",
+        "client/src/components/layout/InstitutionSwitcher.tsx"
+      ],
+      "refs": [
+        "US-009",
+        "US-010",
+        "AC-021"
+      ]
+    },
+    {
+      "id": "T-020",
+      "titulo": "Testes de integração (auth + autorização + cross-tenant)",
+      "modelo": "claude-sonnet-5",
+      "esforco": "high",
+      "arquivos": [
+        "server/src/test/java/com/example/carboncalculator/controllers/AuthControllerTest.java",
+        "server/src/test/java/com/example/carboncalculator/controllers/UserControllerTest.java",
+        "server/src/test/java/com/example/carboncalculator/controllers/LaboratoryControllerAuthTest.java"
+      ],
+      "refs": [
+        "AC-014",
+        "AC-015",
+        "AC-016",
+        "AC-017",
+        "AC-018",
+        "AC-019",
+        "AC-021",
+        "AC-022",
+        "AC-023",
+        "AC-024",
+        "AC-025",
+        "AC-026",
+        "AC-027",
+        "AC-028",
+        "AC-029",
+        "AC-030",
+        "AC-031",
+        "AC-032",
+        "AC-033"
+      ]
+    }
+  ],
+  "concluidas": [],
+  "avisos": []
+}

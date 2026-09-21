@@ -10,11 +10,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.carboncalculator.dto.CreateInstitutionRequest;
 import com.example.carboncalculator.dto.InstitutionDTO;
+import com.example.carboncalculator.entities.AppUser;
 import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.Laboratory;
+import com.example.carboncalculator.entities.MembershipStatus;
 import com.example.carboncalculator.mappers.InstitutionMapper;
 import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
+import com.example.carboncalculator.repositories.UserInstitutionRepository;
 
 @Service
 public class InstitutionService {
@@ -26,15 +29,26 @@ public class InstitutionService {
 
     private final InstitutionRepository institutionRepository;
     private final LaboratoryRepository laboratoryRepository;
+    private final UserInstitutionRepository membershipRepository;
 
-    public InstitutionService(InstitutionRepository institutionRepository, LaboratoryRepository laboratoryRepository) {
+    public InstitutionService(InstitutionRepository institutionRepository,
+                              LaboratoryRepository laboratoryRepository,
+                              UserInstitutionRepository membershipRepository) {
         this.institutionRepository = institutionRepository;
         this.laboratoryRepository = laboratoryRepository;
+        this.membershipRepository = membershipRepository;
     }
 
-    public List<InstitutionDTO> list() {
-        return institutionRepository.findAll().stream()
-                .map(InstitutionMapper::toDTO)
+    public List<InstitutionDTO> listForUser(AppUser user) {
+        if (user.isAdmin()) {
+            return institutionRepository.findAll().stream()
+                    .map(InstitutionMapper::toDTO)
+                    .toList();
+        }
+
+        return membershipRepository.findByUserId(user.getId()).stream()
+                .filter(m -> m.getStatus() == MembershipStatus.ACTIVE)
+                .map(m -> InstitutionMapper.toDTO(m.getInstitution()))
                 .toList();
     }
 

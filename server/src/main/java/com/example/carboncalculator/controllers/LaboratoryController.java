@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,12 +33,14 @@ public class LaboratoryController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('GESTOR')")
     public ResponseEntity<LaboratoryDTO> create(@RequestBody CreateLaboratoryRequest request) {
         LaboratoryDTO response = laboratoryService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('PESQUISADOR')")
     public ResponseEntity<List<LaboratoryDTO>> list(
             @RequestParam(name = "active", required = false, defaultValue = "true") boolean active) {
         boolean includeInactive = !active;
@@ -45,16 +48,19 @@ public class LaboratoryController {
     }
 
     @PatchMapping("/{id}/activate")
+    @PreAuthorize("hasRole('GESTOR')")
     public ResponseEntity<LaboratoryDTO> activate(@PathVariable UUID id) {
         return ResponseEntity.ok(laboratoryService.activate(id));
     }
 
     @PatchMapping("/{id}/deactivate")
+    @PreAuthorize("hasRole('GESTOR')")
     public ResponseEntity<LaboratoryDTO> deactivate(@PathVariable UUID id) {
         return ResponseEntity.ok(laboratoryService.deactivate(id));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('GESTOR')")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         laboratoryService.delete(id);
         return ResponseEntity.noContent().build();

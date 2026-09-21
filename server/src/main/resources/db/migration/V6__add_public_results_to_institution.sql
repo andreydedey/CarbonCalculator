@@ -1,0 +1,1 @@
+ALTER TABLE institution ADD COLUMN public_results BOOLEAN NOT NULL DEFAULT FALSE;

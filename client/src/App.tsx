@@ -1,33 +1,32 @@
 import type React from 'react'
-import { Route, Routes, useNavigate } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { Button } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/sonner'
+import { AuthProvider } from '@/context/AuthContext'
 import { InstitutionProvider } from '@/context/InstitutionContext'
+import { LoginPage } from '@/pages/auth/LoginPage'
+import { RegisterPage } from '@/pages/auth/RegisterPage'
 import { InstitutionsPage } from '@/pages/institutions/InstitutionsPage'
 import { LaboratoriesPage } from '@/pages/laboratories/LaboratoriesPage'
-
-const LandingPage: React.FC = () => {
-  const navigate = useNavigate()
-
-  return (
-    <main className="flex min-h-svh flex-col items-center justify-center gap-4">
-      <h1 className="font-heading text-2xl font-bold">Carbon Calculator</h1>
-      <p className="text-muted-foreground text-sm">Esqueleto do projeto.</p>
-      <Button onClick={() => navigate('/institutions')}>Começar</Button>
-    </main>
-  )
-}
+import { UsersPage } from '@/pages/users/UsersPage'
 
 export const App: React.FC = () => (
-  <InstitutionProvider>
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route element={<AppLayout />}>
-        <Route path="/institutions" element={<InstitutionsPage />} />
-        <Route path="/laboratories" element={<LaboratoriesPage />} />
-      </Route>
-    </Routes>
-    <Toaster position="bottom-right" />
-  </InstitutionProvider>
+  <AuthProvider>
+    <InstitutionProvider>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppLayout />}>
+            <Route path="/institutions" element={<InstitutionsPage />} />
+            <Route path="/laboratories" element={<LaboratoriesPage />} />
+            <Route path="/users" element={<UsersPage />} />
+          </Route>
+        </Route>
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+      <Toaster position="bottom-right" />
+    </InstitutionProvider>
+  </AuthProvider>
 )

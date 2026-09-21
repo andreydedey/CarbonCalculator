@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { Building2, FlaskConical } from 'lucide-react'
+import { Building2, FlaskConical, LogOut, Users } from 'lucide-react'
 import type React from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { InstitutionSwitcher } from '@/components/layout/InstitutionSwitcher'
+import { Button } from '@/components/ui/button'
 import {
   Sidebar,
   SidebarContent,
@@ -19,29 +20,61 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { useAuth } from '@/context/AuthContext'
 import { listInstitutions } from '@/lib/api/institutions'
 
-const NAV_ITEMS = [
-  { label: 'Instituições', href: '/institutions', icon: Building2 },
+type NavItem = {
+  label: string
+  href: string
+  icon: React.ComponentType
+  requiresRole?: string
+  adminOnly?: boolean
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { label: 'Instituições', href: '/institutions', icon: Building2, adminOnly: true },
   { label: 'Laboratórios', href: '/laboratories', icon: FlaskConical },
+  { label: 'Usuários', href: '/users', icon: Users, requiresRole: 'GESTOR' },
 ]
 
 const AppSidebar: React.FC = () => {
   const location = useLocation()
+  const { user } = useAuth()
+
+  const visibleItems = NAV_ITEMS.filter((item) => {
+    if (item.adminOnly && !user?.admin) return false
+    if (item.requiresRole) {
+      const membership = user?.institutions?.find((m) => m.status === 'ACTIVE')
+      if (!membership && !user?.admin) return false
+      if (
+        item.requiresRole === 'GESTOR' &&
+        !user?.admin &&
+        membership?.role !== 'GESTOR'
+      ) {
+        return false
+      }
+    }
+    return true
+  })
 
   return (
     <Sidebar>
       <SidebarHeader>
-        <span className="font-heading px-2 py-1 text-sm font-semibold">Carbon Calculator</span>
+        <span className="font-heading px-2 py-1 text-sm font-semibold">
+          Carbon Calculator
+        </span>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {NAV_ITEMS.map((item) => (
+              {visibleItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton asChild isActive={location.pathname === item.href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname === item.href}
+                  >
                     <Link to={item.href}>
                       <item.icon />
                       <span>{item.label}</span>
@@ -59,6 +92,7 @@ const AppSidebar: React.FC = () => {
 }
 
 export const AppLayout: React.FC = () => {
+  const { user, logout } = useAuth()
   const { data: institutions = [] } = useQuery({
     queryKey: ['institutions'],
     queryFn: listInstitutions,
@@ -71,10 +105,24 @@ export const AppLayout: React.FC = () => {
         <SidebarInset>
           <header className="flex items-center gap-2 border-b px-4 py-3">
             <SidebarTrigger className="-ml-1" />
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-3">
               <InstitutionSwitcher
                 options={institutions.map((i) => ({ id: i.id, name: i.name }))}
               />
+              {user && (
+                <div className="flex items-center gap-2 border-l pl-3">
+                  <span className="text-sm text-muted-foreground">{user.name}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={logout}
+                    title="Sair"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
           </header>
           <main className="flex-1 p-4">

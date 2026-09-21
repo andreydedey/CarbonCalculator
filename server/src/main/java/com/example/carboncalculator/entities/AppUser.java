@@ -18,13 +18,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "institution")
+@Table(name = "app_user")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Institution {
+public class AppUser {
 
     @Id
     @GeneratedValue
@@ -33,22 +33,19 @@ public class Institution {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false, unique = true, length = 20)
-    private String acronym;
+    @Column(nullable = false, unique = true)
+    private String email;
 
-    @Column
-    private String city;
+    @Column(name = "password_hash")
+    private String passwordHash;
 
-    @Column(nullable = false, length = 2)
-    private String state;
+    @Builder.Default
+    @Column(name = "is_admin", nullable = false)
+    private boolean admin = false;
 
     @Builder.Default
     @Column(nullable = false)
     private boolean active = true;
-
-    @Builder.Default
-    @Column(name = "public_results", nullable = false)
-    private boolean publicResults = false;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
