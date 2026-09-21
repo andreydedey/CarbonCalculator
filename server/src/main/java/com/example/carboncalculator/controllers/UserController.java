@@ -1,9 +1,9 @@
 package com.example.carboncalculator.controllers;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,28 +20,33 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.carboncalculator.dto.ChangeRoleRequest;
 import com.example.carboncalculator.dto.InviteRequest;
+import com.example.carboncalculator.dto.PageResponse;
 import com.example.carboncalculator.dto.UserMemberDTO;
 import com.example.carboncalculator.entities.AppUser;
+import com.example.carboncalculator.exceptions.CannotModifySelfException;
+import com.example.carboncalculator.exceptions.DuplicateInviteException;
+import com.example.carboncalculator.exceptions.InvalidRoleException;
+import com.example.carboncalculator.exceptions.LastManagerException;
+import com.example.carboncalculator.exceptions.MemberNotFoundException;
 import com.example.carboncalculator.services.UserService;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/users")
+@RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
 
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
-
     @GetMapping
-    @PreAuthorize("hasRole('GESTOR')")
-    public List<UserMemberDTO> list() {
-        return userService.listMembers();
+    @PreAuthorize("hasRole('MANAGER')")
+    public PageResponse<UserMemberDTO> list(Pageable pageable) {
+        return PageResponse.from(userService.listMembers(pageable));
     }
 
     @PostMapping("/invite")
-    @PreAuthorize("hasRole('GESTOR')")
+    @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<UserMemberDTO> invite(@RequestBody InviteRequest request,
                                                  @AuthenticationPrincipal AppUser user) {
         UserMemberDTO member = userService.invite(request.email(), request.role(), user);
@@ -49,7 +54,7 @@ public class UserController {
     }
 
     @PatchMapping("/{id}/role")
-    @PreAuthorize("hasRole('GESTOR')")
+    @PreAuthorize("hasRole('MANAGER')")
     public UserMemberDTO changeRole(@PathVariable UUID id,
                                      @RequestBody ChangeRoleRequest request,
                                      @AuthenticationPrincipal AppUser user) {
@@ -57,35 +62,35 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('GESTOR')")
+    @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<Void> revoke(@PathVariable UUID id,
                                         @AuthenticationPrincipal AppUser user) {
         userService.revoke(id, user);
         return ResponseEntity.noContent().build();
     }
 
-    @ExceptionHandler(UserService.DuplicateInviteException.class)
-    public ResponseEntity<Map<String, String>> handleDuplicateInvite(UserService.DuplicateInviteException e) {
+    @ExceptionHandler(DuplicateInviteException.class)
+    public ResponseEntity<Map<String, String>> handleDuplicateInvite(DuplicateInviteException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage()));
     }
 
-    @ExceptionHandler(UserService.MemberNotFoundException.class)
-    public ResponseEntity<Map<String, String>> handleMemberNotFound(UserService.MemberNotFoundException e) {
+    @ExceptionHandler(MemberNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleMemberNotFound(MemberNotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
     }
 
-    @ExceptionHandler(UserService.CannotModifySelfException.class)
-    public ResponseEntity<Map<String, String>> handleCannotModifySelf(UserService.CannotModifySelfException e) {
+    @ExceptionHandler(CannotModifySelfException.class)
+    public ResponseEntity<Map<String, String>> handleCannotModifySelf(CannotModifySelfException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
     }
 
-    @ExceptionHandler(UserService.LastGestorException.class)
-    public ResponseEntity<Map<String, String>> handleLastGestor(UserService.LastGestorException e) {
+    @ExceptionHandler(LastManagerException.class)
+    public ResponseEntity<Map<String, String>> handleLastManager(LastManagerException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
     }
 
-    @ExceptionHandler(UserService.InvalidRoleException.class)
-    public ResponseEntity<Map<String, String>> handleInvalidRole(UserService.InvalidRoleException e) {
+    @ExceptionHandler(InvalidRoleException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidRole(InvalidRoleException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
     }
 }

@@ -18,19 +18,23 @@ import com.example.carboncalculator.dto.CreateLaboratoryRequest;
 import com.example.carboncalculator.dto.InstitutionDTO;
 import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.Laboratory;
+import com.example.carboncalculator.exceptions.DuplicateAcronymException;
+import com.example.carboncalculator.exceptions.InvalidStateException;
 import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
+import com.example.carboncalculator.repositories.UserInstitutionRepository;
 
 class InstitutionServiceTest {
 
     private final InstitutionRepository institutionRepository = mock(InstitutionRepository.class);
     private final LaboratoryRepository laboratoryRepository = mock(LaboratoryRepository.class);
+    private final UserInstitutionRepository membershipRepository = mock(UserInstitutionRepository.class);
 
     private InstitutionService service;
 
     @BeforeEach
     void setUp() {
-        service = new InstitutionService(institutionRepository, laboratoryRepository);
+        service = new InstitutionService(institutionRepository, laboratoryRepository, membershipRepository);
     }
 
     private CreateInstitutionRequest validRequest() {
@@ -68,7 +72,7 @@ class InstitutionServiceTest {
     void deveRecusarCriacaoQuandoSiglaJaExiste() {
         when(institutionRepository.existsByAcronym("UFPA")).thenReturn(true);
 
-        assertThrows(InstitutionService.DuplicateAcronymException.class, () -> service.create(validRequest()));
+        assertThrows(DuplicateAcronymException.class, () -> service.create(validRequest()));
 
         verify(institutionRepository, never()).save(any(Institution.class));
         verify(laboratoryRepository, never()).save(any(Laboratory.class));
@@ -80,7 +84,7 @@ class InstitutionServiceTest {
         CreateInstitutionRequest request = new CreateInstitutionRequest("Instituição Teste", "IT", "Cidade", "XX",
                 new CreateLaboratoryRequest("LAB-01"));
 
-        assertThrows(InstitutionService.InvalidStateException.class, () -> service.create(request));
+        assertThrows(InvalidStateException.class, () -> service.create(request));
 
         verify(institutionRepository, never()).save(any(Institution.class));
         verify(laboratoryRepository, never()).save(any(Laboratory.class));

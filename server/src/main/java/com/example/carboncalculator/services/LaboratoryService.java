@@ -11,20 +11,21 @@ import com.example.carboncalculator.dto.CreateLaboratoryRequest;
 import com.example.carboncalculator.dto.LaboratoryDTO;
 import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.Laboratory;
+import com.example.carboncalculator.exceptions.LaboratoryHasDependentsException;
+import com.example.carboncalculator.exceptions.LaboratoryNotFoundException;
+import com.example.carboncalculator.exceptions.MissingLaboratoryNameException;
 import com.example.carboncalculator.mappers.LaboratoryMapper;
 import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class LaboratoryService {
 
     private final LaboratoryRepository laboratoryRepository;
     private final InstitutionRepository institutionRepository;
-
-    public LaboratoryService(LaboratoryRepository laboratoryRepository, InstitutionRepository institutionRepository) {
-        this.laboratoryRepository = laboratoryRepository;
-        this.institutionRepository = institutionRepository;
-    }
 
     @Transactional
     public LaboratoryDTO create(CreateLaboratoryRequest request) {
@@ -82,23 +83,5 @@ public class LaboratoryService {
 
     private UUID currentInstitutionId() {
         return UUID.fromString(TenantContext.getInstitutionId());
-    }
-
-    public static class MissingLaboratoryNameException extends RuntimeException {
-        public MissingLaboratoryNameException() {
-            super("O nome do laboratório é obrigatório");
-        }
-    }
-
-    public static class LaboratoryNotFoundException extends RuntimeException {
-        public LaboratoryNotFoundException(UUID id) {
-            super("Laboratório não encontrado: " + id);
-        }
-    }
-
-    public static class LaboratoryHasDependentsException extends RuntimeException {
-        public LaboratoryHasDependentsException(UUID id) {
-            super("Laboratório " + id + " possui registros dependentes; desative-o em vez de excluir");
-        }
     }
 }

@@ -1,7 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { UserPlus } from 'lucide-react'
 import type React from 'react'
 import { useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -13,6 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -23,6 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useAuth } from '@/context/AuthContext'
+import { ApiError } from '@/lib/api/client'
 import {
   type UserMember,
   changeRole,
@@ -30,11 +34,11 @@ import {
   listMembers,
   revokeAccess,
 } from '@/lib/api/users'
-import { ConflictError } from '@/lib/api/client'
+import { type InviteFormData, inviteSchema } from '@/lib/schemas/inviteSchema'
 
 const ROLE_LABELS: Record<string, string> = {
-  GESTOR: 'Gestor',
-  PESQUISADOR: 'Pesquisador',
+  MANAGER: 'Gestor',
+  RESEARCHER: 'Pesquisador',
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -44,64 +48,64 @@ const STATUS_LABELS: Record<string, string> = {
 
 export const UsersPage: React.FC = () => {
   const { user: currentUser } = useAuth()
-  const queryClient = useQueryClient()
   const [inviteOpen, setInviteOpen] = useState(false)
-  const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRole, setInviteRole] = useState('PESQUISADOR')
 
-  const { data: members = [] } = useQuery({
+  const {
+    data: members = [],
+    refetch,
+  } = useQuery({
     queryKey: ['users'],
     queryFn: listMembers,
   })
 
+  const inviteForm = useForm<InviteFormData>({
+    resolver: zodResolver(inviteSchema),
+    defaultValues: { email: '', role: 'RESEARCHER' },
+  })
+
   const inviteMutation = useMutation({
-    mutationFn: () => inviteUser({ email: inviteEmail, role: inviteRole }),
+    mutationFn: (data: InviteFormData) => inviteUser(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] })
+      refetch()
       setInviteOpen(false)
-      setInviteEmail('')
-      setInviteRole('PESQUISADOR')
+      inviteForm.reset()
       toast.success('Convite enviado')
     },
     onError: (err) => {
-      if (err instanceof ConflictError) {
-        toast.error('Este usuário já foi convidado')
-      } else {
-        toast.error('Erro ao enviar convite')
-      }
+      toast.error(err instanceof ApiError ? err.message : 'Erro ao enviar convite')
     },
   })
 
   const changeRoleMutation = useMutation({
     mutationFn: ({ id, role }: { id: string; role: string }) => changeRole(id, { role }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] })
+      refetch()
       toast.success('Papel alterado')
     },
-    onError: () => {
-      toast.error('Erro ao alterar papel')
+    onError: (err) => {
+      toast.error(err instanceof ApiError ? err.message : 'Erro ao alterar papel')
     },
   })
 
   const revokeMutation = useMutation({
     mutationFn: (id: string) => revokeAccess(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] })
+      refetch()
       toast.success('Acesso revogado')
     },
-    onError: () => {
-      toast.error('Erro ao revogar acesso')
+    onError: (err) => {
+      toast.error(err instanceof ApiError ? err.message : 'Erro ao revogar acesso')
     },
   })
 
   const isSelf = (member: UserMember) =>
     member.email === currentUser?.email
 
-  const gestorCount = members.filter(
-    (m) => m.role === 'GESTOR' && m.status === 'ACTIVE',
+  const managerCount = members.filter(
+    (m) => m.role === 'MANAGER' && m.status === 'ACTIVE',
   ).length
-  const pesquisadorCount = members.filter(
-    (m) => m.role === 'PESQUISADOR' && m.status === 'ACTIVE',
+  const researcherCount = members.filter(
+    (m) => m.role === 'RESEARCHER' && m.status === 'ACTIVE',
   ).length
 
   return (
@@ -114,7 +118,10 @@ export const UsersPage: React.FC = () => {
           </p>
         </div>
 
-        <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+        <Dialog open={inviteOpen} onOpenChange={(open) => {
+          setInviteOpen(open)
+          if (!open) inviteForm.reset()
+        }}>
           <DialogTrigger asChild>
             <Button size="sm">
               <UserPlus className="mr-2 h-4 w-4" />
@@ -126,10 +133,7 @@ export const UsersPage: React.FC = () => {
               <DialogTitle>Convidar Membro</DialogTitle>
             </DialogHeader>
             <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                inviteMutation.mutate()
-              }}
+              onSubmit={inviteForm.handleSubmit((data) => inviteMutation.mutate(data))}
               className="space-y-4"
             >
               <div className="space-y-2">
@@ -138,22 +142,29 @@ export const UsersPage: React.FC = () => {
                   id="invite-email"
                   type="email"
                   placeholder="email@universidade.br"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  required
+                  {...inviteForm.register('email')}
                 />
+                {inviteForm.formState.errors.email && (
+                  <FieldError message={inviteForm.formState.errors.email.message} />
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="invite-role">Papel</Label>
-                <Select value={inviteRole} onValueChange={setInviteRole}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="GESTOR">Gestor</SelectItem>
-                    <SelectItem value="PESQUISADOR">Pesquisador</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Controller
+                  control={inviteForm.control}
+                  name="role"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MANAGER">Gestor</SelectItem>
+                        <SelectItem value="RESEARCHER">Pesquisador</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
               <Button type="submit" className="w-full" disabled={inviteMutation.isPending}>
                 {inviteMutation.isPending ? 'Enviando...' : 'Enviar Convite'}
@@ -181,7 +192,7 @@ export const UsersPage: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{gestorCount}</p>
+            <p className="text-2xl font-bold">{managerCount}</p>
           </CardContent>
         </Card>
         <Card>
@@ -191,7 +202,7 @@ export const UsersPage: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{pesquisadorCount}</p>
+            <p className="text-2xl font-bold">{researcherCount}</p>
           </CardContent>
         </Card>
       </div>
@@ -221,7 +232,7 @@ export const UsersPage: React.FC = () => {
                     <td className="px-4 py-3 text-muted-foreground">{member.email}</td>
                     <td className="px-4 py-3">
                       <Badge
-                        variant={member.role === 'GESTOR' ? 'default' : 'secondary'}
+                        variant={member.role === 'MANAGER' ? 'default' : 'secondary'}
                       >
                         {ROLE_LABELS[member.role] ?? member.role}
                       </Badge>
@@ -246,8 +257,8 @@ export const UsersPage: React.FC = () => {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="GESTOR">Gestor</SelectItem>
-                              <SelectItem value="PESQUISADOR">Pesquisador</SelectItem>
+                              <SelectItem value="MANAGER">Gestor</SelectItem>
+                              <SelectItem value="RESEARCHER">Pesquisador</SelectItem>
                             </SelectContent>
                           </Select>
                           <Button

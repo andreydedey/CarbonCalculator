@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { FieldError } from '@/components/ui/field-error'
 import { useAuth } from '@/context/AuthContext'
 import { type RegisterFormData, registerSchema } from '@/lib/schemas/authSchemas'
-import { ConflictError } from '@/lib/api/client'
+import { ApiError } from '@/lib/api/client'
 
 export const RegisterPage: React.FC = () => {
   const { register: registerUser } = useAuth()
@@ -34,11 +34,7 @@ export const RegisterPage: React.FC = () => {
       })
       navigate('/laboratories')
     } catch (err) {
-      if (err instanceof ConflictError) {
-        setError('Este email já está em uso')
-      } else {
-        setError('Erro ao criar conta. Tente novamente.')
-      }
+      setError(err instanceof ApiError ? err.message : 'Erro inesperado')
     }
   }
 

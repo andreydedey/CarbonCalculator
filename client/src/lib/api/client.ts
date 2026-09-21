@@ -58,7 +58,8 @@ api.interceptors.response.use(
   (error) => {
     if (axios.isAxiosError(error) && error.response) {
       const { status, data } = error.response
-      const message = (data as { message?: string })?.message || error.message
+      const body = data as { message?: string; error?: string }
+      const message = body?.message || body?.error || error.message
       throw errorForStatus(status, message)
     }
     throw error

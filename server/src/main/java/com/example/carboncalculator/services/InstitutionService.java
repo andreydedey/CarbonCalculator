@@ -5,6 +5,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,12 +16,18 @@ import com.example.carboncalculator.entities.AppUser;
 import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.Laboratory;
 import com.example.carboncalculator.entities.MembershipStatus;
+import com.example.carboncalculator.exceptions.DuplicateAcronymException;
+import com.example.carboncalculator.exceptions.InvalidStateException;
 import com.example.carboncalculator.mappers.InstitutionMapper;
 import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
 import com.example.carboncalculator.repositories.UserInstitutionRepository;
+import com.example.carboncalculator.specifications.InstitutionSpecification;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class InstitutionService {
 
     private static final Set<String> VALID_STATES = Set.of(
@@ -31,25 +39,19 @@ public class InstitutionService {
     private final LaboratoryRepository laboratoryRepository;
     private final UserInstitutionRepository membershipRepository;
 
-    public InstitutionService(InstitutionRepository institutionRepository,
-                              LaboratoryRepository laboratoryRepository,
-                              UserInstitutionRepository membershipRepository) {
-        this.institutionRepository = institutionRepository;
-        this.laboratoryRepository = laboratoryRepository;
-        this.membershipRepository = membershipRepository;
-    }
-
-    public List<InstitutionDTO> listForUser(AppUser user) {
+    public Page<InstitutionDTO> listForUser(AppUser user, Pageable pageable) {
         if (user.isAdmin()) {
-            return institutionRepository.findAll().stream()
-                    .map(InstitutionMapper::toDTO)
-                    .toList();
+            return institutionRepository.findAll(pageable)
+                    .map(InstitutionMapper::toDTO);
         }
 
-        return membershipRepository.findByUserId(user.getId()).stream()
+        List<UUID> ids = membershipRepository.findByUserId(user.getId()).stream()
                 .filter(m -> m.getStatus() == MembershipStatus.ACTIVE)
-                .map(m -> InstitutionMapper.toDTO(m.getInstitution()))
+                .map(m -> m.getInstitution().getId())
                 .toList();
+
+        return institutionRepository.findAll(InstitutionSpecification.hasIdIn(ids), pageable)
+                .map(InstitutionMapper::toDTO);
     }
 
     public Optional<InstitutionDTO> getById(UUID id) {
@@ -82,18 +84,6 @@ public class InstitutionService {
     private void validateAcronymNotDuplicate(String acronym) {
         if (institutionRepository.existsByAcronym(acronym)) {
             throw new DuplicateAcronymException(acronym);
-        }
-    }
-
-    public static class DuplicateAcronymException extends RuntimeException {
-        public DuplicateAcronymException(String acronym) {
-            super("Já existe uma instituição com a sigla '" + acronym + "'");
-        }
-    }
-
-    public static class InvalidStateException extends RuntimeException {
-        public InvalidStateException(String state) {
-            super("UF inválida: '" + state + "'");
         }
     }
 }

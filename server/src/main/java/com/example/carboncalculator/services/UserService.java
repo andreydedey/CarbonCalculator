@@ -1,8 +1,9 @@
 package com.example.carboncalculator.services;
 
-import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,30 +14,31 @@ import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.InstitutionRole;
 import com.example.carboncalculator.entities.MembershipStatus;
 import com.example.carboncalculator.entities.UserInstitution;
+import com.example.carboncalculator.exceptions.CannotModifySelfException;
+import com.example.carboncalculator.exceptions.DuplicateInviteException;
+import com.example.carboncalculator.exceptions.InstitutionNotFoundException;
+import com.example.carboncalculator.exceptions.InvalidRoleException;
+import com.example.carboncalculator.exceptions.LastManagerException;
+import com.example.carboncalculator.exceptions.MemberNotFoundException;
+import com.example.carboncalculator.mappers.UserMemberMapper;
 import com.example.carboncalculator.repositories.AppUserRepository;
 import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.UserInstitutionRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
     private final UserInstitutionRepository membershipRepository;
     private final AppUserRepository userRepository;
     private final InstitutionRepository institutionRepository;
 
-    public UserService(UserInstitutionRepository membershipRepository,
-                       AppUserRepository userRepository,
-                       InstitutionRepository institutionRepository) {
-        this.membershipRepository = membershipRepository;
-        this.userRepository = userRepository;
-        this.institutionRepository = institutionRepository;
-    }
-
-    public List<UserMemberDTO> listMembers() {
+    public Page<UserMemberDTO> listMembers(Pageable pageable) {
         UUID institutionId = currentInstitutionId();
-        return membershipRepository.findByInstitutionId(institutionId).stream()
-                .map(this::toDTO)
-                .toList();
+        return membershipRepository.findByInstitutionId(institutionId, pageable)
+                .map(UserMemberMapper::toDTO);
     }
 
     @Transactional
@@ -65,7 +67,7 @@ public class UserService {
                 .build();
         membership = membershipRepository.save(membership);
 
-        return toDTO(membership);
+        return UserMemberMapper.toDTO(membership);
     }
 
     @Transactional
@@ -83,7 +85,7 @@ public class UserService {
 
         membership.setRole(role);
         membership = membershipRepository.save(membership);
-        return toDTO(membership);
+        return UserMemberMapper.toDTO(membership);
     }
 
     @Transactional
@@ -98,13 +100,13 @@ public class UserService {
             throw new CannotModifySelfException();
         }
 
-        if (membership.getRole() == InstitutionRole.GESTOR) {
-            long activeGestors = membershipRepository.findByInstitutionId(institutionId).stream()
-                    .filter(m -> m.getRole() == InstitutionRole.GESTOR)
+        if (membership.getRole() == InstitutionRole.MANAGER) {
+            long activeManagers = membershipRepository.findByInstitutionId(institutionId).stream()
+                    .filter(m -> m.getRole() == InstitutionRole.MANAGER)
                     .filter(m -> m.getStatus() == MembershipStatus.ACTIVE)
                     .count();
-            if (activeGestors <= 1) {
-                throw new LastGestorException();
+            if (activeManagers <= 1) {
+                throw new LastManagerException();
             }
         }
 
@@ -125,55 +127,6 @@ public class UserService {
             return InstitutionRole.valueOf(roleName.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new InvalidRoleException(roleName);
-        }
-    }
-
-    private UserMemberDTO toDTO(UserInstitution membership) {
-        String name = membership.getUser() != null ? membership.getUser().getName() : null;
-        String email = membership.getUser() != null
-                ? membership.getUser().getEmail()
-                : membership.getUserEmail();
-        return new UserMemberDTO(
-                membership.getId(),
-                name,
-                email,
-                membership.getRole().name(),
-                membership.getStatus().name());
-    }
-
-    public static class DuplicateInviteException extends RuntimeException {
-        public DuplicateInviteException(String email) {
-            super("User already invited: " + email);
-        }
-    }
-
-    public static class MemberNotFoundException extends RuntimeException {
-        public MemberNotFoundException(UUID id) {
-            super("Member not found: " + id);
-        }
-    }
-
-    public static class CannotModifySelfException extends RuntimeException {
-        public CannotModifySelfException() {
-            super("Cannot modify your own membership");
-        }
-    }
-
-    public static class LastGestorException extends RuntimeException {
-        public LastGestorException() {
-            super("Cannot remove the last active gestor");
-        }
-    }
-
-    public static class InvalidRoleException extends RuntimeException {
-        public InvalidRoleException(String role) {
-            super("Invalid role: " + role);
-        }
-    }
-
-    public static class InstitutionNotFoundException extends RuntimeException {
-        public InstitutionNotFoundException(UUID id) {
-            super("Institution not found: " + id);
         }
     }
 }

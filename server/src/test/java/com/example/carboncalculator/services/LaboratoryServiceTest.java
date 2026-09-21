@@ -23,6 +23,8 @@ import com.example.carboncalculator.dto.CreateLaboratoryRequest;
 import com.example.carboncalculator.dto.LaboratoryDTO;
 import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.Laboratory;
+import com.example.carboncalculator.exceptions.LaboratoryHasDependentsException;
+import com.example.carboncalculator.exceptions.MissingLaboratoryNameException;
 import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
 
@@ -65,7 +67,7 @@ class LaboratoryServiceTest {
     // @spec:AC-005 Laboratório sem nome é rejeitado
     @Test
     void deveRecusarCriacaoDeLaboratorioSemNome() {
-        assertThrows(LaboratoryService.MissingLaboratoryNameException.class,
+        assertThrows(MissingLaboratoryNameException.class,
                 () -> service.create(new CreateLaboratoryRequest(" ")));
 
         verify(laboratoryRepository, never()).save(any(Laboratory.class));
@@ -121,7 +123,7 @@ class LaboratoryServiceTest {
         when(laboratoryRepository.findById(id)).thenReturn(Optional.of(laboratory));
         when(laboratoryRepository.existsDependentsByLaboratoryId(id)).thenReturn(true);
 
-        assertThrows(LaboratoryService.LaboratoryHasDependentsException.class, () -> service.delete(id));
+        assertThrows(LaboratoryHasDependentsException.class, () -> service.delete(id));
 
         verify(laboratoryRepository, never()).delete(any(Laboratory.class));
     }

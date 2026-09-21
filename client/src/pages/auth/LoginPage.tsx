@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { FieldError } from '@/components/ui/field-error'
 import { useAuth } from '@/context/AuthContext'
 import { type LoginFormData, loginSchema } from '@/lib/schemas/authSchemas'
+import { ApiError } from '@/lib/api/client'
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth()
@@ -28,8 +29,8 @@ export const LoginPage: React.FC = () => {
     try {
       await login(data)
       navigate('/laboratories')
-    } catch {
-      setError('Email ou senha inválidos')
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erro inesperado')
     }
   }
 

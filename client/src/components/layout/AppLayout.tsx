@@ -34,7 +34,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { label: 'Instituições', href: '/institutions', icon: Building2, adminOnly: true },
   { label: 'Laboratórios', href: '/laboratories', icon: FlaskConical },
-  { label: 'Usuários', href: '/users', icon: Users, requiresRole: 'GESTOR' },
+  { label: 'Usuários', href: '/users', icon: Users, requiresRole: 'MANAGER' },
 ]
 
 const AppSidebar: React.FC = () => {
@@ -47,9 +47,9 @@ const AppSidebar: React.FC = () => {
       const membership = user?.institutions?.find((m) => m.status === 'ACTIVE')
       if (!membership && !user?.admin) return false
       if (
-        item.requiresRole === 'GESTOR' &&
+        item.requiresRole === 'MANAGER' &&
         !user?.admin &&
-        membership?.role !== 'GESTOR'
+        membership?.role !== 'MANAGER'
       ) {
         return false
       }

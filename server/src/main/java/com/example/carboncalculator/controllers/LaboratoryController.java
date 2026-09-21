@@ -20,27 +20,29 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.carboncalculator.dto.CreateLaboratoryRequest;
 import com.example.carboncalculator.dto.LaboratoryDTO;
+import com.example.carboncalculator.exceptions.LaboratoryHasDependentsException;
+import com.example.carboncalculator.exceptions.LaboratoryNotFoundException;
+import com.example.carboncalculator.exceptions.MissingLaboratoryNameException;
 import com.example.carboncalculator.services.LaboratoryService;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/laboratories")
+@RequiredArgsConstructor
 public class LaboratoryController {
 
     private final LaboratoryService laboratoryService;
 
-    public LaboratoryController(LaboratoryService laboratoryService) {
-        this.laboratoryService = laboratoryService;
-    }
-
     @PostMapping
-    @PreAuthorize("hasRole('GESTOR')")
+    @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<LaboratoryDTO> create(@RequestBody CreateLaboratoryRequest request) {
         LaboratoryDTO response = laboratoryService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('PESQUISADOR')")
+    @PreAuthorize("hasRole('RESEARCHER')")
     public ResponseEntity<List<LaboratoryDTO>> list(
             @RequestParam(name = "active", required = false, defaultValue = "true") boolean active) {
         boolean includeInactive = !active;
@@ -48,36 +50,36 @@ public class LaboratoryController {
     }
 
     @PatchMapping("/{id}/activate")
-    @PreAuthorize("hasRole('GESTOR')")
+    @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<LaboratoryDTO> activate(@PathVariable UUID id) {
         return ResponseEntity.ok(laboratoryService.activate(id));
     }
 
     @PatchMapping("/{id}/deactivate")
-    @PreAuthorize("hasRole('GESTOR')")
+    @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<LaboratoryDTO> deactivate(@PathVariable UUID id) {
         return ResponseEntity.ok(laboratoryService.deactivate(id));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('GESTOR')")
+    @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         laboratoryService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
-    @ExceptionHandler(LaboratoryService.MissingLaboratoryNameException.class)
-    public ResponseEntity<Map<String, String>> handleMissingName(LaboratoryService.MissingLaboratoryNameException ex) {
+    @ExceptionHandler(MissingLaboratoryNameException.class)
+    public ResponseEntity<Map<String, String>> handleMissingName(MissingLaboratoryNameException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", ex.getMessage()));
     }
 
-    @ExceptionHandler(LaboratoryService.LaboratoryNotFoundException.class)
-    public ResponseEntity<Map<String, String>> handleNotFound(LaboratoryService.LaboratoryNotFoundException ex) {
+    @ExceptionHandler(LaboratoryNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleNotFound(LaboratoryNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", ex.getMessage()));
     }
 
-    @ExceptionHandler(LaboratoryService.LaboratoryHasDependentsException.class)
-    public ResponseEntity<Map<String, String>> handleHasDependents(LaboratoryService.LaboratoryHasDependentsException ex) {
+    @ExceptionHandler(LaboratoryHasDependentsException.class)
+    public ResponseEntity<Map<String, String>> handleHasDependents(LaboratoryHasDependentsException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", ex.getMessage()));
     }
 }

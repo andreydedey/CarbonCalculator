@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.example.carboncalculator.entities.MembershipStatus;
@@ -14,6 +16,8 @@ public interface UserInstitutionRepository extends JpaRepository<UserInstitution
     List<UserInstitution> findByUserId(UUID userId);
 
     List<UserInstitution> findByInstitutionId(UUID institutionId);
+
+    Page<UserInstitution> findByInstitutionId(UUID institutionId, Pageable pageable);
 
     Optional<UserInstitution> findByUserIdAndInstitutionId(UUID userId, UUID institutionId);
 

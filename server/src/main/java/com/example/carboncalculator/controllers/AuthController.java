@@ -19,25 +19,22 @@ import com.example.carboncalculator.dto.LoginRequest;
 import com.example.carboncalculator.dto.RegisterRequest;
 import com.example.carboncalculator.dto.UserProfileDTO;
 import com.example.carboncalculator.entities.AppUser;
+import com.example.carboncalculator.exceptions.EmailAlreadyExistsException;
+import com.example.carboncalculator.exceptions.InvalidCredentialsException;
 import com.example.carboncalculator.security.JwtService;
 import com.example.carboncalculator.services.AuthService;
-import com.example.carboncalculator.services.AuthService.EmailAlreadyExistsException;
-import com.example.carboncalculator.services.AuthService.InvalidCredentialsException;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
     private final JwtService jwtService;
-
-    public AuthController(AuthService authService, JwtService jwtService) {
-        this.authService = authService;
-        this.jwtService = jwtService;
-    }
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
