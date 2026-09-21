@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { AuthBrandPanel } from '@/components/auth/AuthBrandPanel'
+import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -108,6 +109,8 @@ export const RegisterPage: React.FC = () => {
               {isSubmitting ? 'Criando conta...' : 'Criar Conta'}
             </Button>
           </form>
+
+          <GoogleAuthButton />
 
           <p className="text-center text-sm text-muted-foreground">
             Já tem uma conta?{' '}
