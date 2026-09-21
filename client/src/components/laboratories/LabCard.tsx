@@ -54,6 +54,7 @@ const StatusBadge: React.FC<{ active: boolean; label: string }> = ({ active, lab
 interface LabCardProps {
   laboratory: Laboratory
   statusLabel: string
+  onEdit: (lab: Laboratory) => void
   onActivate: (lab: Laboratory) => void
   onDeactivate: (lab: Laboratory) => void
   onDelete: (lab: Laboratory) => void
@@ -62,11 +63,15 @@ interface LabCardProps {
 export const LabCard: React.FC<LabCardProps> = ({
   laboratory,
   statusLabel,
+  onEdit,
   onActivate,
   onDeactivate,
   onDelete,
 }) => (
-  <div className="rounded-[10px] border border-border bg-card">
+  <div
+    className="rounded-[10px] border border-border bg-card cursor-pointer transition-colors hover:bg-muted/40"
+    onClick={() => onEdit(laboratory)}
+  >
     {/* Top */}
     <div className="flex items-center justify-between px-6 py-5">
       <div className="flex items-center gap-4">
@@ -82,7 +87,12 @@ export const LabCard: React.FC<LabCardProps> = ({
         <StatusBadge active={laboratory.active} label={statusLabel} />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="size-8">
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-8"
+              onClick={(e) => e.stopPropagation()}
+            >
               <EllipsisVertical className="size-4" />
             </Button>
           </DropdownMenuTrigger>

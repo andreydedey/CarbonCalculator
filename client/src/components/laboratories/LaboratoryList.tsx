@@ -41,7 +41,8 @@ function statusLabel(lab: Laboratory): string {
 export const LaboratoryList: React.FC = () => {
   const { institutionId } = useInstitution()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [showForm, setShowForm] = useState(false)
+  const [formOpen, setFormOpen] = useState(false)
+  const [editTarget, setEditTarget] = useState<Laboratory | null>(null)
   const [deactivateTarget, setDeactivateTarget] = useState<Laboratory | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Laboratory | null>(null)
 
@@ -104,8 +105,24 @@ export const LaboratoryList: React.FC = () => {
     },
   })
 
+  function openCreate() {
+    setEditTarget(null)
+    setFormOpen(true)
+  }
+
+  function openEdit(lab: Laboratory) {
+    setEditTarget(lab)
+    setFormOpen(true)
+  }
+
+  function handleFormOpenChange(open: boolean) {
+    setFormOpen(open)
+    if (!open) setEditTarget(null)
+  }
+
   function handleSaved() {
-    setShowForm(false)
+    setFormOpen(false)
+    setEditTarget(null)
     refetch()
   }
 
@@ -133,13 +150,18 @@ export const LaboratoryList: React.FC = () => {
             Laboratórios{institutionName ? ` — ${institutionName}` : ''}
           </h1>
         </div>
-        <Button onClick={() => setShowForm(true)}>
+        <Button onClick={openCreate}>
           <Plus className="size-4" />
           Novo Laboratório
         </Button>
       </div>
 
-      <LaboratoryForm open={showForm} onOpenChange={setShowForm} onSaved={handleSaved} />
+      <LaboratoryForm
+        laboratory={editTarget ?? undefined}
+        open={formOpen}
+        onOpenChange={handleFormOpenChange}
+        onSaved={handleSaved}
+      />
 
       <div className="flex gap-4">
         <SummaryCard
@@ -195,6 +217,7 @@ export const LaboratoryList: React.FC = () => {
               key={laboratory.id}
               laboratory={laboratory}
               statusLabel={statusLabel(laboratory)}
+              onEdit={openEdit}
               onActivate={(lab) => activateMutation.mutate(lab)}
               onDeactivate={setDeactivateTarget}
               onDelete={setDeleteTarget}
