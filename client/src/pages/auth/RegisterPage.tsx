@@ -6,12 +6,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import { AuthBrandPanel } from '@/components/auth/AuthBrandPanel'
 import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton'
 import { Button } from '@/components/ui/button'
+import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { FieldError } from '@/components/ui/field-error'
 import { useAuth } from '@/context/AuthContext'
-import { type RegisterFormData, registerSchema } from '@/lib/schemas/authSchemas'
 import { ApiError } from '@/lib/api/client'
+import { type RegisterFormData, registerSchema } from '@/lib/schemas/authSchemas'
 
 export const RegisterPage: React.FC = () => {
   const { register: registerUser } = useAuth()
@@ -48,9 +48,7 @@ export const RegisterPage: React.FC = () => {
         <div className="w-full max-w-sm space-y-6">
           <div className="space-y-2 text-center">
             <h2 className="font-heading text-2xl font-bold">Criar Conta</h2>
-            <p className="text-muted-foreground text-sm">
-              Preencha os dados para se cadastrar
-            </p>
+            <p className="text-muted-foreground text-sm">Preencha os dados para se cadastrar</p>
           </div>
 
           {error && (
@@ -62,11 +60,7 @@ export const RegisterPage: React.FC = () => {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nome Completo</Label>
-              <Input
-                id="name"
-                placeholder="Seu nome completo"
-                {...register('name')}
-              />
+              <Input id="name" placeholder="Seu nome completo" {...register('name')} />
               {errors.name && <FieldError message={errors.name.message} />}
             </div>
 
@@ -100,9 +94,7 @@ export const RegisterPage: React.FC = () => {
                 placeholder="Repita a senha"
                 {...register('confirmPassword')}
               />
-              {errors.confirmPassword && (
-                <FieldError message={errors.confirmPassword.message} />
-              )}
+              {errors.confirmPassword && <FieldError message={errors.confirmPassword.message} />}
             </div>
 
             <Button type="submit" className="w-full" disabled={isSubmitting}>

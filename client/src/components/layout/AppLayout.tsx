@@ -46,11 +46,7 @@ const AppSidebar: React.FC = () => {
     if (item.requiresRole) {
       const membership = user?.institutions?.find((m) => m.status === 'ACTIVE')
       if (!membership && !user?.admin) return false
-      if (
-        item.requiresRole === 'MANAGER' &&
-        !user?.admin &&
-        membership?.role !== 'MANAGER'
-      ) {
+      if (item.requiresRole === 'MANAGER' && !user?.admin && membership?.role !== 'MANAGER') {
         return false
       }
     }
@@ -60,9 +56,7 @@ const AppSidebar: React.FC = () => {
   return (
     <Sidebar>
       <SidebarHeader>
-        <span className="font-heading px-2 py-1 text-sm font-semibold">
-          Carbon Calculator
-        </span>
+        <span className="font-heading px-2 py-1 text-sm font-semibold">Carbon Calculator</span>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -71,10 +65,7 @@ const AppSidebar: React.FC = () => {
             <SidebarMenu>
               {visibleItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={location.pathname === item.href}
-                  >
+                  <SidebarMenuButton asChild isActive={location.pathname === item.href}>
                     <Link to={item.href}>
                       <item.icon />
                       <span>{item.label}</span>

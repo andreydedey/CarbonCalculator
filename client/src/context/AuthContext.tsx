@@ -1,22 +1,15 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react'
 import type React from 'react'
-import { api } from '@/lib/api/client'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import {
   type AuthResponse,
-  type LoginPayload,
-  type RegisterPayload,
-  type UserProfile,
   login as apiLogin,
   refreshToken as apiRefresh,
   register as apiRegister,
+  type LoginPayload,
+  type RegisterPayload,
+  type UserProfile,
 } from '@/lib/api/auth'
+import { api } from '@/lib/api/client'
 
 type AuthState = {
   user: UserProfile | null

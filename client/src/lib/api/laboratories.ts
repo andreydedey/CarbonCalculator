@@ -23,7 +23,9 @@ export type ListLaboratoriesOptions = {
   size?: number
 }
 
-export function listLaboratories(options: ListLaboratoriesOptions = {}): Promise<PageResponse<Laboratory>> {
+export function listLaboratories(
+  options: ListLaboratoriesOptions = {},
+): Promise<PageResponse<Laboratory>> {
   const { status, search, page = 0, size = 10 } = options
   const activeParam =
     status === 'active' ? { active: true } : status === 'inactive' ? { active: false } : {}

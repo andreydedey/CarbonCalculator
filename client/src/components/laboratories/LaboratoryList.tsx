@@ -18,13 +18,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useDialog } from '@/hooks/use-dialog'
 import { useInstitution } from '@/context/InstitutionContext'
+import { useDialog } from '@/hooks/use-dialog'
 import { getInstitution } from '@/lib/api/institutions'
 import {
   activateLaboratory,
-  type LabStatusFilter,
   type Laboratory,
+  type LabStatusFilter,
   listLaboratories,
 } from '@/lib/api/laboratories'
 
@@ -74,7 +74,7 @@ export const LaboratoryList: React.FC = () => {
 
   const { data: institution } = useQuery({
     queryKey: ['institution', institutionId],
-    queryFn: () => getInstitution(institutionId!),
+    queryFn: () => getInstitution(institutionId ?? ''),
     enabled: !!institutionId,
   })
 

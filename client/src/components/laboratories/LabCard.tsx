@@ -68,8 +68,9 @@ export const LabCard: React.FC<LabCardProps> = ({
   onDeactivate,
   onDelete,
 }) => (
-  <div
-    className="rounded-[10px] border border-border bg-card cursor-pointer transition-colors hover:bg-muted/40"
+  <button
+    type="button"
+    className="w-full rounded-[10px] border border-border bg-card cursor-pointer transition-colors hover:bg-muted/40 text-left"
     onClick={() => onEdit(laboratory)}
   >
     {/* Top */}
@@ -154,5 +155,5 @@ export const LabCard: React.FC<LabCardProps> = ({
         <Progress value={0} className="h-1 w-[100px]" />
       </div>
     </div>
-  </div>
+  </button>
 )

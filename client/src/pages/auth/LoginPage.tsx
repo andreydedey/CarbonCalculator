@@ -6,12 +6,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import { AuthBrandPanel } from '@/components/auth/AuthBrandPanel'
 import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton'
 import { Button } from '@/components/ui/button'
+import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { FieldError } from '@/components/ui/field-error'
 import { useAuth } from '@/context/AuthContext'
-import { type LoginFormData, loginSchema } from '@/lib/schemas/authSchemas'
 import { ApiError } from '@/lib/api/client'
+import { type LoginFormData, loginSchema } from '@/lib/schemas/authSchemas'
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth()
@@ -44,9 +44,7 @@ export const LoginPage: React.FC = () => {
         <div className="w-full max-w-sm space-y-6">
           <div className="space-y-2 text-center">
             <h2 className="font-heading text-2xl font-bold">Entrar</h2>
-            <p className="text-muted-foreground text-sm">
-              Acesse sua conta para continuar
-            </p>
+            <p className="text-muted-foreground text-sm">Acesse sua conta para continuar</p>
           </div>
 
           {error && (

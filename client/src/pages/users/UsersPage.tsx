@@ -7,13 +7,7 @@ import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { useDialog } from '@/hooks/use-dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,14 +19,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useAuth } from '@/context/AuthContext'
+import { useDialog } from '@/hooks/use-dialog'
 import { ApiError } from '@/lib/api/client'
-import {
-  type UserMember,
-  changeRole,
-  inviteUser,
-  listMembers,
-  revokeAccess,
-} from '@/lib/api/users'
+import { changeRole, inviteUser, listMembers, revokeAccess, type UserMember } from '@/lib/api/users'
 import { type InviteFormData, inviteSchema } from '@/lib/schemas/inviteSchema'
 
 const ROLE_LABELS: Record<string, string> = {
@@ -49,10 +38,7 @@ export const UsersPage: React.FC = () => {
   const { user: currentUser } = useAuth()
   const inviteDialog = useDialog()
 
-  const {
-    data: membersPage,
-    refetch,
-  } = useQuery({
+  const { data: membersPage, refetch } = useQuery({
     queryKey: ['users'],
     queryFn: listMembers,
   })
@@ -98,12 +84,9 @@ export const UsersPage: React.FC = () => {
     },
   })
 
-  const isSelf = (member: UserMember) =>
-    member.email === currentUser?.email
+  const isSelf = (member: UserMember) => member.email === currentUser?.email
 
-  const managerCount = members.filter(
-    (m) => m.role === 'MANAGER' && m.status === 'ACTIVE',
-  ).length
+  const managerCount = members.filter((m) => m.role === 'MANAGER' && m.status === 'ACTIVE').length
   const researcherCount = members.filter(
     (m) => m.role === 'RESEARCHER' && m.status === 'ACTIVE',
   ).length
@@ -113,9 +96,7 @@ export const UsersPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-heading text-xl font-bold">Gestão de Usuários</h1>
-          <p className="text-muted-foreground text-sm">
-            Gerencie os membros da instituição
-          </p>
+          <p className="text-muted-foreground text-sm">Gerencie os membros da instituição</p>
         </div>
 
         <Button size="sm" onClick={() => inviteDialog.openDialog()}>
@@ -124,9 +105,15 @@ export const UsersPage: React.FC = () => {
         </Button>
       </div>
 
-      <Dialog open={inviteDialog.open} onOpenChange={(open) => {
-        if (!open) { inviteDialog.closeDialog(); inviteForm.reset() }
-      }}>
+      <Dialog
+        open={inviteDialog.open}
+        onOpenChange={(open) => {
+          if (!open) {
+            inviteDialog.closeDialog()
+            inviteForm.reset()
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Convidar Membro</DialogTitle>
@@ -185,9 +172,7 @@ export const UsersPage: React.FC = () => {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Gestores
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Gestores</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{managerCount}</p>
@@ -223,22 +208,16 @@ export const UsersPage: React.FC = () => {
                   <tr key={member.id} className="border-b last:border-0">
                     <td className="px-4 py-3">
                       {member.name ?? '—'}
-                      {isSelf(member) && (
-                        <span className="ml-1 text-muted-foreground">(você)</span>
-                      )}
+                      {isSelf(member) && <span className="ml-1 text-muted-foreground">(você)</span>}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{member.email}</td>
                     <td className="px-4 py-3">
-                      <Badge
-                        variant={member.role === 'MANAGER' ? 'default' : 'secondary'}
-                      >
+                      <Badge variant={member.role === 'MANAGER' ? 'default' : 'secondary'}>
                         {ROLE_LABELS[member.role] ?? member.role}
                       </Badge>
                     </td>
                     <td className="px-4 py-3">
-                      <Badge
-                        variant={member.status === 'ACTIVE' ? 'outline' : 'secondary'}
-                      >
+                      <Badge variant={member.status === 'ACTIVE' ? 'outline' : 'secondary'}>
                         {STATUS_LABELS[member.status] ?? member.status}
                       </Badge>
                     </td>
@@ -274,10 +253,7 @@ export const UsersPage: React.FC = () => {
                 ))}
                 {members.length === 0 && (
                   <tr>
-                    <td
-                      colSpan={5}
-                      className="px-4 py-8 text-center text-muted-foreground"
-                    >
+                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                       Nenhum membro encontrado
                     </td>
                   </tr>
