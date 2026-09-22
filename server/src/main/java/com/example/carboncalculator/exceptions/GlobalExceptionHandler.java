@@ -23,6 +23,8 @@ public class GlobalExceptionHandler {
             InvalidStateException.class,
             InvalidRoleException.class,
             MissingLaboratoryNameException.class,
+            MissingEquipmentModelNameException.class,
+            InvalidQuantityException.class,
             CannotModifySelfException.class,
             LastManagerException.class
     })
@@ -48,6 +50,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
             LaboratoryNotFoundException.class,
+            EquipmentModelNotFoundException.class,
+            LaboratoryEquipmentNotFoundException.class,
             MemberNotFoundException.class,
             InstitutionNotFoundException.class
     })
@@ -61,7 +65,9 @@ public class GlobalExceptionHandler {
             EmailAlreadyExistsException.class,
             DuplicateAcronymException.class,
             DuplicateInviteException.class,
-            LaboratoryHasDependentsException.class
+            LaboratoryHasDependentsException.class,
+            EquipmentModelHasDependentsException.class,
+            DuplicateLaboratoryEquipmentException.class
     })
     public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.CONFLICT, ex.getMessage(), request);
