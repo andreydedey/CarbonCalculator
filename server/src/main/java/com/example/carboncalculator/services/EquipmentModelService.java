@@ -40,13 +40,15 @@ public class EquipmentModelService {
         EquipmentModel model = EquipmentModel.builder()
                 .institution(institution)
                 .name(request.name())
+                .equipmentType(request.equipmentType())
                 .processor(request.processor())
+                .tdpWatts(request.tdpWatts())
+                .coreCount(request.coreCount())
                 .memoryGb(request.memoryGb())
-                .hasDedicatedGpu(request.hasDedicatedGpu() != null && request.hasDedicatedGpu())
-                .gpuModel(request.gpuModel())
                 .monitorName(request.monitorName())
-                .monitorSizeInches(request.monitorSizeInches())
-                .monitorResolution(request.monitorResolution())
+                .monitorWatts(request.monitorWatts())
+                .operatingSystem(request.operatingSystem())
+                .description(request.description())
                 .build();
 
         return EquipmentModelMapper.toDTO(equipmentModelRepository.save(model));
@@ -62,13 +64,15 @@ public class EquipmentModelService {
 
         EquipmentModel model = getOrThrow(id);
         model.setName(request.name());
+        model.setEquipmentType(request.equipmentType());
         model.setProcessor(request.processor());
+        model.setTdpWatts(request.tdpWatts());
+        model.setCoreCount(request.coreCount());
         model.setMemoryGb(request.memoryGb());
-        model.setHasDedicatedGpu(request.hasDedicatedGpu() != null && request.hasDedicatedGpu());
-        model.setGpuModel(request.gpuModel());
         model.setMonitorName(request.monitorName());
-        model.setMonitorSizeInches(request.monitorSizeInches());
-        model.setMonitorResolution(request.monitorResolution());
+        model.setMonitorWatts(request.monitorWatts());
+        model.setOperatingSystem(request.operatingSystem());
+        model.setDescription(request.description());
 
         return EquipmentModelMapper.toDTO(equipmentModelRepository.save(model));
     }

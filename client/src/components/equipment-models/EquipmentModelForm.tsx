@@ -16,6 +16,13 @@ import {
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { ApiError } from '@/lib/api/client'
 import {
   type CreateEquipmentModelPayload,
@@ -24,8 +31,11 @@ import {
   updateEquipmentModel,
 } from '@/lib/api/equipment-models'
 import {
+  EQUIPMENT_TYPES,
   type EquipmentModelFormValues,
   equipmentModelFormSchema,
+  MEMORY_OPTIONS,
+  OS_OPTIONS,
 } from '@/lib/schemas/equipmentModelSchema'
 
 interface EquipmentModelFormProps {
@@ -47,25 +57,26 @@ export const EquipmentModelForm: React.FC<EquipmentModelFormProps> = ({
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<EquipmentModelFormValues>({
     resolver: zodResolver(equipmentModelFormSchema),
     values: {
       name: model?.name ?? '',
+      equipmentType: model?.equipmentType ?? '',
       processor: model?.processor ?? '',
+      tdpWatts: model?.tdpWatts ?? undefined,
+      coreCount: model?.coreCount ?? undefined,
       memoryGb: model?.memoryGb ?? undefined,
-      hasDedicatedGpu: model?.hasDedicatedGpu ?? false,
-      gpuModel: model?.gpuModel ?? '',
       monitorName: model?.monitorName ?? '',
-      monitorSizeInches: model?.monitorSizeInches ?? undefined,
-      monitorResolution: model?.monitorResolution ?? '',
+      monitorWatts: model?.monitorWatts ?? undefined,
+      operatingSystem: model?.operatingSystem ?? '',
+      description: model?.description ?? '',
     },
   })
 
   const monitorName = watch('monitorName')
-  const monitorSizeInches = watch('monitorSizeInches')
-  const monitorResolution = watch('monitorResolution')
-  const noMonitor = !monitorName && !monitorSizeInches && !monitorResolution
+  const noMonitor = !monitorName
 
   const mutation = useMutation({
     mutationFn: (payload: CreateEquipmentModelPayload) =>
@@ -86,15 +97,15 @@ export const EquipmentModelForm: React.FC<EquipmentModelFormProps> = ({
   function onSubmit(values: EquipmentModelFormValues) {
     const payload: CreateEquipmentModelPayload = {
       name: values.name.trim(),
+      ...(values.equipmentType ? { equipmentType: values.equipmentType } : {}),
       ...(values.processor?.trim() ? { processor: values.processor.trim() } : {}),
+      ...(values.tdpWatts ? { tdpWatts: values.tdpWatts } : {}),
+      ...(values.coreCount ? { coreCount: values.coreCount } : {}),
       ...(values.memoryGb ? { memoryGb: values.memoryGb } : {}),
-      hasDedicatedGpu: values.hasDedicatedGpu,
-      ...(values.gpuModel?.trim() ? { gpuModel: values.gpuModel.trim() } : {}),
       ...(values.monitorName?.trim() ? { monitorName: values.monitorName.trim() } : {}),
-      ...(values.monitorSizeInches ? { monitorSizeInches: values.monitorSizeInches } : {}),
-      ...(values.monitorResolution?.trim()
-        ? { monitorResolution: values.monitorResolution.trim() }
-        : {}),
+      ...(values.monitorWatts ? { monitorWatts: values.monitorWatts } : {}),
+      ...(values.operatingSystem ? { operatingSystem: values.operatingSystem } : {}),
+      ...(values.description?.trim() ? { description: values.description.trim() } : {}),
     }
     mutation.mutate(payload)
   }
@@ -109,99 +120,146 @@ export const EquipmentModelForm: React.FC<EquipmentModelFormProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[600px] gap-0 p-0">
+      <DialogContent className="sm:max-w-[700px] gap-0 p-0">
         <DialogHeader className="px-7 pt-5 pb-4">
           <DialogTitle className="text-base font-semibold">
-            {mode === 'edit' ? 'Editar Modelo' : 'Novo Modelo de Equipamento'}
+            {mode === 'edit' ? 'Editar Equipamento' : 'Novo Equipamento'}
           </DialogTitle>
-          <DialogDescription>
-            Informe as especificações de hardware e monitor do modelo.
-          </DialogDescription>
+          <DialogDescription>Cadastre um modelo de equipamento na instituição</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="flex flex-col gap-5 px-7 pb-6 max-h-[60vh] overflow-y-auto">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="model-name">Nome do Modelo *</Label>
-              <Input
-                id="model-name"
-                placeholder="Ex: Dell OptiPlex 3070"
-                aria-invalid={!!errors.name}
-                {...register('name')}
-              />
-              <FieldError message={errors.name?.message} />
-            </div>
-
+          <div className="flex flex-col gap-5 px-7 pb-6">
+            {/* Row 1: Modelo + Tipo */}
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="model-processor">Processador</Label>
+                <Label htmlFor="model-name">Modelo do Equipamento *</Label>
+                <Input
+                  id="model-name"
+                  placeholder="Ex: Dell OptiPlex 7090"
+                  aria-invalid={!!errors.name}
+                  {...register('name')}
+                />
+                <FieldError message={errors.name?.message} />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label>Tipo</Label>
+                <Select
+                  value={watch('equipmentType') || ''}
+                  onValueChange={(v) => setValue('equipmentType', v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EQUIPMENT_TYPES.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Row 2: CPU + TDP + Núcleos */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="model-processor">Processador (CPU)</Label>
                 <Input
                   id="model-processor"
-                  placeholder="Ex: Intel Core i5-9500"
+                  placeholder="Ex: Intel i7-10700"
                   {...register('processor')}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="model-memory">Memória (GB)</Label>
+                <Label htmlFor="model-tdp">TDP (Watts)</Label>
                 <Input
-                  id="model-memory"
+                  id="model-tdp"
+                  type="number"
+                  placeholder="Ex: 65"
+                  {...register('tdpWatts')}
+                />
+                <FieldError message={errors.tdpWatts?.message} />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="model-cores">Núcleos</Label>
+                <Input
+                  id="model-cores"
                   type="number"
                   placeholder="Ex: 8"
-                  {...register('memoryGb')}
+                  {...register('coreCount')}
                 />
-                <FieldError message={errors.memoryGb?.message} />
+                <FieldError message={errors.coreCount?.message} />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center gap-2">
-                <input
-                  id="model-gpu"
-                  type="checkbox"
-                  className="size-4 rounded border-border"
-                  {...register('hasDedicatedGpu')}
-                />
-                <Label htmlFor="model-gpu">GPU dedicada</Label>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="model-gpu-model">Modelo da GPU</Label>
-                <Input
-                  id="model-gpu-model"
-                  placeholder="Ex: NVIDIA GTX 1650"
-                  {...register('gpuModel')}
-                />
-              </div>
-            </div>
-
-            <div className="h-px bg-border" />
-
-            <span className="text-sm font-semibold">Monitor</span>
-
+            {/* Row 3: RAM + Monitor + Monitor Watts */}
             <div className="grid grid-cols-3 gap-4">
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="monitor-name">Nome</Label>
+                <Label>Memória RAM</Label>
+                <Select
+                  value={watch('memoryGb')?.toString() || ''}
+                  onValueChange={(v) => setValue('memoryGb', Number(v))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MEMORY_OPTIONS.map((gb) => (
+                      <SelectItem key={gb} value={String(gb)}>
+                        {gb} GB
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="monitor-name">Monitor (Modelo)</Label>
                 <Input
                   id="monitor-name"
-                  placeholder="Ex: Dell P2419H"
+                  placeholder="Ex: Dell P2422H"
                   {...register('monitorName')}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="monitor-size">Tamanho (pol.)</Label>
+                <Label htmlFor="monitor-watts">Monitor (Watts)</Label>
                 <Input
-                  id="monitor-size"
+                  id="monitor-watts"
                   type="number"
-                  step="0.1"
-                  placeholder="Ex: 23.8"
-                  {...register('monitorSizeInches')}
+                  placeholder="Ex: 25"
+                  {...register('monitorWatts')}
                 />
+                <FieldError message={errors.monitorWatts?.message} />
+              </div>
+            </div>
+
+            {/* Row 4: Sistema Operacional + Descrição */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Label>Sistema Operacional</Label>
+                <Select
+                  value={watch('operatingSystem') || ''}
+                  onValueChange={(v) => setValue('operatingSystem', v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {OS_OPTIONS.map((os) => (
+                      <SelectItem key={os} value={os}>
+                        {os}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="monitor-resolution">Resolução</Label>
+                <Label htmlFor="model-description">Descrição (opcional)</Label>
                 <Input
-                  id="monitor-resolution"
-                  placeholder="Ex: 1920x1080"
-                  {...register('monitorResolution')}
+                  id="model-description"
+                  placeholder="Observações sobre o equipamento"
+                  {...register('description')}
                 />
               </div>
             </div>
@@ -219,7 +277,7 @@ export const EquipmentModelForm: React.FC<EquipmentModelFormProps> = ({
               Cancelar
             </Button>
             <Button type="submit" disabled={mutation.isPending}>
-              {mode === 'edit' ? 'Salvar alterações' : 'Criar Modelo'}
+              {mode === 'edit' ? 'Salvar alterações' : 'Cadastrar Equipamento'}
             </Button>
           </DialogFooter>
         </form>

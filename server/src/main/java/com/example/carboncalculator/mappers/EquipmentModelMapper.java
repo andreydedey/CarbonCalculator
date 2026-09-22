@@ -12,13 +12,15 @@ public final class EquipmentModelMapper {
         return new EquipmentModelDTO(
                 entity.getId(),
                 entity.getName(),
+                entity.getEquipmentType(),
                 entity.getProcessor(),
+                entity.getTdpWatts(),
+                entity.getCoreCount(),
                 entity.getMemoryGb(),
-                entity.isHasDedicatedGpu(),
-                entity.getGpuModel(),
                 entity.getMonitorName(),
-                entity.getMonitorSizeInches(),
-                entity.getMonitorResolution(),
+                entity.getMonitorWatts(),
+                entity.getOperatingSystem(),
+                entity.getDescription(),
                 entity.hasMonitor(),
                 entity.getCreatedAt());
     }

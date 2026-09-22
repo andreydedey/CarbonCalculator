@@ -10,6 +10,18 @@ import {
 } from '@/components/ui/dropdown-menu'
 import type { EquipmentModel } from '@/lib/api/equipment-models'
 
+function cpuLabel(model: EquipmentModel): string {
+  const parts = [model.processor, model.tdpWatts ? `${model.tdpWatts}W` : null].filter(Boolean)
+  return parts.join(' / ') || '-'
+}
+
+function monitorLabel(model: EquipmentModel): string {
+  const parts = [model.monitorName, model.monitorWatts ? `${model.monitorWatts}W` : null].filter(
+    Boolean,
+  )
+  return parts.join(' / ') || '-'
+}
+
 interface EquipmentModelCardProps {
   model: EquipmentModel
   onEdit: (model: EquipmentModel) => void
@@ -33,14 +45,15 @@ export const EquipmentModelCard: React.FC<EquipmentModelCardProps> = ({
         </div>
         <div className="flex flex-col gap-0.5">
           <span className="text-base font-semibold">{model.name}</span>
-          <span className="text-[13px] text-muted-foreground">
-            {[model.processor, model.memoryGb ? `${model.memoryGb} GB` : null]
-              .filter(Boolean)
-              .join(' — ') || 'Sem especificações'}
-          </span>
+          <span className="text-[13px] text-muted-foreground">{cpuLabel(model)}</span>
         </div>
       </div>
       <div className="flex items-center gap-2.5">
+        {model.operatingSystem && (
+          <Badge variant="secondary" className="gap-1">
+            {model.operatingSystem}
+          </Badge>
+        )}
         {!model.hasMonitor && (
           <Badge variant="destructive" className="gap-1">
             <MonitorOff className="size-3" />
@@ -65,6 +78,27 @@ export const EquipmentModelCard: React.FC<EquipmentModelCardProps> = ({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+      </div>
+    </div>
+
+    <div className="h-px w-full bg-border" />
+
+    <div className="flex items-center gap-8 px-6 py-4 text-xs">
+      <div className="flex items-center gap-1.5">
+        <span className="font-medium tracking-[0.6px] text-muted-foreground uppercase">
+          Núcleos:
+        </span>
+        <span className="font-semibold">{model.coreCount ?? '-'}</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <span className="font-medium tracking-[0.6px] text-muted-foreground uppercase">RAM:</span>
+        <span className="font-semibold">{model.memoryGb ? `${model.memoryGb} GB` : '-'}</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <span className="font-medium tracking-[0.6px] text-muted-foreground uppercase">
+          Monitor:
+        </span>
+        <span className="font-semibold">{monitorLabel(model)}</span>
       </div>
     </div>
   </button>

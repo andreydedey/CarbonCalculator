@@ -4,26 +4,30 @@ import type { PageResponse } from './types'
 export type EquipmentModel = {
   id: string
   name: string
+  equipmentType?: string
   processor?: string
+  tdpWatts?: number
+  coreCount?: number
   memoryGb?: number
-  hasDedicatedGpu: boolean
-  gpuModel?: string
   monitorName?: string
-  monitorSizeInches?: number
-  monitorResolution?: string
+  monitorWatts?: number
+  operatingSystem?: string
+  description?: string
   hasMonitor: boolean
   createdAt?: string
 }
 
 export type CreateEquipmentModelPayload = {
   name: string
+  equipmentType?: string
   processor?: string
+  tdpWatts?: number
+  coreCount?: number
   memoryGb?: number
-  hasDedicatedGpu?: boolean
-  gpuModel?: string
   monitorName?: string
-  monitorSizeInches?: number
-  monitorResolution?: string
+  monitorWatts?: number
+  operatingSystem?: string
+  description?: string
 }
 
 export type ListEquipmentModelsOptions = {

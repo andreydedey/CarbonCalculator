@@ -14,7 +14,12 @@ public record LaboratoryEquipmentDTO(
             UUID id,
             String name,
             String processor,
+            Integer tdpWatts,
+            Integer coreCount,
             Integer memoryGb,
+            String monitorName,
+            Integer monitorWatts,
+            String operatingSystem,
             boolean hasMonitor) {
     }
 }

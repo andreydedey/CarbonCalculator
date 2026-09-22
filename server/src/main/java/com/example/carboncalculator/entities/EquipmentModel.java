@@ -1,6 +1,5 @@
 package com.example.carboncalculator.entities;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -41,26 +40,31 @@ public class EquipmentModel {
     @Column(nullable = false)
     private String name;
 
+    @Column(name = "equipment_type", length = 50)
+    private String equipmentType;
+
     private String processor;
+
+    @Column(name = "tdp_watts")
+    private Integer tdpWatts;
+
+    @Column(name = "core_count")
+    private Integer coreCount;
 
     @Column(name = "memory_gb")
     private Integer memoryGb;
 
-    @Builder.Default
-    @Column(name = "has_dedicated_gpu", nullable = false)
-    private boolean hasDedicatedGpu = false;
-
-    @Column(name = "gpu_model")
-    private String gpuModel;
-
     @Column(name = "monitor_name")
     private String monitorName;
 
-    @Column(name = "monitor_size_inches")
-    private BigDecimal monitorSizeInches;
+    @Column(name = "monitor_watts")
+    private Integer monitorWatts;
 
-    @Column(name = "monitor_resolution")
-    private String monitorResolution;
+    @Column(name = "operating_system", length = 100)
+    private String operatingSystem;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
@@ -69,7 +73,7 @@ public class EquipmentModel {
     private OffsetDateTime updatedAt;
 
     public boolean hasMonitor() {
-        return monitorName != null || monitorSizeInches != null || monitorResolution != null;
+        return monitorName != null;
     }
 
     @PrePersist

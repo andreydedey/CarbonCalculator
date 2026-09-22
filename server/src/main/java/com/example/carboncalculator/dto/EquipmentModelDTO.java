@@ -1,19 +1,20 @@
 package com.example.carboncalculator.dto;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public record EquipmentModelDTO(
         UUID id,
         String name,
+        String equipmentType,
         String processor,
+        Integer tdpWatts,
+        Integer coreCount,
         Integer memoryGb,
-        boolean hasDedicatedGpu,
-        String gpuModel,
         String monitorName,
-        BigDecimal monitorSizeInches,
-        String monitorResolution,
+        Integer monitorWatts,
+        String operatingSystem,
+        String description,
         boolean hasMonitor,
         OffsetDateTime createdAt) {
 }

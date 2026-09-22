@@ -4,7 +4,12 @@ export type EquipmentModelSummary = {
   id: string
   name: string
   processor?: string
+  tdpWatts?: number
+  coreCount?: number
   memoryGb?: number
+  monitorName?: string
+  monitorWatts?: number
+  operatingSystem?: string
   hasMonitor: boolean
 }
 

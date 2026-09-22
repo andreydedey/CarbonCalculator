@@ -1,14 +1,14 @@
 package com.example.carboncalculator.dto;
 
-import java.math.BigDecimal;
-
 public record CreateEquipmentModelRequest(
         String name,
+        String equipmentType,
         String processor,
+        Integer tdpWatts,
+        Integer coreCount,
         Integer memoryGb,
-        Boolean hasDedicatedGpu,
-        String gpuModel,
         String monitorName,
-        BigDecimal monitorSizeInches,
-        String monitorResolution) {
+        Integer monitorWatts,
+        String operatingSystem,
+        String description) {
 }

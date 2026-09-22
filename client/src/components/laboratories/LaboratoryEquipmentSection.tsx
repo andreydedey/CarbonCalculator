@@ -85,52 +85,77 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="px-4 py-2 text-left font-medium">Modelo</th>
-                  <th className="px-4 py-2 text-left font-medium">Sistema Operacional</th>
-                  <th className="px-4 py-2 text-right font-medium">Qtd.</th>
+                  <th className="px-4 py-2 text-left font-medium">CPU / TDP</th>
+                  <th className="px-4 py-2 text-right font-medium">Núcleos</th>
+                  <th className="px-4 py-2 text-right font-medium">RAM</th>
                   <th className="px-4 py-2 text-left font-medium">Monitor</th>
+                  <th className="px-4 py-2 text-left font-medium">Sistema Op.</th>
+                  <th className="px-4 py-2 text-right font-medium">Qtd.</th>
                   <th className="px-4 py-2 text-right font-medium">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((item) => (
-                  <tr key={item.id} className="border-b last:border-b-0">
-                    <td className="px-4 py-2">{item.equipmentModel.name}</td>
-                    <td className="px-4 py-2">{item.operatingSystem}</td>
-                    <td className="px-4 py-2 text-right">{item.quantity}</td>
-                    <td className="px-4 py-2">
-                      {item.equipmentModel.hasMonitor ? (
-                        <span className="text-muted-foreground">Sim</span>
-                      ) : (
-                        <Badge variant="destructive" className="gap-1">
-                          <MonitorOff className="size-3" />
-                          Sem monitor
-                        </Badge>
-                      )}
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="size-7"
-                          onClick={() => linkDialog.openDialog(item)}
-                        >
-                          <Pencil className="size-3.5" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="size-7 text-destructive"
-                          onClick={() => unlinkMutation.mutate(item.id)}
-                        >
-                          <Trash2 className="size-3.5" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {items.map((item) => {
+                  const m = item.equipmentModel
+                  const cpuTdp = [m.processor, m.tdpWatts ? `${m.tdpWatts}W` : null]
+                    .filter(Boolean)
+                    .join(' / ')
+                  const monitor = [m.monitorName, m.monitorWatts ? `${m.monitorWatts}W` : null]
+                    .filter(Boolean)
+                    .join(' / ')
+                  return (
+                    <tr key={item.id} className="border-b last:border-b-0">
+                      <td className="px-4 py-2 font-medium">{m.name}</td>
+                      <td className="px-4 py-2 font-mono text-xs text-muted-foreground">
+                        {cpuTdp || '-'}
+                      </td>
+                      <td className="px-4 py-2 text-right font-mono text-xs">
+                        {m.coreCount ?? '-'}
+                      </td>
+                      <td className="px-4 py-2 text-right font-mono text-xs">
+                        {m.memoryGb ? `${m.memoryGb} GB` : '-'}
+                      </td>
+                      <td className="px-4 py-2 text-xs">
+                        {m.hasMonitor ? (
+                          <span className="text-muted-foreground">{monitor}</span>
+                        ) : (
+                          <Badge variant="destructive" className="gap-1">
+                            <MonitorOff className="size-3" />
+                            Sem monitor
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-4 py-2">
+                        {item.operatingSystem && (
+                          <Badge variant="secondary">{item.operatingSystem}</Badge>
+                        )}
+                      </td>
+                      <td className="px-4 py-2 text-right font-mono text-xs">{item.quantity}</td>
+                      <td className="px-4 py-2 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-7"
+                            onClick={() => linkDialog.openDialog(item)}
+                          >
+                            <Pencil className="size-3.5" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 text-destructive"
+                            onClick={() => unlinkMutation.mutate(item.id)}
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
