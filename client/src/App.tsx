@@ -7,6 +7,7 @@ import { AuthProvider } from '@/context/AuthContext'
 import { InstitutionProvider } from '@/context/InstitutionContext'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
+import { EquipmentModelsPage } from '@/pages/equipment-models/EquipmentModelsPage'
 import { InstitutionsPage } from '@/pages/institutions/InstitutionsPage'
 import { LaboratoriesPage } from '@/pages/laboratories/LaboratoriesPage'
 import { UsersPage } from '@/pages/users/UsersPage'
@@ -21,6 +22,7 @@ export const App: React.FC = () => (
           <Route element={<AppLayout />}>
             <Route path="/institutions" element={<InstitutionsPage />} />
             <Route path="/laboratories" element={<LaboratoriesPage />} />
+            <Route path="/equipment-models" element={<EquipmentModelsPage />} />
             <Route path="/users" element={<UsersPage />} />
           </Route>
         </Route>
