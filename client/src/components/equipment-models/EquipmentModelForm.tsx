@@ -1,10 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
-import { AlertTriangle } from 'lucide-react'
 import type React from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -35,7 +35,6 @@ import {
   type EquipmentModelFormValues,
   equipmentModelFormSchema,
   MEMORY_OPTIONS,
-  OS_OPTIONS,
 } from '@/lib/schemas/equipmentModelSchema'
 
 interface EquipmentModelFormProps {
@@ -68,15 +67,14 @@ export const EquipmentModelForm: React.FC<EquipmentModelFormProps> = ({
       tdpWatts: model?.tdpWatts ?? undefined,
       coreCount: model?.coreCount ?? undefined,
       memoryGb: model?.memoryGb ?? undefined,
-      monitorName: model?.monitorName ?? '',
-      monitorWatts: model?.monitorWatts ?? undefined,
-      operatingSystem: model?.operatingSystem ?? '',
+      gpuModel: model?.gpuModel ?? '',
+      gpuTdpWatts: model?.gpuTdpWatts ?? undefined,
+      hasIntegratedScreen: model?.hasIntegratedScreen ?? false,
       description: model?.description ?? '',
     },
   })
 
-  const monitorName = watch('monitorName')
-  const noMonitor = !monitorName
+  const gpuModel = watch('gpuModel')
 
   const mutation = useMutation({
     mutationFn: (payload: CreateEquipmentModelPayload) =>
@@ -102,9 +100,9 @@ export const EquipmentModelForm: React.FC<EquipmentModelFormProps> = ({
       ...(values.tdpWatts ? { tdpWatts: values.tdpWatts } : {}),
       ...(values.coreCount ? { coreCount: values.coreCount } : {}),
       ...(values.memoryGb ? { memoryGb: values.memoryGb } : {}),
-      ...(values.monitorName?.trim() ? { monitorName: values.monitorName.trim() } : {}),
-      ...(values.monitorWatts ? { monitorWatts: values.monitorWatts } : {}),
-      ...(values.operatingSystem ? { operatingSystem: values.operatingSystem } : {}),
+      ...(values.gpuModel?.trim() ? { gpuModel: values.gpuModel.trim() } : {}),
+      ...(values.gpuTdpWatts ? { gpuTdpWatts: values.gpuTdpWatts } : {}),
+      hasIntegratedScreen: values.hasIntegratedScreen,
       ...(values.description?.trim() ? { description: values.description.trim() } : {}),
     }
     mutation.mutate(payload)
@@ -123,17 +121,17 @@ export const EquipmentModelForm: React.FC<EquipmentModelFormProps> = ({
       <DialogContent className="sm:max-w-[700px] gap-0 p-0">
         <DialogHeader className="px-7 pt-5 pb-4">
           <DialogTitle className="text-base font-semibold">
-            {mode === 'edit' ? 'Editar Equipamento' : 'Novo Equipamento'}
+            {mode === 'edit' ? 'Editar Computador' : 'Novo Computador'}
           </DialogTitle>
-          <DialogDescription>Cadastre um modelo de equipamento na instituição</DialogDescription>
+          <DialogDescription>Cadastre um modelo de computador na instituição</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-5 px-7 pb-6">
             {/* Row 1: Modelo + Tipo */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-[1fr_auto] gap-4">
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="model-name">Modelo do Equipamento *</Label>
+                <Label htmlFor="model-name">Modelo do Computador *</Label>
                 <Input
                   id="model-name"
                   placeholder="Ex: Dell OptiPlex 7090"
@@ -142,7 +140,7 @@ export const EquipmentModelForm: React.FC<EquipmentModelFormProps> = ({
                 />
                 <FieldError message={errors.name?.message} />
               </div>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5 min-w-[180px]">
                 <Label>Tipo</Label>
                 <Select
                   value={watch('equipmentType') || ''}
@@ -194,7 +192,7 @@ export const EquipmentModelForm: React.FC<EquipmentModelFormProps> = ({
               </div>
             </div>
 
-            {/* Row 3: RAM + Monitor + Monitor Watts */}
+            {/* Row 3: RAM + GPU Modelo + GPU TDP */}
             <div className="grid grid-cols-3 gap-4">
               <div className="flex flex-col gap-1.5">
                 <Label>Memória RAM</Label>
@@ -215,44 +213,33 @@ export const EquipmentModelForm: React.FC<EquipmentModelFormProps> = ({
                 </Select>
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="monitor-name">Monitor (Modelo)</Label>
-                <Input
-                  id="monitor-name"
-                  placeholder="Ex: Dell P2422H"
-                  {...register('monitorName')}
-                />
+                <Label htmlFor="gpu-model">GPU Dedicada (Modelo)</Label>
+                <Input id="gpu-model" placeholder="Ex: NVIDIA GTX 1650" {...register('gpuModel')} />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="monitor-watts">Monitor (Watts)</Label>
+                <Label htmlFor="gpu-tdp">GPU TDP (Watts)</Label>
                 <Input
-                  id="monitor-watts"
+                  id="gpu-tdp"
                   type="number"
-                  placeholder="Ex: 25"
-                  {...register('monitorWatts')}
+                  placeholder="Ex: 75"
+                  disabled={!gpuModel}
+                  {...register('gpuTdpWatts')}
                 />
-                <FieldError message={errors.monitorWatts?.message} />
+                <FieldError message={errors.gpuTdpWatts?.message} />
               </div>
             </div>
 
-            {/* Row 4: Sistema Operacional + Descrição */}
+            {/* Row 4: Tela integrada + Descrição */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <Label>Sistema Operacional</Label>
-                <Select
-                  value={watch('operatingSystem') || ''}
-                  onValueChange={(v) => setValue('operatingSystem', v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {OS_OPTIONS.map((os) => (
-                      <SelectItem key={os} value={os}>
-                        {os}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center gap-2 pt-6">
+                <Checkbox
+                  id="has-integrated-screen"
+                  checked={watch('hasIntegratedScreen')}
+                  onCheckedChange={(checked) => setValue('hasIntegratedScreen', checked === true)}
+                />
+                <Label htmlFor="has-integrated-screen" className="cursor-pointer">
+                  Tela integrada (notebook / all-in-one)
+                </Label>
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="model-description">Descrição (opcional)</Label>
@@ -263,13 +250,6 @@ export const EquipmentModelForm: React.FC<EquipmentModelFormProps> = ({
                 />
               </div>
             </div>
-
-            {noMonitor && (
-              <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
-                <AlertTriangle className="size-3.5 shrink-0" />
-                <span>Sem dados de monitor, o consumo calculado ficará subestimado.</span>
-              </div>
-            )}
           </div>
 
           <DialogFooter className="mx-0 mb-0">
@@ -277,7 +257,7 @@ export const EquipmentModelForm: React.FC<EquipmentModelFormProps> = ({
               Cancelar
             </Button>
             <Button type="submit" disabled={mutation.isPending}>
-              {mode === 'edit' ? 'Salvar alterações' : 'Cadastrar Equipamento'}
+              {mode === 'edit' ? 'Salvar alterações' : 'Cadastrar Computador'}
             </Button>
           </DialogFooter>
         </form>

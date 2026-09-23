@@ -9,11 +9,10 @@ export type EquipmentModel = {
   tdpWatts?: number
   coreCount?: number
   memoryGb?: number
-  monitorName?: string
-  monitorWatts?: number
-  operatingSystem?: string
+  gpuModel?: string
+  gpuTdpWatts?: number
+  hasIntegratedScreen: boolean
   description?: string
-  hasMonitor: boolean
   createdAt?: string
 }
 
@@ -24,9 +23,9 @@ export type CreateEquipmentModelPayload = {
   tdpWatts?: number
   coreCount?: number
   memoryGb?: number
-  monitorName?: string
-  monitorWatts?: number
-  operatingSystem?: string
+  gpuModel?: string
+  gpuTdpWatts?: number
+  hasIntegratedScreen?: boolean
   description?: string
 }
 

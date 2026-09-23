@@ -1,4 +1,4 @@
-import { Cpu, EllipsisVertical, MonitorOff } from 'lucide-react'
+import { Cpu, EllipsisVertical, Monitor } from 'lucide-react'
 import type React from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -12,13 +12,6 @@ import type { EquipmentModel } from '@/lib/api/equipment-models'
 
 function cpuLabel(model: EquipmentModel): string {
   const parts = [model.processor, model.tdpWatts ? `${model.tdpWatts}W` : null].filter(Boolean)
-  return parts.join(' / ') || '-'
-}
-
-function monitorLabel(model: EquipmentModel): string {
-  const parts = [model.monitorName, model.monitorWatts ? `${model.monitorWatts}W` : null].filter(
-    Boolean,
-  )
   return parts.join(' / ') || '-'
 }
 
@@ -49,15 +42,20 @@ export const EquipmentModelCard: React.FC<EquipmentModelCardProps> = ({
         </div>
       </div>
       <div className="flex items-center gap-2.5">
-        {model.operatingSystem && (
+        {model.equipmentType && (
           <Badge variant="secondary" className="gap-1">
-            {model.operatingSystem}
+            {model.equipmentType}
           </Badge>
         )}
-        {!model.hasMonitor && (
-          <Badge variant="destructive" className="gap-1">
-            <MonitorOff className="size-3" />
-            Sem monitor
+        {model.hasIntegratedScreen && (
+          <Badge variant="outline" className="gap-1">
+            <Monitor className="size-3" />
+            Tela integrada
+          </Badge>
+        )}
+        {model.gpuModel && (
+          <Badge variant="secondary" className="gap-1">
+            GPU: {model.gpuModel}
           </Badge>
         )}
         <DropdownMenu>
@@ -94,12 +92,14 @@ export const EquipmentModelCard: React.FC<EquipmentModelCardProps> = ({
         <span className="font-medium tracking-[0.6px] text-muted-foreground uppercase">RAM:</span>
         <span className="font-semibold">{model.memoryGb ? `${model.memoryGb} GB` : '-'}</span>
       </div>
-      <div className="flex items-center gap-1.5">
-        <span className="font-medium tracking-[0.6px] text-muted-foreground uppercase">
-          Monitor:
-        </span>
-        <span className="font-semibold">{monitorLabel(model)}</span>
-      </div>
+      {model.gpuModel && (
+        <div className="flex items-center gap-1.5">
+          <span className="font-medium tracking-[0.6px] text-muted-foreground uppercase">
+            GPU TDP:
+          </span>
+          <span className="font-semibold">{model.gpuTdpWatts ? `${model.gpuTdpWatts}W` : '-'}</span>
+        </div>
+      )}
     </div>
   </button>
 )

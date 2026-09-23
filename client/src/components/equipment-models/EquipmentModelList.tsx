@@ -1,21 +1,27 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { Cpu, Plus, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import type React from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useDebounce } from 'use-debounce'
 import { DeleteEquipmentModelDialog } from '@/components/equipment-models/DeleteEquipmentModelDialog'
 import { EquipmentModelCard } from '@/components/equipment-models/EquipmentModelCard'
 import { EquipmentModelForm } from '@/components/equipment-models/EquipmentModelForm'
-import { SummaryCard } from '@/components/laboratories/LabCard'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
 import { useDialog } from '@/hooks/use-dialog'
 import { type EquipmentModel, listEquipmentModels } from '@/lib/api/equipment-models'
 
-export const EquipmentModelList: React.FC = () => {
+interface EquipmentModelListProps {
+  formOpen?: boolean
+  onFormOpenChange?: (open: boolean) => void
+}
+
+export const EquipmentModelList: React.FC<EquipmentModelListProps> = ({
+  formOpen,
+  onFormOpenChange,
+}) => {
   const [searchParams, setSearchParams] = useSearchParams()
-  const form = useDialog<EquipmentModel>()
+  const editDialog = useDialog<EquipmentModel>()
   const deleteDialog = useDialog<EquipmentModel>()
 
   const search = searchParams.get('q') ?? ''
@@ -48,10 +54,19 @@ export const EquipmentModelList: React.FC = () => {
   })
 
   const models = modelsData?.pages.flatMap((p) => p.content) ?? []
-  const totalModels = modelsData?.pages[0]?.totalElements ?? 0
+
+  const isFormOpen = editDialog.open || (formOpen ?? false)
+
+  function handleFormOpenChange(open: boolean) {
+    if (!open) {
+      editDialog.closeDialog()
+      onFormOpenChange?.(false)
+    }
+  }
 
   function handleSaved() {
-    form.closeDialog()
+    editDialog.closeDialog()
+    onFormOpenChange?.(false)
     refetch()
   }
 
@@ -62,34 +77,12 @@ export const EquipmentModelList: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col gap-1">
-          <p className="text-xs font-normal text-muted-foreground">
-            Cadastro &rsaquo; Modelos de Equipamento
-          </p>
-          <h1 className="font-heading text-2xl font-bold">Modelos de Equipamento</h1>
-        </div>
-        <Button onClick={() => form.openDialog()}>
-          <Plus className="size-4" />
-          Novo Modelo
-        </Button>
-      </div>
-
       <EquipmentModelForm
-        model={form.data ?? undefined}
-        open={form.open}
-        onOpenChange={(open) => !open && form.closeDialog()}
+        model={editDialog.data ?? undefined}
+        open={isFormOpen}
+        onOpenChange={handleFormOpenChange}
         onSaved={handleSaved}
       />
-
-      <div className="flex gap-4">
-        <SummaryCard
-          value={String(totalModels)}
-          label="Total de Modelos"
-          icon={<Cpu className="size-[18px] text-primary-foreground" />}
-          variant="accent"
-        />
-      </div>
 
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
@@ -113,7 +106,7 @@ export const EquipmentModelList: React.FC = () => {
             <EquipmentModelCard
               key={model.id}
               model={model}
-              onEdit={(m) => form.openDialog(m)}
+              onEdit={(m) => editDialog.openDialog(m)}
               onDelete={(m) => deleteDialog.openDialog(m)}
             />
           ))}
