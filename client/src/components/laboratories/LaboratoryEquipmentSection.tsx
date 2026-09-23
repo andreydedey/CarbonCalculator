@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, MonitorOff, Pencil, Trash2 } from 'lucide-react'
+import { AlertTriangle, Monitor, MonitorOff, Pencil, Trash2 } from 'lucide-react'
 import type React from 'react'
 import { toast } from 'sonner'
 import { LinkEquipmentDialog } from '@/components/laboratories/LinkEquipmentDialog'
@@ -100,9 +100,14 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
                   const cpuTdp = [m.processor, m.tdpWatts ? `${m.tdpWatts}W` : null]
                     .filter(Boolean)
                     .join(' / ')
-                  const monitor = [m.monitorName, m.monitorWatts ? `${m.monitorWatts}W` : null]
-                    .filter(Boolean)
-                    .join(' / ')
+                  const hasMonitor = item.monitor != null || m.hasIntegratedScreen
+                  const monitorLabel = m.hasIntegratedScreen
+                    ? 'Tela integrada'
+                    : item.monitor
+                      ? [item.monitor.name, item.monitor.watts ? `${item.monitor.watts}W` : null]
+                          .filter(Boolean)
+                          .join(' / ')
+                      : null
                   return (
                     <tr key={item.id} className="border-b last:border-b-0">
                       <td className="px-4 py-2 font-medium">{m.name}</td>
@@ -116,8 +121,11 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
                         {m.memoryGb ? `${m.memoryGb} GB` : '-'}
                       </td>
                       <td className="px-4 py-2 text-xs">
-                        {m.hasMonitor ? (
-                          <span className="text-muted-foreground">{monitor}</span>
+                        {hasMonitor ? (
+                          <span className="flex items-center gap-1 text-muted-foreground">
+                            {m.hasIntegratedScreen && <Monitor className="size-3" />}
+                            {monitorLabel}
+                          </span>
                         ) : (
                           <Badge variant="destructive" className="gap-1">
                             <MonitorOff className="size-3" />
@@ -165,11 +173,12 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
               Total: <strong className="text-foreground">{composition?.totalMachines}</strong>{' '}
               máquinas
             </span>
-            {composition && composition.modelsWithoutMonitor > 0 && (
+            {composition && composition.configurationsWithoutMonitor > 0 && (
               <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
                 <AlertTriangle className="size-3.5" />
                 <span>
-                  {composition.modelsWithoutMonitor} modelo(s) sem monitor — consumo subestimado
+                  {composition.configurationsWithoutMonitor} configuração(ões) sem monitor — consumo
+                  subestimado
                 </span>
               </div>
             )}

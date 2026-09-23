@@ -1,4 +1,5 @@
 import { api } from './client.ts'
+import type { Monitor } from './monitors'
 
 export type EquipmentModelSummary = {
   id: string
@@ -7,16 +8,14 @@ export type EquipmentModelSummary = {
   tdpWatts?: number
   coreCount?: number
   memoryGb?: number
-  monitorName?: string
-  monitorWatts?: number
-  operatingSystem?: string
-  hasMonitor: boolean
+  hasIntegratedScreen: boolean
 }
 
 export type LaboratoryEquipment = {
   id: string
   equipmentModel: EquipmentModelSummary
   operatingSystem: string
+  monitor: Monitor | null
   quantity: number
   createdAt?: string
 }
@@ -24,12 +23,13 @@ export type LaboratoryEquipment = {
 export type LaboratoryComposition = {
   items: LaboratoryEquipment[]
   totalMachines: number
-  modelsWithoutMonitor: number
+  configurationsWithoutMonitor: number
 }
 
 export type CreateLaboratoryEquipmentPayload = {
   equipmentModelId: string
   operatingSystem: string
+  monitorId?: string | null
   quantity: number
 }
 

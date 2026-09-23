@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Monitor } from 'lucide-react'
 import type React from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -31,9 +31,11 @@ import {
   linkEquipment,
   updateLabEquipment,
 } from '@/lib/api/laboratory-equipment'
+import { listMonitors } from '@/lib/api/monitors'
 import {
   type LaboratoryEquipmentFormValues,
   laboratoryEquipmentFormSchema,
+  OS_OPTIONS,
 } from '@/lib/schemas/laboratoryEquipmentSchema'
 
 interface LinkEquipmentDialogProps {
@@ -60,6 +62,13 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
   })
   const models = modelsPage?.content ?? []
 
+  const { data: monitorsPage } = useQuery({
+    queryKey: ['monitors', 'all'],
+    queryFn: () => listMonitors({ size: 100 }),
+    enabled: open,
+  })
+  const monitors = monitorsPage?.content ?? []
+
   const {
     register,
     handleSubmit,
@@ -72,12 +81,14 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
     values: {
       equipmentModelId: equipment?.equipmentModel.id ?? '',
       operatingSystem: equipment?.operatingSystem ?? '',
+      monitorId: equipment?.monitor?.id ?? '',
       quantity: equipment?.quantity ?? 1,
     },
   })
 
   const selectedModelId = watch('equipmentModelId')
   const selectedModel = models.find((m) => m.id === selectedModelId)
+  const hasIntegratedScreen = selectedModel?.hasIntegratedScreen ?? false
 
   const mutation = useMutation({
     mutationFn: (payload: CreateLaboratoryEquipmentPayload) =>
@@ -96,9 +107,11 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
   })
 
   function onSubmit(values: LaboratoryEquipmentFormValues) {
+    const monitorId = hasIntegratedScreen ? undefined : values.monitorId || undefined
     mutation.mutate({
       equipmentModelId: values.equipmentModelId,
       operatingSystem: values.operatingSystem.trim(),
+      monitorId: monitorId ?? null,
       quantity: values.quantity,
     })
   }
@@ -119,21 +132,21 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
             {mode === 'edit' ? 'Editar Configuração' : 'Vincular Equipamento'}
           </DialogTitle>
           <DialogDescription>
-            Selecione um modelo de equipamento e informe o sistema operacional e a quantidade.
+            Selecione um computador, sistema operacional, monitor e a quantidade.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-5 px-7 pb-6">
             <div className="flex flex-col gap-1.5">
-              <Label>Modelo de Equipamento *</Label>
+              <Label>Computador *</Label>
               <Select
                 value={selectedModelId}
                 onValueChange={(v) => setValue('equipmentModelId', v)}
                 disabled={mode === 'edit'}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione um modelo" />
+                  <SelectValue placeholder="Selecione um computador" />
                 </SelectTrigger>
                 <SelectContent>
                   {models.map((m) => (
@@ -146,25 +159,61 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
               <FieldError message={errors.equipmentModelId?.message} />
             </div>
 
-            {selectedModel && !selectedModel.hasMonitor && (
-              <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
-                <AlertTriangle className="size-3.5 shrink-0" />
-                <span>
-                  Este modelo não possui dados de monitor. O consumo calculado ficará subestimado.
-                </span>
+            <div className="flex flex-col gap-1.5">
+              <Label>Sistema Operacional *</Label>
+              <Select
+                value={watch('operatingSystem')}
+                onValueChange={(v) => setValue('operatingSystem', v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o sistema operacional" />
+                </SelectTrigger>
+                <SelectContent>
+                  {OS_OPTIONS.map((os) => (
+                    <SelectItem key={os} value={os}>
+                      {os}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FieldError message={errors.operatingSystem?.message} />
+            </div>
+
+            {hasIntegratedScreen ? (
+              <div className="flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200">
+                <Monitor className="size-3.5 shrink-0" />
+                <span>Este computador possui tela integrada — monitor externo não aplicável.</span>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                <Label>Monitor</Label>
+                <Select
+                  value={watch('monitorId') || ''}
+                  onValueChange={(v) => setValue('monitorId', v === '__none__' ? '' : v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Nenhum (sem monitor externo)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Nenhum</SelectItem>
+                    {monitors.map((mon) => (
+                      <SelectItem key={mon.id} value={mon.id}>
+                        {mon.name}
+                        {mon.watts ? ` (${mon.watts}W)` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FieldError message={errors.monitorId?.message} />
               </div>
             )}
 
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="link-os">Sistema Operacional *</Label>
-              <Input
-                id="link-os"
-                placeholder="Ex: Windows 11"
-                aria-invalid={!!errors.operatingSystem}
-                {...register('operatingSystem')}
-              />
-              <FieldError message={errors.operatingSystem?.message} />
-            </div>
+            {!hasIntegratedScreen && !watch('monitorId') && selectedModel && (
+              <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                <AlertTriangle className="size-3.5 shrink-0" />
+                <span>Nenhum monitor selecionado. O consumo calculado ficará subestimado.</span>
+              </div>
+            )}
 
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="link-qty">Quantidade *</Label>
