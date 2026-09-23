@@ -1,6 +1,7 @@
 import type React from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider } from '@/context/AuthContext'
@@ -13,6 +14,7 @@ import { LaboratoriesPage } from '@/pages/laboratories/LaboratoriesPage'
 import { UsersPage } from '@/pages/users/UsersPage'
 
 export const App: React.FC = () => (
+  <ErrorBoundary>
   <AuthProvider>
     <InstitutionProvider>
       <Routes>
@@ -31,4 +33,5 @@ export const App: React.FC = () => (
       <Toaster position="bottom-right" />
     </InstitutionProvider>
   </AuthProvider>
+  </ErrorBoundary>
 )
