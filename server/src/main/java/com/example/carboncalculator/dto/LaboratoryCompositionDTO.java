@@ -5,5 +5,5 @@ import java.util.List;
 public record LaboratoryCompositionDTO(
         List<LaboratoryEquipmentDTO> items,
         int totalMachines,
-        int modelsWithoutMonitor) {
+        int configurationsWithoutMonitor) {
 }

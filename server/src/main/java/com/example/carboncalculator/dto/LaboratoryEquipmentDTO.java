@@ -7,6 +7,7 @@ public record LaboratoryEquipmentDTO(
         UUID id,
         EquipmentModelSummaryDTO equipmentModel,
         String operatingSystem,
+        MonitorDTO monitor,
         int quantity,
         OffsetDateTime createdAt) {
 
@@ -17,9 +18,6 @@ public record LaboratoryEquipmentDTO(
             Integer tdpWatts,
             Integer coreCount,
             Integer memoryGb,
-            String monitorName,
-            Integer monitorWatts,
-            String operatingSystem,
-            boolean hasMonitor) {
+            boolean hasIntegratedScreen) {
     }
 }

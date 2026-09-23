@@ -44,6 +44,10 @@ public class LaboratoryEquipment {
     @Column(name = "operating_system", nullable = false, length = 100)
     private String operatingSystem;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "monitor_id")
+    private Monitor monitor;
+
     @Column(nullable = false)
     private int quantity;
 

@@ -12,6 +12,7 @@ import com.example.carboncalculator.dto.LaboratoryEquipmentDTO;
 import com.example.carboncalculator.entities.EquipmentModel;
 import com.example.carboncalculator.entities.Laboratory;
 import com.example.carboncalculator.entities.LaboratoryEquipment;
+import com.example.carboncalculator.entities.Monitor;
 import com.example.carboncalculator.exceptions.DuplicateLaboratoryEquipmentException;
 import com.example.carboncalculator.exceptions.InvalidQuantityException;
 import com.example.carboncalculator.exceptions.LaboratoryEquipmentNotFoundException;
@@ -28,6 +29,7 @@ public class LaboratoryEquipmentService {
     private final LaboratoryEquipmentRepository laboratoryEquipmentRepository;
     private final LaboratoryRepository laboratoryRepository;
     private final EquipmentModelService equipmentModelService;
+    private final MonitorService monitorService;
 
     @Transactional
     public LaboratoryEquipmentDTO create(UUID laboratoryId, CreateLaboratoryEquipmentRequest request) {
@@ -35,9 +37,10 @@ public class LaboratoryEquipmentService {
 
         Laboratory laboratory = laboratoryRepository.getReferenceById(laboratoryId);
         EquipmentModel model = equipmentModelService.getOrThrow(request.equipmentModelId());
+        Monitor monitor = request.monitorId() != null ? monitorService.getOrThrow(request.monitorId()) : null;
 
-        if (laboratoryEquipmentRepository.existsByLaboratoryIdAndEquipmentModelIdAndOperatingSystem(
-                laboratoryId, request.equipmentModelId(), request.operatingSystem())) {
+        if (laboratoryEquipmentRepository.existsDuplicate(
+                laboratoryId, request.equipmentModelId(), request.operatingSystem(), request.monitorId())) {
             throw new DuplicateLaboratoryEquipmentException();
         }
 
@@ -45,6 +48,7 @@ public class LaboratoryEquipmentService {
                 .laboratory(laboratory)
                 .equipmentModel(model)
                 .operatingSystem(request.operatingSystem())
+                .monitor(monitor)
                 .quantity(request.quantity())
                 .build();
 
@@ -56,7 +60,10 @@ public class LaboratoryEquipmentService {
         validateQuantity(request.quantity());
 
         LaboratoryEquipment equipment = getOrThrow(id);
+        Monitor monitor = request.monitorId() != null ? monitorService.getOrThrow(request.monitorId()) : null;
+
         equipment.setOperatingSystem(request.operatingSystem());
+        equipment.setMonitor(monitor);
         equipment.setQuantity(request.quantity());
 
         return LaboratoryEquipmentMapper.toDTO(laboratoryEquipmentRepository.save(equipment));
@@ -70,13 +77,11 @@ public class LaboratoryEquipmentService {
                 .toList();
 
         int totalMachines = items.stream().mapToInt(LaboratoryEquipment::getQuantity).sum();
-        long modelsWithoutMonitor = items.stream()
-                .map(LaboratoryEquipment::getEquipmentModel)
-                .distinct()
-                .filter(m -> !m.hasMonitor())
+        long configurationsWithoutMonitor = items.stream()
+                .filter(le -> le.getMonitor() == null && !le.getEquipmentModel().isHasIntegratedScreen())
                 .count();
 
-        return new LaboratoryCompositionDTO(dtos, totalMachines, (int) modelsWithoutMonitor);
+        return new LaboratoryCompositionDTO(dtos, totalMachines, (int) configurationsWithoutMonitor);
     }
 
     @Transactional

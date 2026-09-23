@@ -21,11 +21,9 @@ public final class LaboratoryEquipmentMapper {
                         model.getTdpWatts(),
                         model.getCoreCount(),
                         model.getMemoryGb(),
-                        model.getMonitorName(),
-                        model.getMonitorWatts(),
-                        model.getOperatingSystem(),
-                        model.hasMonitor()),
+                        model.isHasIntegratedScreen()),
                 entity.getOperatingSystem(),
+                MonitorMapper.toDTO(entity.getMonitor()),
                 entity.getQuantity(),
                 entity.getCreatedAt());
     }
