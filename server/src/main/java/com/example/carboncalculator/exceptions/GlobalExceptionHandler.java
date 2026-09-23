@@ -24,6 +24,8 @@ public class GlobalExceptionHandler {
             InvalidRoleException.class,
             MissingLaboratoryNameException.class,
             MissingEquipmentModelNameException.class,
+            MissingMonitorNameException.class,
+            GpuTdpRequiredException.class,
             InvalidQuantityException.class,
             CannotModifySelfException.class,
             LastManagerException.class
@@ -52,6 +54,7 @@ public class GlobalExceptionHandler {
             LaboratoryNotFoundException.class,
             EquipmentModelNotFoundException.class,
             LaboratoryEquipmentNotFoundException.class,
+            MonitorNotFoundException.class,
             MemberNotFoundException.class,
             InstitutionNotFoundException.class
     })
@@ -67,6 +70,7 @@ public class GlobalExceptionHandler {
             DuplicateInviteException.class,
             LaboratoryHasDependentsException.class,
             EquipmentModelHasDependentsException.class,
+            MonitorHasDependentsException.class,
             DuplicateLaboratoryEquipmentException.class
     })
     public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex, HttpServletRequest request) {
