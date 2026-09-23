@@ -2,6 +2,8 @@ package com.example.carboncalculator.services;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthService {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+
     private final AppUserRepository userRepository;
     private final UserInstitutionRepository membershipRepository;
     private final PasswordEncoder passwordEncoder;
@@ -41,6 +45,7 @@ public class AuthService {
                 .passwordHash(passwordEncoder.encode(password))
                 .build();
         user = userRepository.save(user);
+        log.info("User registered: id={}", user.getId());
 
         activatePendingInvitations(user);
 
@@ -57,6 +62,7 @@ public class AuthService {
             throw new InvalidCredentialsException();
         }
 
+        log.info("User logged in: id={}", user.getId());
         return buildAuthResponse(user);
     }
 

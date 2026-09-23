@@ -2,6 +2,8 @@ package com.example.carboncalculator.services;
 
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -29,6 +31,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class EquipmentModelService {
 
+    private static final Logger log = LoggerFactory.getLogger(EquipmentModelService.class);
+
     private final EquipmentModelRepository equipmentModelRepository;
     private final LaboratoryEquipmentRepository laboratoryEquipmentRepository;
     private final InstitutionRepository institutionRepository;
@@ -53,7 +57,9 @@ public class EquipmentModelService {
                 .description(request.description())
                 .build();
 
-        return EquipmentModelMapper.toDTO(equipmentModelRepository.save(model));
+        EquipmentModelDTO dto = EquipmentModelMapper.toDTO(equipmentModelRepository.save(model));
+        log.info("Equipment model created: id={}", dto.id());
+        return dto;
     }
 
     public EquipmentModelDTO getById(UUID id) {
@@ -77,6 +83,7 @@ public class EquipmentModelService {
         model.setHasIntegratedScreen(Boolean.TRUE.equals(request.hasIntegratedScreen()));
         model.setDescription(request.description());
 
+        log.info("Equipment model updated: id={}", id);
         return EquipmentModelMapper.toDTO(equipmentModelRepository.save(model));
     }
 
@@ -95,6 +102,7 @@ public class EquipmentModelService {
             throw new EquipmentModelHasDependentsException(id);
         }
         equipmentModelRepository.delete(model);
+        log.info("Equipment model deleted: id={}", id);
     }
 
     EquipmentModel getOrThrow(UUID id) {

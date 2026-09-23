@@ -2,6 +2,8 @@ package com.example.carboncalculator.services;
 
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -28,6 +30,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MonitorService {
 
+    private static final Logger log = LoggerFactory.getLogger(MonitorService.class);
+
     private final MonitorRepository monitorRepository;
     private final LaboratoryEquipmentRepository laboratoryEquipmentRepository;
     private final InstitutionRepository institutionRepository;
@@ -43,7 +47,9 @@ public class MonitorService {
                 .watts(request.watts())
                 .build();
 
-        return MonitorMapper.toDTO(monitorRepository.save(monitor));
+        MonitorDTO dto = MonitorMapper.toDTO(monitorRepository.save(monitor));
+        log.info("Monitor created: id={}", dto.id());
+        return dto;
     }
 
     public MonitorDTO getById(UUID id) {
@@ -58,6 +64,7 @@ public class MonitorService {
         monitor.setName(request.name());
         monitor.setWatts(request.watts());
 
+        log.info("Monitor updated: id={}", id);
         return MonitorMapper.toDTO(monitorRepository.save(monitor));
     }
 
@@ -76,6 +83,7 @@ public class MonitorService {
             throw new MonitorHasDependentsException(id);
         }
         monitorRepository.delete(monitor);
+        log.info("Monitor deleted: id={}", id);
     }
 
     Monitor getOrThrow(UUID id) {

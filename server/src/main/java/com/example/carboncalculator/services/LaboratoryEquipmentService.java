@@ -3,6 +3,8 @@ package com.example.carboncalculator.services;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +27,8 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class LaboratoryEquipmentService {
+
+    private static final Logger log = LoggerFactory.getLogger(LaboratoryEquipmentService.class);
 
     private final LaboratoryEquipmentRepository laboratoryEquipmentRepository;
     private final LaboratoryRepository laboratoryRepository;
@@ -52,7 +56,9 @@ public class LaboratoryEquipmentService {
                 .quantity(request.quantity())
                 .build();
 
-        return LaboratoryEquipmentMapper.toDTO(laboratoryEquipmentRepository.save(equipment));
+        LaboratoryEquipmentDTO dto = LaboratoryEquipmentMapper.toDTO(laboratoryEquipmentRepository.save(equipment));
+        log.info("Equipment linked to laboratory: laboratoryId={}, equipmentId={}", laboratoryId, dto.id());
+        return dto;
     }
 
     @Transactional
@@ -66,6 +72,7 @@ public class LaboratoryEquipmentService {
         equipment.setMonitor(monitor);
         equipment.setQuantity(request.quantity());
 
+        log.info("Equipment updated in laboratory: id={}", id);
         return LaboratoryEquipmentMapper.toDTO(laboratoryEquipmentRepository.save(equipment));
     }
 
@@ -88,6 +95,7 @@ public class LaboratoryEquipmentService {
     public void delete(UUID laboratoryId, UUID id) {
         LaboratoryEquipment equipment = getOrThrow(id);
         laboratoryEquipmentRepository.delete(equipment);
+        log.info("Equipment removed from laboratory: laboratoryId={}, id={}", laboratoryId, id);
     }
 
     private LaboratoryEquipment getOrThrow(UUID id) {
