@@ -15,6 +15,7 @@ import com.example.carboncalculator.entities.EquipmentModel;
 import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.exceptions.EquipmentModelHasDependentsException;
 import com.example.carboncalculator.exceptions.EquipmentModelNotFoundException;
+import com.example.carboncalculator.exceptions.GpuTdpRequiredException;
 import com.example.carboncalculator.exceptions.MissingEquipmentModelNameException;
 import com.example.carboncalculator.mappers.EquipmentModelMapper;
 import com.example.carboncalculator.repositories.EquipmentModelRepository;
@@ -35,6 +36,7 @@ public class EquipmentModelService {
     @Transactional
     public EquipmentModelDTO create(CreateEquipmentModelRequest request) {
         validateName(request.name());
+        validateGpu(request);
 
         Institution institution = institutionRepository.getReferenceById(currentInstitutionId());
         EquipmentModel model = EquipmentModel.builder()
@@ -45,9 +47,9 @@ public class EquipmentModelService {
                 .tdpWatts(request.tdpWatts())
                 .coreCount(request.coreCount())
                 .memoryGb(request.memoryGb())
-                .monitorName(request.monitorName())
-                .monitorWatts(request.monitorWatts())
-                .operatingSystem(request.operatingSystem())
+                .gpuModel(request.gpuModel())
+                .gpuTdpWatts(request.gpuTdpWatts())
+                .hasIntegratedScreen(Boolean.TRUE.equals(request.hasIntegratedScreen()))
                 .description(request.description())
                 .build();
 
@@ -61,6 +63,7 @@ public class EquipmentModelService {
     @Transactional
     public EquipmentModelDTO update(UUID id, CreateEquipmentModelRequest request) {
         validateName(request.name());
+        validateGpu(request);
 
         EquipmentModel model = getOrThrow(id);
         model.setName(request.name());
@@ -69,9 +72,9 @@ public class EquipmentModelService {
         model.setTdpWatts(request.tdpWatts());
         model.setCoreCount(request.coreCount());
         model.setMemoryGb(request.memoryGb());
-        model.setMonitorName(request.monitorName());
-        model.setMonitorWatts(request.monitorWatts());
-        model.setOperatingSystem(request.operatingSystem());
+        model.setGpuModel(request.gpuModel());
+        model.setGpuTdpWatts(request.gpuTdpWatts());
+        model.setHasIntegratedScreen(Boolean.TRUE.equals(request.hasIntegratedScreen()));
         model.setDescription(request.description());
 
         return EquipmentModelMapper.toDTO(equipmentModelRepository.save(model));
@@ -102,6 +105,12 @@ public class EquipmentModelService {
     private void validateName(String name) {
         if (name == null || name.isBlank()) {
             throw new MissingEquipmentModelNameException();
+        }
+    }
+
+    private void validateGpu(CreateEquipmentModelRequest request) {
+        if (request.gpuModel() != null && !request.gpuModel().isBlank() && request.gpuTdpWatts() == null) {
+            throw new GpuTdpRequiredException();
         }
     }
 

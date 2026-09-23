@@ -11,10 +11,9 @@ public record EquipmentModelDTO(
         Integer tdpWatts,
         Integer coreCount,
         Integer memoryGb,
-        String monitorName,
-        Integer monitorWatts,
-        String operatingSystem,
+        String gpuModel,
+        Integer gpuTdpWatts,
+        boolean hasIntegratedScreen,
         String description,
-        boolean hasMonitor,
         OffsetDateTime createdAt) {
 }

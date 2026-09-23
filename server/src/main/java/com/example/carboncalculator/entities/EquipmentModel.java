@@ -54,14 +54,14 @@ public class EquipmentModel {
     @Column(name = "memory_gb")
     private Integer memoryGb;
 
-    @Column(name = "monitor_name")
-    private String monitorName;
+    @Column(name = "gpu_model")
+    private String gpuModel;
 
-    @Column(name = "monitor_watts")
-    private Integer monitorWatts;
+    @Column(name = "gpu_tdp_watts")
+    private Integer gpuTdpWatts;
 
-    @Column(name = "operating_system", length = 100)
-    private String operatingSystem;
+    @Column(name = "has_integrated_screen", nullable = false)
+    private boolean hasIntegratedScreen;
 
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -71,10 +71,6 @@ public class EquipmentModel {
 
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
-
-    public boolean hasMonitor() {
-        return monitorName != null;
-    }
 
     @PrePersist
     protected void onCreate() {

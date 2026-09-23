@@ -7,8 +7,8 @@ public record CreateEquipmentModelRequest(
         Integer tdpWatts,
         Integer coreCount,
         Integer memoryGb,
-        String monitorName,
-        Integer monitorWatts,
-        String operatingSystem,
+        String gpuModel,
+        Integer gpuTdpWatts,
+        Boolean hasIntegratedScreen,
         String description) {
 }

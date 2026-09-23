@@ -17,11 +17,10 @@ public final class EquipmentModelMapper {
                 entity.getTdpWatts(),
                 entity.getCoreCount(),
                 entity.getMemoryGb(),
-                entity.getMonitorName(),
-                entity.getMonitorWatts(),
-                entity.getOperatingSystem(),
+                entity.getGpuModel(),
+                entity.getGpuTdpWatts(),
+                entity.isHasIntegratedScreen(),
                 entity.getDescription(),
-                entity.hasMonitor(),
                 entity.getCreatedAt());
     }
 }
