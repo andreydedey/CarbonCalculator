@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query'
 import type React from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
+import { LaboratoryEquipmentSection } from '@/components/laboratories/LaboratoryEquipmentSection'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -116,25 +117,29 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
 
             <div className="h-px bg-border" />
 
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold">Equipamentos do Laboratório</span>
-                <Button type="button" variant="outline" size="sm" disabled>
-                  Vincular Equipamento
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Selecione os modelos de equipamento cadastrados na instituição e informe a
-                quantidade em uso neste laboratório.
-              </p>
-              <div className="rounded-lg border">
-                <div className="flex items-center justify-center px-4 py-4">
-                  <p className="text-xs text-muted-foreground italic">
-                    Use &ldquo;Vincular Equipamento&rdquo; para adicionar modelos da instituição
-                  </p>
+            {laboratory ? (
+              <LaboratoryEquipmentSection labId={laboratory.id} />
+            ) : (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold">Equipamentos do Laboratório</span>
+                  <Button type="button" variant="outline" size="sm" disabled>
+                    Vincular Equipamento
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Selecione os modelos de equipamento cadastrados na instituição e informe a
+                  quantidade em uso neste laboratório.
+                </p>
+                <div className="rounded-lg border">
+                  <div className="flex items-center justify-center px-4 py-4">
+                    <p className="text-xs text-muted-foreground italic">
+                      Salve o laboratório primeiro para vincular equipamentos
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           <DialogFooter className="mx-0 mb-0">

@@ -23,10 +23,15 @@ public class GlobalExceptionHandler {
             InvalidStateException.class,
             InvalidRoleException.class,
             MissingLaboratoryNameException.class,
+            MissingEquipmentModelNameException.class,
+            MissingMonitorNameException.class,
+            GpuTdpRequiredException.class,
+            InvalidQuantityException.class,
             CannotModifySelfException.class,
             LastManagerException.class
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException ex, HttpServletRequest request) {
+        log.warn("Bad request on {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
     }
 
@@ -41,6 +46,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
+        log.warn("Access denied on {} {}", request.getMethod(), request.getRequestURI());
         return buildResponse(HttpStatus.FORBIDDEN, "Access denied", request);
     }
 
@@ -48,6 +54,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
             LaboratoryNotFoundException.class,
+            EquipmentModelNotFoundException.class,
+            LaboratoryEquipmentNotFoundException.class,
+            MonitorNotFoundException.class,
             MemberNotFoundException.class,
             InstitutionNotFoundException.class
     })
@@ -61,9 +70,13 @@ public class GlobalExceptionHandler {
             EmailAlreadyExistsException.class,
             DuplicateAcronymException.class,
             DuplicateInviteException.class,
-            LaboratoryHasDependentsException.class
+            LaboratoryHasDependentsException.class,
+            EquipmentModelHasDependentsException.class,
+            MonitorHasDependentsException.class,
+            DuplicateLaboratoryEquipmentException.class
     })
     public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex, HttpServletRequest request) {
+        log.warn("Conflict on {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
         return buildResponse(HttpStatus.CONFLICT, ex.getMessage(), request);
     }
 

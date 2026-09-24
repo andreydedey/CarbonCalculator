@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.MDC;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,8 +21,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.example.carboncalculator.entities.AppUser;
 import com.example.carboncalculator.repositories.AppUserRepository;
-
-import io.jsonwebtoken.Claims;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -71,6 +71,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 new UsernamePasswordAuthenticationToken(user, null, authorities);
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authentication);
+        MDC.put("userId", user.getId().toString());
 
         filterChain.doFilter(request, response);
     }

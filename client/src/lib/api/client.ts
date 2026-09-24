@@ -1,6 +1,5 @@
 import axios from 'axios'
-
-const INSTITUTION_STORAGE_KEY = 'carbon-calculator:institution-id'
+import { readStoredInstitutionId } from '@/lib/context/institutionStorage'
 
 export class ApiError extends Error {
   status: number
@@ -16,24 +15,6 @@ export class ValidationError extends ApiError {}
 export class ConflictError extends ApiError {}
 export class NotFoundError extends ApiError {}
 
-function hasLocalStorage(): boolean {
-  return typeof localStorage !== 'undefined' && typeof localStorage.getItem === 'function'
-}
-
-export function getActiveInstitutionId(): string | null {
-  if (!hasLocalStorage()) return null
-  return localStorage.getItem(INSTITUTION_STORAGE_KEY)
-}
-
-export function setActiveInstitutionId(institutionId: string | null): void {
-  if (!hasLocalStorage()) return
-  if (institutionId) {
-    localStorage.setItem(INSTITUTION_STORAGE_KEY, institutionId)
-  } else {
-    localStorage.removeItem(INSTITUTION_STORAGE_KEY)
-  }
-}
-
 export function errorForStatus(status: number, message: string): ApiError {
   if (status === 400) return new ValidationError(status, message)
   if (status === 404) return new NotFoundError(status, message)
@@ -46,10 +27,11 @@ export const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
-  const institutionId = getActiveInstitutionId()
+  const institutionId = readStoredInstitutionId()
   if (institutionId) {
     config.headers['X-Institution-Id'] = institutionId
   }
+  config.headers['X-Correlation-ID'] = crypto.randomUUID()
   return config
 })
 
@@ -57,9 +39,13 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (axios.isAxiosError(error) && error.response) {
-      const { status, data } = error.response
+      const { status, data, config: reqConfig } = error.response
       const body = data as { message?: string; error?: string }
       const message = body?.message || body?.error || error.message
+      const correlationId = reqConfig?.headers?.['X-Correlation-ID'] ?? 'unknown'
+      const method = reqConfig?.method?.toUpperCase() ?? '?'
+      const url = reqConfig?.url ?? '?'
+      console.error(`[${correlationId}] API error ${status} on ${method} ${url}: ${message}`)
       throw errorForStatus(status, message)
     }
     throw error

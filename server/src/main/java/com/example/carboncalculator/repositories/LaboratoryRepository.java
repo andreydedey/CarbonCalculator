@@ -9,7 +9,8 @@ import com.example.carboncalculator.entities.Laboratory;
 
 public interface LaboratoryRepository extends JpaRepository<Laboratory, UUID>, JpaSpecificationExecutor<Laboratory> {
 
-    default boolean existsDependentsByLaboratoryId(UUID id) {
-        return false;
-    }
+    @org.springframework.data.jpa.repository.Query(
+            "SELECT CASE WHEN COUNT(le) > 0 THEN true ELSE false END " +
+            "FROM LaboratoryEquipment le WHERE le.laboratory.id = :id")
+    boolean existsDependentsByLaboratoryId(UUID id);
 }

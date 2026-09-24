@@ -4,6 +4,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -27,6 +29,8 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class InstitutionService {
+
+    private static final Logger log = LoggerFactory.getLogger(InstitutionService.class);
 
     private static final Set<String> VALID_STATES = Set.of(
             "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO",
@@ -63,6 +67,7 @@ public class InstitutionService {
                 .build();
         laboratoryRepository.save(laboratory);
 
+        log.info("Institution created: id={}, acronym={}", institution.getId(), institution.getAcronym());
         return InstitutionMapper.toDTO(institution);
     }
 

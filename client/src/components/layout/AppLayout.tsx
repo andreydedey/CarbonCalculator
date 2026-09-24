@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Building2, FlaskConical, LogOut, Users } from 'lucide-react'
+import { Building2, Cpu, FlaskConical, LogOut, Users } from 'lucide-react'
 import type React from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { InstitutionSwitcher } from '@/components/layout/InstitutionSwitcher'
@@ -34,6 +34,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { label: 'Instituições', href: '/institutions', icon: Building2, adminOnly: true },
   { label: 'Laboratórios', href: '/laboratories', icon: FlaskConical },
+  { label: 'Equipamentos', href: '/equipment-models', icon: Cpu },
   { label: 'Usuários', href: '/users', icon: Users, requiresRole: 'MANAGER' },
 ]
 
