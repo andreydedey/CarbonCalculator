@@ -6,7 +6,7 @@ import { LinkEquipmentDialog } from '@/components/laboratories/LinkEquipmentDial
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useDialog } from '@/hooks/use-dialog'
-import { ApiError } from '@/lib/api/client'
+import { isApiError } from '@/lib/api/client'
 import {
   getLabComposition,
   type LaboratoryEquipment,
@@ -35,7 +35,7 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
       toast.success('Configuração removida do laboratório.')
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : 'Não foi possível desvincular.')
+      toast.error(isApiError(error) ? error.message : 'Não foi possível desvincular.')
     },
   })
 
@@ -58,6 +58,7 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
       <LinkEquipmentDialog
         labId={labId}
         equipment={linkDialog.data ?? undefined}
+        existingConfigurationIds={items.map((i) => i.configurationId)}
         open={linkDialog.open}
         onOpenChange={(open) => !open && linkDialog.closeDialog()}
         onSaved={handleSaved}

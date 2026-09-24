@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ApiError } from '@/lib/api/client'
+import { isApiError } from '@/lib/api/client'
 import { listConfigurations } from '@/lib/api/configurations'
 import {
   type CreateLaboratoryEquipmentPayload,
@@ -42,6 +42,7 @@ type LinkFormValues = z.infer<typeof linkFormSchema>
 interface LinkEquipmentDialogProps {
   labId: string
   equipment?: LaboratoryEquipment
+  existingConfigurationIds?: string[]
   open: boolean
   onOpenChange: (open: boolean) => void
   onSaved?: () => void
@@ -56,6 +57,7 @@ function configLabel(config: { equipmentModel: { name: string }; operatingSystem
 export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
   labId,
   equipment,
+  existingConfigurationIds = [],
   open,
   onOpenChange,
   onSaved,
@@ -67,7 +69,11 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
     queryFn: () => listConfigurations({ size: 100 }),
     enabled: open,
   })
-  const configurations = configurationsPage?.content ?? []
+  const allConfigurations = configurationsPage?.content ?? []
+  const configurations =
+    mode === 'edit'
+      ? allConfigurations
+      : allConfigurations.filter((c) => !existingConfigurationIds.includes(c.id))
 
   const {
     register,
@@ -96,7 +102,7 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
       toast.success(mode === 'edit' ? 'Quantidade atualizada.' : 'Configuração adicionada ao laboratório.')
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : 'Não foi possível salvar.')
+      toast.error(isApiError(error) ? error.message : 'Não foi possível salvar.')
     },
   })
 
@@ -117,7 +123,11 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[500px] gap-0 p-0">
+      <DialogContent
+        className="sm:max-w-[500px] gap-0 p-0"
+        onPointerDownOutside={(e) => e.stopPropagation()}
+        onInteractOutside={(e) => e.stopPropagation()}
+      >
         <DialogHeader className="px-7 pt-5 pb-4">
           <DialogTitle className="text-base font-semibold">
             {mode === 'edit' ? 'Editar Quantidade' : 'Adicionar Configuração'}
