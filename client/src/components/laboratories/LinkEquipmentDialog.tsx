@@ -1,9 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { AlertTriangle, Monitor } from 'lucide-react'
 import type React from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
+import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -24,19 +24,20 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ApiError } from '@/lib/api/client'
-import { listEquipmentModels } from '@/lib/api/equipment-models'
+import { listConfigurations } from '@/lib/api/configurations'
 import {
   type CreateLaboratoryEquipmentPayload,
   type LaboratoryEquipment,
   linkEquipment,
   updateLabEquipment,
 } from '@/lib/api/laboratory-equipment'
-import { listMonitors } from '@/lib/api/monitors'
-import {
-  type LaboratoryEquipmentFormValues,
-  laboratoryEquipmentFormSchema,
-  OS_OPTIONS,
-} from '@/lib/schemas/laboratoryEquipmentSchema'
+
+const linkFormSchema = z.object({
+  configurationId: z.string().min(1, 'Selecione uma configuração'),
+  quantity: z.coerce.number().int().min(1, 'A quantidade deve ser pelo menos 1'),
+})
+
+type LinkFormValues = z.infer<typeof linkFormSchema>
 
 interface LinkEquipmentDialogProps {
   labId: string
@@ -44,6 +45,12 @@ interface LinkEquipmentDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSaved?: () => void
+}
+
+function configLabel(config: { equipmentModel: { name: string }; operatingSystem: string; monitor: { name: string } | null }): string {
+  const parts = [config.equipmentModel.name, config.operatingSystem]
+  if (config.monitor) parts.push(config.monitor.name)
+  return parts.join(' + ')
 }
 
 export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
@@ -55,19 +62,12 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
 }) => {
   const mode = equipment ? 'edit' : 'create'
 
-  const { data: modelsPage } = useQuery({
-    queryKey: ['equipment-models', 'all'],
-    queryFn: () => listEquipmentModels({ size: 100 }),
+  const { data: configurationsPage } = useQuery({
+    queryKey: ['configurations', 'all'],
+    queryFn: () => listConfigurations({ size: 100 }),
     enabled: open,
   })
-  const models = modelsPage?.content ?? []
-
-  const { data: monitorsPage } = useQuery({
-    queryKey: ['monitors', 'all'],
-    queryFn: () => listMonitors({ size: 100 }),
-    enabled: open,
-  })
-  const monitors = monitorsPage?.content ?? []
+  const configurations = configurationsPage?.content ?? []
 
   const {
     register,
@@ -76,19 +76,13 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
     watch,
     setValue,
     formState: { errors },
-  } = useForm<LaboratoryEquipmentFormValues>({
-    resolver: zodResolver(laboratoryEquipmentFormSchema),
+  } = useForm<LinkFormValues>({
+    resolver: zodResolver(linkFormSchema),
     values: {
-      equipmentModelId: equipment?.equipmentModel.id ?? '',
-      operatingSystem: equipment?.operatingSystem ?? '',
-      monitorId: equipment?.monitor?.id ?? '',
+      configurationId: equipment?.configurationId ?? '',
       quantity: equipment?.quantity ?? 1,
     },
   })
-
-  const selectedModelId = watch('equipmentModelId')
-  const selectedModel = models.find((m) => m.id === selectedModelId)
-  const hasIntegratedScreen = selectedModel?.hasIntegratedScreen ?? false
 
   const mutation = useMutation({
     mutationFn: (payload: CreateLaboratoryEquipmentPayload) =>
@@ -99,19 +93,16 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
       reset()
       onOpenChange(false)
       onSaved?.()
-      toast.success(mode === 'edit' ? 'Configuração atualizada.' : 'Equipamento vinculado.')
+      toast.success(mode === 'edit' ? 'Quantidade atualizada.' : 'Configuração adicionada ao laboratório.')
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : 'Não foi possível salvar o vínculo.')
+      toast.error(error instanceof ApiError ? error.message : 'Não foi possível salvar.')
     },
   })
 
-  function onSubmit(values: LaboratoryEquipmentFormValues) {
-    const monitorId = hasIntegratedScreen ? undefined : values.monitorId || undefined
+  function onSubmit(values: LinkFormValues) {
     mutation.mutate({
-      equipmentModelId: values.equipmentModelId,
-      operatingSystem: values.operatingSystem.trim(),
-      monitorId: monitorId ?? null,
+      configurationId: values.configurationId,
       quantity: values.quantity,
     })
   }
@@ -129,91 +120,37 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
       <DialogContent className="sm:max-w-[500px] gap-0 p-0">
         <DialogHeader className="px-7 pt-5 pb-4">
           <DialogTitle className="text-base font-semibold">
-            {mode === 'edit' ? 'Editar Configuração' : 'Vincular Equipamento'}
+            {mode === 'edit' ? 'Editar Quantidade' : 'Adicionar Configuração'}
           </DialogTitle>
           <DialogDescription>
-            Selecione um computador, sistema operacional, monitor e a quantidade.
+            {mode === 'edit'
+              ? 'Altere a quantidade de estações com esta configuração.'
+              : 'Selecione uma configuração cadastrada e informe a quantidade de estações.'}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-5 px-7 pb-6">
             <div className="flex flex-col gap-1.5">
-              <Label>Computador *</Label>
+              <Label>Configuração *</Label>
               <Select
-                value={selectedModelId}
-                onValueChange={(v) => setValue('equipmentModelId', v)}
+                value={watch('configurationId')}
+                onValueChange={(v) => setValue('configurationId', v)}
                 disabled={mode === 'edit'}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione um computador" />
+                  <SelectValue placeholder="Selecione uma configuração" />
                 </SelectTrigger>
                 <SelectContent>
-                  {models.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.name}
+                  {configurations.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {configLabel(c)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <FieldError message={errors.equipmentModelId?.message} />
+              <FieldError message={errors.configurationId?.message} />
             </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label>Sistema Operacional *</Label>
-              <Select
-                value={watch('operatingSystem')}
-                onValueChange={(v) => setValue('operatingSystem', v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o sistema operacional" />
-                </SelectTrigger>
-                <SelectContent>
-                  {OS_OPTIONS.map((os) => (
-                    <SelectItem key={os} value={os}>
-                      {os}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FieldError message={errors.operatingSystem?.message} />
-            </div>
-
-            {hasIntegratedScreen ? (
-              <div className="flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200">
-                <Monitor className="size-3.5 shrink-0" />
-                <span>Este computador possui tela integrada — monitor externo não aplicável.</span>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-1.5">
-                <Label>Monitor</Label>
-                <Select
-                  value={watch('monitorId') || ''}
-                  onValueChange={(v) => setValue('monitorId', v === '__none__' ? '' : v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Nenhum (sem monitor externo)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">Nenhum</SelectItem>
-                    {monitors.map((mon) => (
-                      <SelectItem key={mon.id} value={mon.id}>
-                        {mon.name}
-                        {mon.watts ? ` (${mon.watts}W)` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FieldError message={errors.monitorId?.message} />
-              </div>
-            )}
-
-            {!hasIntegratedScreen && !watch('monitorId') && selectedModel && (
-              <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
-                <AlertTriangle className="size-3.5 shrink-0" />
-                <span>Nenhum monitor selecionado. O consumo calculado ficará subestimado.</span>
-              </div>
-            )}
 
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="link-qty">Quantidade *</Label>
@@ -233,7 +170,7 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
               Cancelar
             </Button>
             <Button type="submit" disabled={mutation.isPending}>
-              {mode === 'edit' ? 'Salvar alterações' : 'Vincular'}
+              {mode === 'edit' ? 'Salvar alterações' : 'Adicionar'}
             </Button>
           </DialogFooter>
         </form>

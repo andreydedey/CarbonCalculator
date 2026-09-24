@@ -33,7 +33,7 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
     mutationFn: (id: string) => unlinkEquipment(labId, id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lab-composition', labId] })
-      toast.success('Equipamento desvinculado.')
+      toast.success('Configuração removida do laboratório.')
     },
     onError: (error) => {
       toast.error(error instanceof ApiError ? error.message : 'Não foi possível desvincular.')
@@ -52,7 +52,7 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
       <div className="flex items-center justify-between">
         <span className="text-sm font-semibold">Equipamentos do Laboratório</span>
         <Button type="button" variant="outline" size="sm" onClick={() => linkDialog.openDialog()}>
-          Vincular Equipamento
+          Adicionar Configuração
         </Button>
       </div>
 
@@ -67,13 +67,13 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
       {items.length === 0 ? (
         <>
           <p className="text-xs text-muted-foreground">
-            Selecione os modelos de equipamento cadastrados na instituição e informe a quantidade em
+            Adicione configurações cadastradas na instituição e informe a quantidade de estações em
             uso neste laboratório.
           </p>
           <div className="rounded-lg border">
             <div className="flex items-center justify-center px-4 py-4">
               <p className="text-xs text-muted-foreground italic">
-                Use &ldquo;Vincular Equipamento&rdquo; para adicionar modelos da instituição
+                Use &ldquo;Adicionar Configuração&rdquo; para vincular configurações da instituição
               </p>
             </div>
           </div>

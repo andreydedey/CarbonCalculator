@@ -13,6 +13,7 @@ export type EquipmentModelSummary = {
 
 export type LaboratoryEquipment = {
   id: string
+  configurationId: string
   equipmentModel: EquipmentModelSummary
   operatingSystem: string
   monitor: Monitor | null
@@ -27,9 +28,7 @@ export type LaboratoryComposition = {
 }
 
 export type CreateLaboratoryEquipmentPayload = {
-  equipmentModelId: string
-  operatingSystem: string
-  monitorId?: string | null
+  configurationId: string
   quantity: number
 }
 
