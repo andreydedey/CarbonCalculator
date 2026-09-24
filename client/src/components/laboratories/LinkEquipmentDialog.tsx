@@ -3,7 +3,6 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import type React from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
-import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -31,13 +30,10 @@ import {
   linkEquipment,
   updateLabEquipment,
 } from '@/lib/api/laboratory-equipment'
-
-const linkFormSchema = z.object({
-  configurationId: z.string().min(1, 'Selecione uma configuração'),
-  quantity: z.coerce.number().int().min(1, 'A quantidade deve ser pelo menos 1'),
-})
-
-type LinkFormValues = z.infer<typeof linkFormSchema>
+import {
+  type LinkEquipmentFormValues,
+  linkEquipmentFormSchema,
+} from '@/lib/schemas/laboratoryEquipmentSchema'
 
 interface LinkEquipmentDialogProps {
   labId: string
@@ -82,8 +78,8 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
     watch,
     setValue,
     formState: { errors },
-  } = useForm<LinkFormValues>({
-    resolver: zodResolver(linkFormSchema),
+  } = useForm<LinkEquipmentFormValues>({
+    resolver: zodResolver(linkEquipmentFormSchema),
     values: {
       configurationId: equipment?.configurationId ?? '',
       quantity: equipment?.quantity ?? 1,
@@ -106,7 +102,7 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
     },
   })
 
-  function onSubmit(values: LinkFormValues) {
+  function onSubmit(values: LinkEquipmentFormValues) {
     saveMutation.mutate({
       configurationId: values.configurationId,
       quantity: values.quantity,

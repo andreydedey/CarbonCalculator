@@ -63,10 +63,12 @@ public class ConfigurationService {
         return ConfigurationMapper.toDTO(config, 0, 0);
     }
 
+    @Transactional(readOnly = true)
     public Page<ConfigurationDTO> list(Pageable pageable) {
         return configurationRepository.findAll(pageable).map(this::toDTOWithUsage);
     }
 
+    @Transactional(readOnly = true)
     public ConfigurationDTO getById(UUID id) {
         Configuration config = getOrThrow(id);
         return toDTOWithUsage(config);
@@ -104,6 +106,7 @@ public class ConfigurationService {
         log.info("Configuration deleted: id={}", id);
     }
 
+    @Transactional(readOnly = true)
     Configuration getOrThrow(UUID id) {
         return configurationRepository.findById(id)
                 .orElseThrow(() -> new ConfigurationNotFoundException(id));

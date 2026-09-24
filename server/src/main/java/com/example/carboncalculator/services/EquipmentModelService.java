@@ -62,6 +62,7 @@ public class EquipmentModelService {
         return dto;
     }
 
+    @Transactional(readOnly = true)
     public EquipmentModelDTO getById(UUID id) {
         return EquipmentModelMapper.toDTO(getOrThrow(id));
     }
@@ -78,6 +79,7 @@ public class EquipmentModelService {
         return EquipmentModelMapper.toDTO(equipmentModelRepository.save(model));
     }
 
+    @Transactional(readOnly = true)
     public Page<EquipmentModelDTO> list(String name, Pageable pageable) {
         Specification<EquipmentModel> spec = Specification.unrestricted();
         if (name != null && !name.isBlank()) {
@@ -96,6 +98,7 @@ public class EquipmentModelService {
         log.info("Equipment model deleted: id={}", id);
     }
 
+    @Transactional(readOnly = true)
     EquipmentModel getOrThrow(UUID id) {
         return equipmentModelRepository.findById(id)
                 .orElseThrow(() -> new EquipmentModelNotFoundException(id));

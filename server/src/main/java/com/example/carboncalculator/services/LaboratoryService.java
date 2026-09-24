@@ -54,6 +54,7 @@ public class LaboratoryService {
         return dto;
     }
 
+    @Transactional(readOnly = true)
     public LaboratoryDTO getById(UUID id) {
         return LaboratoryMapper.toDTO(getOrThrow(id));
     }
@@ -68,6 +69,7 @@ public class LaboratoryService {
         return LaboratoryMapper.toDTO(laboratoryRepository.save(laboratory));
     }
 
+    @Transactional(readOnly = true)
     public Page<LaboratoryDTO> list(Boolean active, String name, Pageable pageable) {
         Specification<Laboratory> spec = Specification.unrestricted();
         if (active != null) {

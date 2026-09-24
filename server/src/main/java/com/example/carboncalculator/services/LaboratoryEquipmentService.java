@@ -67,6 +67,7 @@ public class LaboratoryEquipmentService {
         return LaboratoryEquipmentMapper.toDTO(laboratoryEquipmentRepository.save(equipment));
     }
 
+    @Transactional(readOnly = true)
     public LaboratoryCompositionDTO getComposition(UUID laboratoryId) {
         List<LaboratoryEquipment> items = laboratoryEquipmentRepository.findByLaboratoryId(laboratoryId);
 

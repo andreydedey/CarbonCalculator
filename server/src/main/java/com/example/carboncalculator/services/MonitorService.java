@@ -52,6 +52,7 @@ public class MonitorService {
         return dto;
     }
 
+    @Transactional(readOnly = true)
     public MonitorDTO getById(UUID id) {
         return MonitorMapper.toDTO(getOrThrow(id));
     }
@@ -68,6 +69,7 @@ public class MonitorService {
         return MonitorMapper.toDTO(monitorRepository.save(monitor));
     }
 
+    @Transactional(readOnly = true)
     public Page<MonitorDTO> list(String name, Pageable pageable) {
         Specification<Monitor> spec = Specification.unrestricted();
         if (name != null && !name.isBlank()) {
@@ -86,6 +88,7 @@ public class MonitorService {
         log.info("Monitor deleted: id={}", id);
     }
 
+    @Transactional(readOnly = true)
     Monitor getOrThrow(UUID id) {
         return monitorRepository.findById(id)
                 .orElseThrow(() -> new MonitorNotFoundException(id));

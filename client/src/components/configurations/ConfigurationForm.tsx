@@ -81,11 +81,9 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
     },
   })
 
-  const selectedModelId = watch('equipmentModelId')
-  const selectedModel = models.find((m) => m.id === selectedModelId)
+  const selectedModel = models.find((m) => m.id === watch('equipmentModelId'))
   const hasIntegratedScreen = selectedModel?.hasIntegratedScreen ?? false
-  const monitorId = watch('monitorId')
-  const showMonitorWarning = !hasIntegratedScreen && !monitorId && !!selectedModel
+  const showMonitorWarning = !!selectedModel && !hasIntegratedScreen && !watch('monitorId')
 
   const saveMutation = useMutation({
     mutationFn: (payload: CreateConfigurationPayload) =>
@@ -140,7 +138,7 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
               <div className="flex flex-1 flex-col gap-1.5">
                 <Label>Computador *</Label>
                 <Select
-                  value={selectedModelId}
+                  value={watch('equipmentModelId')}
                   onValueChange={(v) => setValue('equipmentModelId', v)}
                 >
                   <SelectTrigger>
@@ -187,7 +185,7 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
               <div className="flex flex-col gap-1.5">
                 <Label>Monitor</Label>
                 <Select
-                  value={monitorId || ''}
+                  value={watch('monitorId') || ''}
                   onValueChange={(v) => setValue('monitorId', v === '__none__' ? '' : v)}
                 >
                   <SelectTrigger>
