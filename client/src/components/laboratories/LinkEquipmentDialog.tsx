@@ -77,7 +77,7 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
     reset,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<LinkEquipmentFormValues>({
     resolver: zodResolver(linkEquipmentFormSchema),
     values: {
@@ -175,7 +175,7 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={saveMutation.isPending}>
+            <Button type="submit" disabled={!isDirty || saveMutation.isPending}>
               {mode === 'edit' ? 'Salvar alterações' : 'Adicionar'}
             </Button>
           </DialogFooter>

@@ -152,7 +152,7 @@ export const UsersPage: React.FC = () => {
                 )}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={inviteMutation.isPending}>
+            <Button type="submit" className="w-full" disabled={!inviteForm.formState.isDirty || inviteMutation.isPending}>
               {inviteMutation.isPending ? 'Enviando...' : 'Enviar Convite'}
             </Button>
           </form>

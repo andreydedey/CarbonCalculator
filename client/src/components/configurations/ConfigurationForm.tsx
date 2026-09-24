@@ -71,7 +71,7 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
     reset,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<ConfigurationFormValues>({
     resolver: zodResolver(configurationFormSchema),
     values: {
@@ -226,7 +226,7 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={saveMutation.isPending}>
+            <Button type="submit" disabled={!isDirty || saveMutation.isPending}>
               {mode === 'edit' ? 'Salvar alterações' : 'Cadastrar Configuração'}
             </Button>
           </DialogFooter>

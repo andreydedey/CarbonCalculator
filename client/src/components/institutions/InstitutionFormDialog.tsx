@@ -66,7 +66,7 @@ export const InstitutionFormDialog: React.FC<InstitutionFormDialogProps> = ({
     handleSubmit,
     reset,
     control,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<CreateValues>({
     resolver: zodResolver(mode === 'edit' ? editSchema : createSchema),
     values: {
@@ -211,7 +211,7 @@ export const InstitutionFormDialog: React.FC<InstitutionFormDialogProps> = ({
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={saveMutation.isPending}>
+            <Button type="submit" disabled={!isDirty || saveMutation.isPending}>
               {mode === 'edit' ? 'Salvar alterações' : 'Criar Instituição'}
             </Button>
           </DialogFooter>

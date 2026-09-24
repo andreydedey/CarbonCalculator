@@ -42,7 +42,7 @@ export const MonitorForm: React.FC<MonitorFormProps> = ({
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<MonitorFormValues>({
     resolver: zodResolver(monitorFormSchema),
     values: {
@@ -121,7 +121,7 @@ export const MonitorForm: React.FC<MonitorFormProps> = ({
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={mutation.isPending}>
+            <Button type="submit" disabled={!isDirty || mutation.isPending}>
               {mode === 'edit' ? 'Salvar alterações' : 'Cadastrar Monitor'}
             </Button>
           </DialogFooter>
