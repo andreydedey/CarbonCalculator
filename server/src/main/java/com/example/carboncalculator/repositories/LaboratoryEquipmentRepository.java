@@ -1,5 +1,6 @@
 package com.example.carboncalculator.repositories;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,6 +19,14 @@ public interface LaboratoryEquipmentRepository extends JpaRepository<LaboratoryE
     boolean existsByConfigurationId(UUID configurationId);
 
     boolean existsByLaboratoryIdAndConfigurationId(UUID laboratoryId, UUID configurationId);
+
+    @Query("""
+            SELECT le.laboratory.id, COUNT(le), COALESCE(SUM(le.quantity), 0)
+            FROM LaboratoryEquipment le
+            WHERE le.laboratory.id IN :labIds
+            GROUP BY le.laboratory.id
+            """)
+    List<Object[]> countStationsByLaboratoryIds(@Param("labIds") Collection<UUID> labIds);
 
     @Query("""
             SELECT COUNT(DISTINCT le.laboratory.id)

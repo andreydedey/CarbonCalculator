@@ -6,6 +6,8 @@ export type Laboratory = {
   name: string
   description?: string
   active: boolean
+  configurationCount: number
+  totalStations: number
   createdAt?: string
 }
 

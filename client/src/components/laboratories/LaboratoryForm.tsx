@@ -82,8 +82,8 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[560px] gap-0 p-0">
-        <DialogHeader className="px-7 pt-5 pb-4">
+      <DialogContent className="sm:max-w-3xl max-h-[85vh] flex flex-col gap-0 p-0">
+        <DialogHeader className="px-7 pt-5 pb-4 shrink-0">
           <DialogTitle className="text-base font-semibold">
             {mode === 'edit' ? 'Editar Laboratório' : 'Novo Laboratório'}
           </DialogTitle>
@@ -92,8 +92,8 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="flex flex-col gap-5 px-7 pb-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col min-h-0">
+          <div className="flex flex-col gap-5 px-7 pb-6 overflow-y-auto">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="laboratory-name">Nome do Laboratório *</Label>
               <Input
@@ -142,7 +142,7 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
             )}
           </div>
 
-          <DialogFooter className="mx-0 mb-0">
+          <DialogFooter className="mx-0 mb-0 shrink-0">
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
               Cancelar
             </Button>

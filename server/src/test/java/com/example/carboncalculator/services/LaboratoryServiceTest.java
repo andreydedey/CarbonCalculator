@@ -32,6 +32,7 @@ import com.example.carboncalculator.entities.Laboratory;
 import com.example.carboncalculator.exceptions.LaboratoryHasDependentsException;
 import com.example.carboncalculator.exceptions.MissingLaboratoryNameException;
 import com.example.carboncalculator.repositories.InstitutionRepository;
+import com.example.carboncalculator.repositories.LaboratoryEquipmentRepository;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -41,13 +42,14 @@ import jakarta.persistence.criteria.Root;
 class LaboratoryServiceTest {
 
     private final LaboratoryRepository laboratoryRepository = mock(LaboratoryRepository.class);
+    private final LaboratoryEquipmentRepository laboratoryEquipmentRepository = mock(LaboratoryEquipmentRepository.class);
     private final InstitutionRepository institutionRepository = mock(InstitutionRepository.class);
 
     private LaboratoryService service;
 
     @BeforeEach
     void setUp() {
-        service = new LaboratoryService(laboratoryRepository, institutionRepository);
+        service = new LaboratoryService(laboratoryRepository, laboratoryEquipmentRepository, institutionRepository);
         TenantContext.setInstitutionId("550e8400-e29b-41d4-a716-446655440000");
     }
 
