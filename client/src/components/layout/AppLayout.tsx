@@ -1,8 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
 import { Building2, Cpu, FlaskConical, LogOut, Users } from 'lucide-react'
 import type React from 'react'
-import { Link, Outlet, useLocation, useMatch } from 'react-router-dom'
-import { InstitutionSwitcher } from '@/components/layout/InstitutionSwitcher'
+import { Link, Outlet, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import {
   Sidebar,
@@ -21,7 +19,6 @@ import {
 } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useAuth } from '@/context/AuthContext'
-import { listInstitutions } from '@/lib/api/institutions'
 
 type NavItem = {
   label: string
@@ -85,12 +82,6 @@ const AppSidebar: React.FC = () => {
 
 export const AppLayout: React.FC = () => {
   const { user, logout } = useAuth()
-  const isInstitutionsPage = useMatch('/institutions')
-  const { data: institutionsPage } = useQuery({
-    queryKey: ['institutions'],
-    queryFn: () => listInstitutions(),
-  })
-  const institutions = institutionsPage?.content ?? []
 
   return (
     <TooltipProvider>
@@ -100,11 +91,6 @@ export const AppLayout: React.FC = () => {
           <header className="flex items-center gap-2 border-b px-4 py-3">
             <SidebarTrigger className="-ml-1" />
             <div className="ml-auto flex items-center gap-3">
-              {!isInstitutionsPage && (
-                <InstitutionSwitcher
-                  options={institutions.map((i) => ({ id: i.id, name: i.name }))}
-                />
-              )}
               {user && (
                 <div className="flex items-center gap-2 border-l pl-3">
                   <span className="text-sm text-muted-foreground">{user.name}</span>
