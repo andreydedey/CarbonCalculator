@@ -5,7 +5,6 @@ import type React from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -23,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ApiError } from '@/lib/api/client'
+import { isApiError } from '@/lib/api/client'
 import {
   type Configuration,
   type CreateConfigurationPayload,
@@ -93,26 +92,25 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
       mode === 'edit' && configuration
         ? updateConfiguration(configuration.id, payload)
         : createConfiguration(payload),
-    onSuccess: () => {
+  })
+
+  async function onSubmit(values: ConfigurationFormValues) {
+    const finalMonitorId = hasIntegratedScreen ? undefined : values.monitorId || undefined
+    try {
+      await saveMutation.mutateAsync({
+        equipmentModelId: values.equipmentModelId,
+        operatingSystem: values.operatingSystem.trim(),
+        monitorId: finalMonitorId ?? null,
+      })
       reset()
       onOpenChange(false)
       onSaved?.()
       toast.success(mode === 'edit' ? 'Configuração atualizada.' : 'Configuração cadastrada.')
-    },
-    onError: (error) => {
+    } catch (error) {
       toast.error(
-        error instanceof ApiError ? error.message : 'Não foi possível salvar a configuração.',
+        isApiError(error) ? error.message : 'Não foi possível salvar a configuração.',
       )
-    },
-  })
-
-  function onSubmit(values: ConfigurationFormValues) {
-    const finalMonitorId = hasIntegratedScreen ? undefined : values.monitorId || undefined
-    saveMutation.mutate({
-      equipmentModelId: values.equipmentModelId,
-      operatingSystem: values.operatingSystem.trim(),
-      monitorId: finalMonitorId ?? null,
-    })
+    }
   }
 
   function handleOpenChange(nextOpen: boolean) {
@@ -210,24 +208,18 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
             )}
 
             {showMonitorWarning && (
-              <div className="flex flex-col gap-3 rounded-md border border-amber-200 bg-amber-50 p-3">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
-                  <div className="flex flex-col gap-1 text-xs text-amber-800">
-                    <span className="font-medium">
-                      Sem monitor, o resultado fica subestimado
-                    </span>
-                    <span>
-                      Este computador não tem tela integrada. Monitores representaram 69% e 40% dos
-                      dispositivos nos casos analisados por Sutton-Parker e ficaram fora da
-                      contabilidade.
-                    </span>
-                  </div>
+              <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3">
+                <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
+                <div className="flex flex-col gap-1 text-xs text-amber-800">
+                  <span className="font-medium">
+                    Sem monitor, o resultado fica subestimado
+                  </span>
+                  <span>
+                    Este computador não tem tela integrada. Monitores representaram 69% e 40% dos
+                    dispositivos nos casos analisados por Sutton-Parker e ficaram fora da
+                    contabilidade.
+                  </span>
                 </div>
-                <label className="flex items-center gap-2 text-xs text-amber-800">
-                  <Checkbox />
-                  <span>Confirmo que estas estações não têm monitor</span>
-                </label>
               </div>
             )}
           </div>
