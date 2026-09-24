@@ -16,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -144,6 +145,8 @@ public class TenantFilter extends OncePerRequestFilter {
             });
         } catch (FilterChainException e) {
             e.rethrow();
+        } catch (UnexpectedRollbackException e) {
+            log.debug("Request-scoped transaction rolled back due to a handled exception", e);
         }
     }
 
