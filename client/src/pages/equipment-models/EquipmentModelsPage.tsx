@@ -1,5 +1,6 @@
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
+import { ConfigurationList } from '@/components/configurations/ConfigurationList'
 import { EquipmentModelList } from '@/components/equipment-models/EquipmentModelList'
 import { MonitorList } from '@/components/monitors/MonitorList'
 import { Button } from '@/components/ui/button'
@@ -8,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 const TAB_LABELS = {
   computadores: 'Novo Computador',
   monitores: 'Novo Monitor',
+  configuracoes: 'Nova Configuração',
 } as const
 
 type TabValue = keyof typeof TAB_LABELS
@@ -16,10 +18,12 @@ export function EquipmentModelsPage() {
   const [tab, setTab] = useState<TabValue>('computadores')
   const [computerFormOpen, setComputerFormOpen] = useState(false)
   const [monitorFormOpen, setMonitorFormOpen] = useState(false)
+  const [configFormOpen, setConfigFormOpen] = useState(false)
 
   function handleAdd() {
     if (tab === 'computadores') setComputerFormOpen(true)
-    else setMonitorFormOpen(true)
+    else if (tab === 'monitores') setMonitorFormOpen(true)
+    else setConfigFormOpen(true)
   }
 
   return (
@@ -41,12 +45,16 @@ export function EquipmentModelsPage() {
         <TabsList variant="line">
           <TabsTrigger value="computadores">Computadores</TabsTrigger>
           <TabsTrigger value="monitores">Monitores</TabsTrigger>
+          <TabsTrigger value="configuracoes">Configurações</TabsTrigger>
         </TabsList>
         <TabsContent value="computadores">
           <EquipmentModelList formOpen={computerFormOpen} onFormOpenChange={setComputerFormOpen} />
         </TabsContent>
         <TabsContent value="monitores">
           <MonitorList formOpen={monitorFormOpen} onFormOpenChange={setMonitorFormOpen} />
+        </TabsContent>
+        <TabsContent value="configuracoes">
+          <ConfigurationList formOpen={configFormOpen} onFormOpenChange={setConfigFormOpen} />
         </TabsContent>
       </Tabs>
     </div>

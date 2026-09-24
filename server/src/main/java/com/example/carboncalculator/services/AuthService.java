@@ -52,6 +52,7 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
+    @Transactional(readOnly = true)
     public AuthResponse login(String email, String password) {
         AppUser user = userRepository.findByEmail(email)
                 .filter(u -> u.getPasswordHash() != null)
@@ -66,6 +67,7 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
+    @Transactional(readOnly = true)
     public AuthResponse refresh(String refreshToken) {
         if (!jwtService.isTokenValid(refreshToken)) {
             throw new InvalidCredentialsException();
@@ -79,10 +81,12 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
+    @Transactional(readOnly = true)
     public AppUser findByEmail(String email) {
         return userRepository.findByEmail(email).orElseThrow(InvalidCredentialsException::new);
     }
 
+    @Transactional(readOnly = true)
     public UserProfileDTO getProfile(AppUser user) {
         List<UserInstitution> memberships = membershipRepository.findByUserId(user.getId());
         return UserProfileMapper.toProfileDTO(user, memberships);

@@ -121,6 +121,7 @@ export const LaboratoryList: React.FC = () => {
 
   const institutionName = institution?.acronym ?? institution?.name ?? ''
   const totalLabs = laboratoriesData?.pages[0]?.totalElements ?? 0
+  const totalStations = laboratories.reduce((sum, lab) => sum + lab.totalStations, 0)
 
   return (
     <div className="flex flex-col gap-6">
@@ -154,7 +155,7 @@ export const LaboratoryList: React.FC = () => {
           variant="accent"
         />
         <SummaryCard
-          value="-"
+          value={String(totalStations)}
           label="Estações Ativas"
           icon={<Monitor className="size-[18px] text-primary-foreground" />}
         />

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { AlertTriangle, Monitor, MonitorOff, Pencil, Trash2 } from 'lucide-react'
 import type React from 'react'
 import { toast } from 'sonner'
@@ -6,7 +6,7 @@ import { LinkEquipmentDialog } from '@/components/laboratories/LinkEquipmentDial
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useDialog } from '@/hooks/use-dialog'
-import { ApiError } from '@/lib/api/client'
+import { isApiError } from '@/lib/api/client'
 import {
   getLabComposition,
   type LaboratoryEquipment,
@@ -20,10 +20,9 @@ interface LaboratoryEquipmentSectionProps {
 export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProps> = ({
   labId,
 }) => {
-  const queryClient = useQueryClient()
   const linkDialog = useDialog<LaboratoryEquipment>()
 
-  const { data: composition } = useQuery({
+  const { data: composition, refetch } = useQuery({
     queryKey: ['lab-composition', labId],
     queryFn: () => getLabComposition(labId),
     enabled: !!labId,
@@ -32,17 +31,17 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
   const unlinkMutation = useMutation({
     mutationFn: (id: string) => unlinkEquipment(labId, id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lab-composition', labId] })
-      toast.success('Equipamento desvinculado.')
+      refetch()
+      toast.success('Configuração removida do laboratório.')
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : 'Não foi possível desvincular.')
+      toast.error(isApiError(error) ? error.message : 'Não foi possível desvincular.')
     },
   })
 
   function handleSaved() {
     linkDialog.closeDialog()
-    queryClient.invalidateQueries({ queryKey: ['lab-composition', labId] })
+    refetch()
   }
 
   const items = composition?.items ?? []
@@ -52,13 +51,14 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
       <div className="flex items-center justify-between">
         <span className="text-sm font-semibold">Equipamentos do Laboratório</span>
         <Button type="button" variant="outline" size="sm" onClick={() => linkDialog.openDialog()}>
-          Vincular Equipamento
+          Adicionar Configuração
         </Button>
       </div>
 
       <LinkEquipmentDialog
         labId={labId}
         equipment={linkDialog.data ?? undefined}
+        existingConfigurationIds={items.map((i) => i.configurationId)}
         open={linkDialog.open}
         onOpenChange={(open) => !open && linkDialog.closeDialog()}
         onSaved={handleSaved}
@@ -67,13 +67,13 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
       {items.length === 0 ? (
         <>
           <p className="text-xs text-muted-foreground">
-            Selecione os modelos de equipamento cadastrados na instituição e informe a quantidade em
+            Adicione configurações cadastradas na instituição e informe a quantidade de estações em
             uso neste laboratório.
           </p>
           <div className="rounded-lg border">
             <div className="flex items-center justify-center px-4 py-4">
               <p className="text-xs text-muted-foreground italic">
-                Use &ldquo;Vincular Equipamento&rdquo; para adicionar modelos da instituição
+                Use &ldquo;Adicionar Configuração&rdquo; para vincular configurações da instituição
               </p>
             </div>
           </div>
@@ -174,7 +174,7 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
               máquinas
             </span>
             {composition && composition.configurationsWithoutMonitor > 0 && (
-              <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+              <div className="flex items-center gap-1 text-amber-600">
                 <AlertTriangle className="size-3.5" />
                 <span>
                   {composition.configurationsWithoutMonitor} configuração(ões) sem monitor — consumo

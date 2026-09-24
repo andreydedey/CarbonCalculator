@@ -39,6 +39,7 @@ public class UserService {
     private final AppUserRepository userRepository;
     private final InstitutionRepository institutionRepository;
 
+    @Transactional(readOnly = true)
     public Page<UserMemberDTO> listMembers(Pageable pageable) {
         UUID institutionId = currentInstitutionId();
         return membershipRepository.findByInstitutionId(institutionId, pageable)

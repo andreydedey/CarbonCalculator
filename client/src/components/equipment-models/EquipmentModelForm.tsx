@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ApiError } from '@/lib/api/client'
+import { isApiError } from '@/lib/api/client'
 import {
   type CreateEquipmentModelPayload,
   createEquipmentModel,
@@ -76,7 +76,7 @@ export const EquipmentModelForm: React.FC<EquipmentModelFormProps> = ({
 
   const gpuModel = watch('gpuModel')
 
-  const mutation = useMutation({
+  const saveMutation = useMutation({
     mutationFn: (payload: CreateEquipmentModelPayload) =>
       mode === 'edit' && model
         ? updateEquipmentModel(model.id, payload)
@@ -88,7 +88,7 @@ export const EquipmentModelForm: React.FC<EquipmentModelFormProps> = ({
       toast.success(mode === 'edit' ? 'Modelo atualizado.' : 'Modelo criado.')
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : 'Não foi possível salvar o modelo.')
+      toast.error(isApiError(error) ? error.message : 'Não foi possível salvar o modelo.')
     },
   })
 
@@ -105,13 +105,13 @@ export const EquipmentModelForm: React.FC<EquipmentModelFormProps> = ({
       hasIntegratedScreen: values.hasIntegratedScreen,
       ...(values.description?.trim() ? { description: values.description.trim() } : {}),
     }
-    mutation.mutate(payload)
+    saveMutation.mutate(payload)
   }
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
       reset()
-      mutation.reset()
+      saveMutation.reset()
     }
     onOpenChange(nextOpen)
   }
@@ -256,7 +256,7 @@ export const EquipmentModelForm: React.FC<EquipmentModelFormProps> = ({
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={mutation.isPending}>
+            <Button type="submit" disabled={saveMutation.isPending}>
               {mode === 'edit' ? 'Salvar alterações' : 'Cadastrar Computador'}
             </Button>
           </DialogFooter>

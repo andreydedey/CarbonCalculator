@@ -20,7 +20,7 @@ import com.example.carboncalculator.exceptions.MonitorHasDependentsException;
 import com.example.carboncalculator.exceptions.MonitorNotFoundException;
 import com.example.carboncalculator.mappers.MonitorMapper;
 import com.example.carboncalculator.repositories.InstitutionRepository;
-import com.example.carboncalculator.repositories.LaboratoryEquipmentRepository;
+import com.example.carboncalculator.repositories.ConfigurationRepository;
 import com.example.carboncalculator.repositories.MonitorRepository;
 import com.example.carboncalculator.specifications.MonitorSpecification;
 
@@ -33,7 +33,7 @@ public class MonitorService {
     private static final Logger log = LoggerFactory.getLogger(MonitorService.class);
 
     private final MonitorRepository monitorRepository;
-    private final LaboratoryEquipmentRepository laboratoryEquipmentRepository;
+    private final ConfigurationRepository configurationRepository;
     private final InstitutionRepository institutionRepository;
 
     @Transactional
@@ -52,6 +52,7 @@ public class MonitorService {
         return dto;
     }
 
+    @Transactional(readOnly = true)
     public MonitorDTO getById(UUID id) {
         return MonitorMapper.toDTO(getOrThrow(id));
     }
@@ -68,6 +69,7 @@ public class MonitorService {
         return MonitorMapper.toDTO(monitorRepository.save(monitor));
     }
 
+    @Transactional(readOnly = true)
     public Page<MonitorDTO> list(String name, Pageable pageable) {
         Specification<Monitor> spec = Specification.unrestricted();
         if (name != null && !name.isBlank()) {
@@ -79,13 +81,14 @@ public class MonitorService {
     @Transactional
     public void delete(UUID id) {
         Monitor monitor = getOrThrow(id);
-        if (laboratoryEquipmentRepository.existsByMonitorId(id)) {
+        if (configurationRepository.existsByMonitorId(id)) {
             throw new MonitorHasDependentsException(id);
         }
         monitorRepository.delete(monitor);
         log.info("Monitor deleted: id={}", id);
     }
 
+    @Transactional(readOnly = true)
     Monitor getOrThrow(UUID id) {
         return monitorRepository.findById(id)
                 .orElseThrow(() -> new MonitorNotFoundException(id));

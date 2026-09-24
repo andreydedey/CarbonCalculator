@@ -11,7 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { ApiError } from '@/lib/api/client'
+import { isApiError } from '@/lib/api/client'
 import { deleteLaboratory, type Laboratory } from '@/lib/api/laboratories'
 
 interface DeleteDialogProps {
@@ -36,7 +36,7 @@ export const DeleteDialog: React.FC<DeleteDialogProps> = ({
     },
     onError: (error) => {
       toast.error(
-        error instanceof ApiError ? error.message : 'Não foi possível excluir o laboratório.',
+        isApiError(error) ? error.message : 'Não foi possível excluir o laboratório.',
       )
     },
   })

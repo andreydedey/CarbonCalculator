@@ -11,7 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { ApiError } from '@/lib/api/client'
+import { isApiError } from '@/lib/api/client'
 import { deactivateLaboratory, type Laboratory } from '@/lib/api/laboratories'
 
 interface DeactivateDialogProps {
@@ -36,7 +36,7 @@ export const DeactivateDialog: React.FC<DeactivateDialogProps> = ({
     },
     onError: (error) => {
       toast.error(
-        error instanceof ApiError ? error.message : 'Não foi possível desativar o laboratório.',
+        isApiError(error) ? error.message : 'Não foi possível desativar o laboratório.',
       )
     },
   })

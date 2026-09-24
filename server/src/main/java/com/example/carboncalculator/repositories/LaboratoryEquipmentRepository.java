@@ -1,5 +1,6 @@
 package com.example.carboncalculator.repositories;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,20 +14,31 @@ public interface LaboratoryEquipmentRepository extends JpaRepository<LaboratoryE
 
     List<LaboratoryEquipment> findByLaboratoryId(UUID laboratoryId);
 
-    boolean existsByEquipmentModelId(UUID equipmentModelId);
+    List<LaboratoryEquipment> findByConfigurationId(UUID configurationId);
 
-    boolean existsByMonitorId(UUID monitorId);
+    boolean existsByConfigurationId(UUID configurationId);
+
+    boolean existsByLaboratoryIdAndConfigurationId(UUID laboratoryId, UUID configurationId);
 
     @Query("""
-            SELECT COUNT(le) > 0 FROM LaboratoryEquipment le
-            WHERE le.laboratory.id = :labId
-              AND le.equipmentModel.id = :modelId
-              AND le.operatingSystem = :os
-              AND (le.monitor.id = :monitorId OR (le.monitor IS NULL AND :monitorId IS NULL))
+            SELECT le.laboratory.id, COUNT(le), COALESCE(SUM(le.quantity), 0)
+            FROM LaboratoryEquipment le
+            WHERE le.laboratory.id IN :labIds
+            GROUP BY le.laboratory.id
             """)
-    boolean existsDuplicate(
-            @Param("labId") UUID laboratoryId,
-            @Param("modelId") UUID equipmentModelId,
-            @Param("os") String operatingSystem,
-            @Param("monitorId") UUID monitorId);
+    List<Object[]> countStationsByLaboratoryIds(@Param("labIds") Collection<UUID> labIds);
+
+    @Query("""
+            SELECT COUNT(DISTINCT le.laboratory.id)
+            FROM LaboratoryEquipment le
+            WHERE le.configuration.id = :configId
+            """)
+    int countDistinctLaboratoriesByConfigurationId(@Param("configId") UUID configurationId);
+
+    @Query("""
+            SELECT COALESCE(SUM(le.quantity), 0)
+            FROM LaboratoryEquipment le
+            WHERE le.configuration.id = :configId
+            """)
+    int sumQuantityByConfigurationId(@Param("configId") UUID configurationId);
 }

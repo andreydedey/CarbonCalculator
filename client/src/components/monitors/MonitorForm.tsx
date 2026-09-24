@@ -15,7 +15,7 @@ import {
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ApiError } from '@/lib/api/client'
+import { isApiError } from '@/lib/api/client'
 import {
   type CreateMonitorPayload,
   createMonitor,
@@ -61,7 +61,7 @@ export const MonitorForm: React.FC<MonitorFormProps> = ({
       toast.success(mode === 'edit' ? 'Monitor atualizado.' : 'Monitor criado.')
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : 'Não foi possível salvar o monitor.')
+      toast.error(isApiError(error) ? error.message : 'Não foi possível salvar o monitor.')
     },
   })
 

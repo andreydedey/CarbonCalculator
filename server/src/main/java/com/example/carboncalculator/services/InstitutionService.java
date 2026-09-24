@@ -40,6 +40,7 @@ public class InstitutionService {
     private final InstitutionRepository institutionRepository;
     private final LaboratoryRepository laboratoryRepository;
 
+    @Transactional(readOnly = true)
     public Page<InstitutionDTO> listForUser(AppUser user, Pageable pageable) {
         Specification<Institution> spec = Specification.unrestricted();
         if (!user.isAdmin()) {
@@ -49,6 +50,7 @@ public class InstitutionService {
         return institutionRepository.findAll(spec, pageable).map(InstitutionMapper::toDTO);
     }
 
+    @Transactional(readOnly = true)
     public Optional<InstitutionDTO> getById(UUID id) {
         return institutionRepository.findById(id)
                 .map(InstitutionMapper::toDTO);

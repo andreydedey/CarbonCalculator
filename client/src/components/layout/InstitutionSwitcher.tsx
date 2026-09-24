@@ -20,6 +20,11 @@ interface InstitutionSwitcherProps {
 export const InstitutionSwitcher: React.FC<InstitutionSwitcherProps> = ({ options = [] }) => {
   const { institutionId, setInstitutionId } = useInstitution()
 
+  const isValid = institutionId && options.some((o) => o.id === institutionId)
+  if (options.length > 0 && !isValid) {
+    setInstitutionId(options[0].id)
+  }
+
   function handleChange(value: string) {
     if (options.some((option) => option.id === value)) {
       setInstitutionId(value)

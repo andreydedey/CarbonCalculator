@@ -20,9 +20,9 @@ import com.example.carboncalculator.exceptions.EquipmentModelNotFoundException;
 import com.example.carboncalculator.exceptions.GpuTdpRequiredException;
 import com.example.carboncalculator.exceptions.MissingEquipmentModelNameException;
 import com.example.carboncalculator.mappers.EquipmentModelMapper;
+import com.example.carboncalculator.repositories.ConfigurationRepository;
 import com.example.carboncalculator.repositories.EquipmentModelRepository;
 import com.example.carboncalculator.repositories.InstitutionRepository;
-import com.example.carboncalculator.repositories.LaboratoryEquipmentRepository;
 import com.example.carboncalculator.specifications.EquipmentModelSpecification;
 
 import lombok.RequiredArgsConstructor;
@@ -34,7 +34,7 @@ public class EquipmentModelService {
     private static final Logger log = LoggerFactory.getLogger(EquipmentModelService.class);
 
     private final EquipmentModelRepository equipmentModelRepository;
-    private final LaboratoryEquipmentRepository laboratoryEquipmentRepository;
+    private final ConfigurationRepository configurationRepository;
     private final InstitutionRepository institutionRepository;
 
     @Transactional
@@ -62,6 +62,7 @@ public class EquipmentModelService {
         return dto;
     }
 
+    @Transactional(readOnly = true)
     public EquipmentModelDTO getById(UUID id) {
         return EquipmentModelMapper.toDTO(getOrThrow(id));
     }
@@ -72,21 +73,13 @@ public class EquipmentModelService {
         validateGpu(request);
 
         EquipmentModel model = getOrThrow(id);
-        model.setName(request.name());
-        model.setEquipmentType(request.equipmentType());
-        model.setProcessor(request.processor());
-        model.setTdpWatts(request.tdpWatts());
-        model.setCoreCount(request.coreCount());
-        model.setMemoryGb(request.memoryGb());
-        model.setGpuModel(request.gpuModel());
-        model.setGpuTdpWatts(request.gpuTdpWatts());
-        model.setHasIntegratedScreen(Boolean.TRUE.equals(request.hasIntegratedScreen()));
-        model.setDescription(request.description());
+        EquipmentModelMapper.updateFromRequest(model, request);
 
         log.info("Equipment model updated: id={}", id);
         return EquipmentModelMapper.toDTO(equipmentModelRepository.save(model));
     }
 
+    @Transactional(readOnly = true)
     public Page<EquipmentModelDTO> list(String name, Pageable pageable) {
         Specification<EquipmentModel> spec = Specification.unrestricted();
         if (name != null && !name.isBlank()) {
@@ -98,13 +91,14 @@ public class EquipmentModelService {
     @Transactional
     public void delete(UUID id) {
         EquipmentModel model = getOrThrow(id);
-        if (laboratoryEquipmentRepository.existsByEquipmentModelId(id)) {
+        if (configurationRepository.existsByEquipmentModelId(id)) {
             throw new EquipmentModelHasDependentsException(id);
         }
         equipmentModelRepository.delete(model);
         log.info("Equipment model deleted: id={}", id);
     }
 
+    @Transactional(readOnly = true)
     EquipmentModel getOrThrow(UUID id) {
         return equipmentModelRepository.findById(id)
                 .orElseThrow(() -> new EquipmentModelNotFoundException(id));
