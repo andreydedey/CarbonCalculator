@@ -14,10 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.carboncalculator.dto.CreateInstitutionRequest;
 import com.example.carboncalculator.dto.InstitutionDTO;
+import com.example.carboncalculator.dto.UpdateInstitutionRequest;
 import com.example.carboncalculator.entities.AppUser;
 import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.Laboratory;
 import com.example.carboncalculator.exceptions.DuplicateAcronymException;
+import com.example.carboncalculator.exceptions.InstitutionNotFoundException;
 import com.example.carboncalculator.exceptions.InvalidStateException;
 import com.example.carboncalculator.mappers.InstitutionMapper;
 import com.example.carboncalculator.repositories.InstitutionRepository;
@@ -41,10 +43,13 @@ public class InstitutionService {
     private final LaboratoryRepository laboratoryRepository;
 
     @Transactional(readOnly = true)
-    public Page<InstitutionDTO> listForUser(AppUser user, Pageable pageable) {
+    public Page<InstitutionDTO> listForUser(AppUser user, String search, Pageable pageable) {
         Specification<Institution> spec = Specification.unrestricted();
         if (!user.isAdmin()) {
             spec = spec.and(InstitutionSpecification.hasActiveMember(user.getId()));
+        }
+        if (search != null && !search.isBlank()) {
+            spec = spec.and(InstitutionSpecification.nameOrAcronymContains(search.trim()));
         }
 
         return institutionRepository.findAll(spec, pageable).map(InstitutionMapper::toDTO);
@@ -70,6 +75,26 @@ public class InstitutionService {
         laboratoryRepository.save(laboratory);
 
         log.info("Institution created: id={}, acronym={}", institution.getId(), institution.getAcronym());
+        return InstitutionMapper.toDTO(institution);
+    }
+
+    @Transactional
+    public InstitutionDTO update(UUID id, UpdateInstitutionRequest request) {
+        Institution institution = institutionRepository.findById(id)
+                .orElseThrow(() -> new InstitutionNotFoundException(id));
+
+        validateState(request.state());
+        if (!institution.getAcronym().equals(request.acronym())) {
+            validateAcronymNotDuplicate(request.acronym());
+        }
+
+        institution.setName(request.name());
+        institution.setAcronym(request.acronym());
+        institution.setCity(request.city());
+        institution.setState(request.state());
+
+        institution = institutionRepository.save(institution);
+        log.info("Institution updated: id={}, acronym={}", institution.getId(), institution.getAcronym());
         return InstitutionMapper.toDTO(institution);
     }
 

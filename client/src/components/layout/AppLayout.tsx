@@ -32,7 +32,7 @@ type NavItem = {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Instituições', href: '/institutions', icon: Building2, adminOnly: true },
+  { label: 'Instituições', href: '/institutions', icon: Building2 },
   { label: 'Laboratórios', href: '/laboratories', icon: FlaskConical },
   { label: 'Equipamentos', href: '/equipment-models', icon: Cpu },
   { label: 'Usuários', href: '/users', icon: Users, requiresRole: 'MANAGER' },
@@ -87,7 +87,7 @@ export const AppLayout: React.FC = () => {
   const { user, logout } = useAuth()
   const { data: institutionsPage } = useQuery({
     queryKey: ['institutions'],
-    queryFn: listInstitutions,
+    queryFn: () => listInstitutions(),
   })
   const institutions = institutionsPage?.content ?? []
 

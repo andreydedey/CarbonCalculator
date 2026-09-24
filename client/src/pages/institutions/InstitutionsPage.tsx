@@ -1,165 +1,120 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation } from '@tanstack/react-query'
+import { useInfiniteQuery } from '@tanstack/react-query'
+import { Plus, Search } from 'lucide-react'
 import type React from 'react'
-import { Controller, useForm } from 'react-hook-form'
-import { toast } from 'sonner'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useDebounce } from 'use-debounce'
+import { InstitutionCard } from '@/components/institutions/InstitutionCard'
+import { InstitutionFormDialog } from '@/components/institutions/InstitutionFormDialog'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { createInstitution } from '@/lib/api/institutions'
-import { mapCreateInstitutionError } from '@/lib/institutions/mapCreateInstitutionError'
-import {
-  BRAZILIAN_STATES,
-  type InstitutionFormValues,
-  institutionFormSchema,
-  normalizeInstitutionForm,
-} from '@/lib/schemas/institutionSchema'
+import { LoadMoreButton } from '@/components/ui/load-more-button'
+import { useAuth } from '@/context/AuthContext'
+import { useInstitution } from '@/context/InstitutionContext'
+import { useDialog } from '@/hooks/use-dialog'
+import { type Institution, listInstitutions } from '@/lib/api/institutions'
 
 export const InstitutionsPage: React.FC = () => {
-  const {
-    register,
-    handleSubmit,
-    setError,
-    reset,
-    control,
-    formState: { errors },
-  } = useForm<InstitutionFormValues>({
-    resolver: zodResolver(institutionFormSchema),
-    defaultValues: { name: '', acronym: '', city: '', state: '', laboratoryName: '' },
-  })
+  const { user } = useAuth()
+  const { setInstitutionId } = useInstitution()
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const formDialog = useDialog<Institution>()
 
-  const mutation = useMutation({
-    mutationFn: createInstitution,
-    onSuccess: () => {
-      reset()
-      toast.success('Instituição criada.')
-    },
-    onError: (error) => {
-      const mapped = mapCreateInstitutionError(error)
-      if (mapped.field === 'root') {
-        setError('root', { type: 'server', message: mapped.message })
-      } else {
-        setError(mapped.field, { type: 'server', message: mapped.message })
-      }
-    },
-  })
+  const search = searchParams.get('q') ?? ''
+  const [debouncedSearch] = useDebounce(search, 400)
 
-  const rootError = errors.root?.message
-
-  function onSubmit(values: InstitutionFormValues) {
-    mutation.mutate(normalizeInstitutionForm(values))
+  function setSearch(value: string) {
+    setSearchParams(
+      (prev) => {
+        if (value) prev.set('q', value)
+        else prev.delete('q')
+        return prev
+      },
+      { replace: true },
+    )
   }
 
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
+    useInfiniteQuery({
+      queryKey: ['institutions', debouncedSearch],
+      queryFn: ({ pageParam }) => listInstitutions({ search: debouncedSearch, page: pageParam }),
+      initialPageParam: 0,
+      getNextPageParam: (lastPage) =>
+        lastPage.page + 1 < lastPage.totalPages ? lastPage.page + 1 : undefined,
+    })
+
+  const institutions = data?.pages.flatMap((p) => p.content) ?? []
+
+  function handleEnter(institution: Institution) {
+    setInstitutionId(institution.id)
+    navigate('/laboratories')
+  }
+
+  function handleSaved() {
+    formDialog.closeDialog()
+    refetch()
+  }
+
+  const isAdmin = user?.admin ?? false
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <p className="text-sm text-muted-foreground">Cadastro &rsaquo; Instituições</p>
-        <h1 className="font-heading text-2xl font-bold">Nova Instituição</h1>
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-1">
+          <h1 className="font-heading text-2xl font-bold">Instituições</h1>
+          <p className="text-sm text-muted-foreground">
+            Selecione uma instituição para gerenciar ou crie uma nova.
+          </p>
+        </div>
+        {isAdmin && (
+          <Button onClick={() => formDialog.openDialog()}>
+            <Plus className="size-4" />
+            Nova Instituição
+          </Button>
+        )}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Dados da Instituição</CardTitle>
-          <CardDescription>
-            Informações gerais da universidade ou centro de pesquisa
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="name">Nome da Instituição</Label>
-              <Input
-                id="name"
-                placeholder="Ex: Universidade Federal do Pará"
-                aria-invalid={!!errors.name}
-                {...register('name')}
-              />
-              <FieldError message={errors.name?.message} />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="acronym">Sigla</Label>
-              <Input
-                id="acronym"
-                placeholder="Ex: UFPA"
-                aria-invalid={!!errors.acronym}
-                {...register('acronym')}
-              />
-              <FieldError message={errors.acronym?.message} />
-            </div>
-          </div>
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Buscar instituição..."
+            className="h-9 pl-8"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="city">Cidade</Label>
-              <Input
-                id="city"
-                placeholder="Ex: Belém"
-                aria-invalid={!!errors.city}
-                {...register('city')}
-              />
-              <FieldError message={errors.city?.message} />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label>UF</Label>
-              <Controller
-                control={control}
-                name="state"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="w-full" aria-invalid={!!errors.state}>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {BRAZILIAN_STATES.map((state) => (
-                        <SelectItem key={state} value={state}>
-                          {state}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              <FieldError message={errors.state?.message} />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Laboratório Vinculado</CardTitle>
-          <CardDescription>Configure o primeiro laboratório desta instituição</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="laboratoryName">Nome do Laboratório</Label>
-            <Input
-              id="laboratoryName"
-              placeholder="Ex: LABCOMP-01"
-              aria-invalid={!!errors.laboratoryName}
-              {...register('laboratoryName')}
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Carregando...</p>
+      ) : institutions.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Nenhuma instituição encontrada.</p>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {institutions.map((institution) => (
+            <InstitutionCard
+              key={institution.id}
+              institution={institution}
+              onEnter={handleEnter}
+              onEdit={isAdmin ? (inst) => formDialog.openDialog(inst) : undefined}
             />
-            <FieldError message={errors.laboratoryName?.message} />
-          </div>
-        </CardContent>
-      </Card>
+          ))}
+        </div>
+      )}
 
-      <FieldError message={rootError} />
+      <LoadMoreButton
+        fetchNextPage={fetchNextPage}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+      />
 
-      <div className="flex justify-end gap-3">
-        <Button type="submit" disabled={mutation.isPending}>
-          Salvar Instituição
-        </Button>
-      </div>
-    </form>
+      <InstitutionFormDialog
+        institution={formDialog.data ?? undefined}
+        open={formDialog.open}
+        onOpenChange={(open) => !open && formDialog.closeDialog()}
+        onSaved={handleSaved}
+      />
+    </div>
   )
 }

@@ -34,8 +34,16 @@ export function createInstitution(payload: CreateInstitutionPayload): Promise<In
   return api.post('/institutions', payload).then((r) => r.data)
 }
 
-export function listInstitutions(): Promise<PageResponse<Institution>> {
-  return api.get('/institutions').then((r) => r.data)
+export type ListInstitutionsParams = {
+  page?: number
+  size?: number
+  search?: string
+}
+
+export function listInstitutions(
+  params?: ListInstitutionsParams,
+): Promise<PageResponse<Institution>> {
+  return api.get('/institutions', { params }).then((r) => r.data)
 }
 
 export function getInstitution(id: string): Promise<Institution> {

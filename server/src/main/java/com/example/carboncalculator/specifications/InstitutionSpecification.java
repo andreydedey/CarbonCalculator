@@ -26,4 +26,13 @@ public final class InstitutionSpecification {
             return root.get("id").in(memberships);
         };
     }
+
+    public static Specification<Institution> nameOrAcronymContains(String term) {
+        return (root, query, cb) -> {
+            String pattern = "%" + term.toLowerCase() + "%";
+            return cb.or(
+                    cb.like(cb.lower(root.get("name")), pattern),
+                    cb.like(cb.lower(root.get("acronym")), pattern));
+        };
+    }
 }
