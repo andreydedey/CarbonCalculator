@@ -15,6 +15,10 @@ export class ValidationError extends ApiError {}
 export class ConflictError extends ApiError {}
 export class NotFoundError extends ApiError {}
 
+export function isApiError(error: unknown): error is ApiError {
+  return error instanceof Error && 'status' in error && typeof error.status === 'number'
+}
+
 export function errorForStatus(status: number, message: string): ApiError {
   if (status === 400) return new ValidationError(status, message)
   if (status === 404) return new NotFoundError(status, message)
