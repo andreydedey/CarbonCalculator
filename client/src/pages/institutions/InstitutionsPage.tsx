@@ -15,7 +15,7 @@ import { type Institution, listInstitutions } from '@/lib/api/institutions'
 
 export const InstitutionsPage: React.FC = () => {
   const { user } = useAuth()
-  const { setInstitutionId } = useInstitution()
+  const { institutionId, setInstitutionId } = useInstitution()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const formDialog = useDialog<Institution>()
@@ -96,6 +96,7 @@ export const InstitutionsPage: React.FC = () => {
             <InstitutionCard
               key={institution.id}
               institution={institution}
+              isCurrent={institution.id === institutionId}
               onEnter={handleEnter}
               onEdit={isAdmin ? (inst) => formDialog.openDialog(inst) : undefined}
             />

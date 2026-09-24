@@ -1,4 +1,4 @@
-import { Cpu, LogIn, Monitor, Pencil } from 'lucide-react'
+import { Check, Cpu, LogIn, Monitor, Pencil } from 'lucide-react'
 import type React from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -6,6 +6,7 @@ import type { Institution } from '@/lib/api/institutions'
 
 interface InstitutionCardProps {
   institution: Institution
+  isCurrent?: boolean
   onEnter: (institution: Institution) => void
   onEdit?: (institution: Institution) => void
 }
@@ -20,6 +21,7 @@ function locationLabel(city: string | null, state: string): string {
 
 export const InstitutionCard: React.FC<InstitutionCardProps> = ({
   institution,
+  isCurrent = false,
   onEnter,
   onEdit,
 }) => (
@@ -63,10 +65,17 @@ export const InstitutionCard: React.FC<InstitutionCardProps> = ({
           Editar
         </Button>
       )}
-      <Button size="sm" onClick={() => onEnter(institution)}>
-        <LogIn className="size-3.5" />
-        Entrar
-      </Button>
+      {isCurrent ? (
+        <Button size="sm" variant="secondary" disabled>
+          <Check className="size-3.5" />
+          Atual
+        </Button>
+      ) : (
+        <Button size="sm" onClick={() => onEnter(institution)}>
+          <LogIn className="size-3.5" />
+          Entrar
+        </Button>
+      )}
     </div>
   </div>
 )
