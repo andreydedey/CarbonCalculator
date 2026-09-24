@@ -44,6 +44,13 @@ export function createConfiguration(payload: CreateConfigurationPayload): Promis
   return api.post('/configurations', payload).then((r) => r.data)
 }
 
+export function updateConfiguration(
+  id: string,
+  payload: CreateConfigurationPayload,
+): Promise<Configuration> {
+  return api.put(`/configurations/${id}`, payload).then((r) => r.data)
+}
+
 export function deleteConfiguration(id: string): Promise<void> {
   return api.delete(`/configurations/${id}`).then(() => undefined)
 }

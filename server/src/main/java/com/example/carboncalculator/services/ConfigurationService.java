@@ -73,6 +73,28 @@ public class ConfigurationService {
     }
 
     @Transactional
+    public ConfigurationDTO update(UUID id, CreateConfigurationRequest request) {
+        Configuration config = getOrThrow(id);
+        UUID institutionId = currentInstitutionId();
+
+        if (configurationRepository.existsDuplicateExcluding(
+                institutionId, request.equipmentModelId(), request.operatingSystem(), request.monitorId(), id)) {
+            throw new DuplicateConfigurationException();
+        }
+
+        EquipmentModel model = equipmentModelService.getOrThrow(request.equipmentModelId());
+        Monitor monitor = request.monitorId() != null ? monitorService.getOrThrow(request.monitorId()) : null;
+
+        config.setEquipmentModel(model);
+        config.setOperatingSystem(request.operatingSystem());
+        config.setMonitor(monitor);
+
+        config = configurationRepository.save(config);
+        log.info("Configuration updated: id={}", id);
+        return toDTOWithUsage(config);
+    }
+
+    @Transactional
     public void delete(UUID id) {
         Configuration config = getOrThrow(id);
         if (laboratoryEquipmentRepository.existsByConfigurationId(id)) {

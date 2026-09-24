@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { AlertTriangle, Monitor, MonitorOff, Pencil, Trash2 } from 'lucide-react'
 import type React from 'react'
 import { toast } from 'sonner'
@@ -20,10 +20,9 @@ interface LaboratoryEquipmentSectionProps {
 export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProps> = ({
   labId,
 }) => {
-  const queryClient = useQueryClient()
   const linkDialog = useDialog<LaboratoryEquipment>()
 
-  const { data: composition } = useQuery({
+  const { data: composition, refetch } = useQuery({
     queryKey: ['lab-composition', labId],
     queryFn: () => getLabComposition(labId),
     enabled: !!labId,
@@ -32,7 +31,7 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
   const unlinkMutation = useMutation({
     mutationFn: (id: string) => unlinkEquipment(labId, id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lab-composition', labId] })
+      refetch()
       toast.success('Configuração removida do laboratório.')
     },
     onError: (error) => {
@@ -42,7 +41,7 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
 
   function handleSaved() {
     linkDialog.closeDialog()
-    queryClient.invalidateQueries({ queryKey: ['lab-composition', labId] })
+    refetch()
   }
 
   const items = composition?.items ?? []
@@ -174,7 +173,7 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
               máquinas
             </span>
             {composition && composition.configurationsWithoutMonitor > 0 && (
-              <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+              <div className="flex items-center gap-1 text-amber-600">
                 <AlertTriangle className="size-3.5" />
                 <span>
                   {composition.configurationsWithoutMonitor} configuração(ões) sem monitor — consumo

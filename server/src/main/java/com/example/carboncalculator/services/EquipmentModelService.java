@@ -72,16 +72,7 @@ public class EquipmentModelService {
         validateGpu(request);
 
         EquipmentModel model = getOrThrow(id);
-        model.setName(request.name());
-        model.setEquipmentType(request.equipmentType());
-        model.setProcessor(request.processor());
-        model.setTdpWatts(request.tdpWatts());
-        model.setCoreCount(request.coreCount());
-        model.setMemoryGb(request.memoryGb());
-        model.setGpuModel(request.gpuModel());
-        model.setGpuTdpWatts(request.gpuTdpWatts());
-        model.setHasIntegratedScreen(Boolean.TRUE.equals(request.hasIntegratedScreen()));
-        model.setDescription(request.description());
+        EquipmentModelMapper.updateFromRequest(model, request);
 
         log.info("Equipment model updated: id={}", id);
         return EquipmentModelMapper.toDTO(equipmentModelRepository.save(model));

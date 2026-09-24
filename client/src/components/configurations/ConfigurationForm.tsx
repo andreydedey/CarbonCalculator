@@ -24,7 +24,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ApiError } from '@/lib/api/client'
-import { createConfiguration } from '@/lib/api/configurations'
+import {
+  type Configuration,
+  type CreateConfigurationPayload,
+  createConfiguration,
+  updateConfiguration,
+} from '@/lib/api/configurations'
 import { listEquipmentModels } from '@/lib/api/equipment-models'
 import { listMonitors } from '@/lib/api/monitors'
 import {
@@ -34,16 +39,20 @@ import {
 } from '@/lib/schemas/configurationSchema'
 
 interface ConfigurationFormProps {
+  configuration?: Configuration
   open: boolean
   onOpenChange: (open: boolean) => void
   onSaved?: () => void
 }
 
 export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
+  configuration,
   open,
   onOpenChange,
   onSaved,
 }) => {
+  const mode = configuration ? 'edit' : 'create'
+
   const { data: modelsPage } = useQuery({
     queryKey: ['equipment-models', 'all'],
     queryFn: () => listEquipmentModels({ size: 100 }),
@@ -66,10 +75,10 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
     formState: { errors },
   } = useForm<ConfigurationFormValues>({
     resolver: zodResolver(configurationFormSchema),
-    defaultValues: {
-      equipmentModelId: '',
-      operatingSystem: '',
-      monitorId: '',
+    values: {
+      equipmentModelId: configuration?.equipmentModel.id ?? '',
+      operatingSystem: configuration?.operatingSystem ?? '',
+      monitorId: configuration?.monitor?.id ?? '',
     },
   })
 
@@ -79,24 +88,27 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
   const monitorId = watch('monitorId')
   const showMonitorWarning = !hasIntegratedScreen && !monitorId && !!selectedModel
 
-  const mutation = useMutation({
-    mutationFn: createConfiguration,
+  const saveMutation = useMutation({
+    mutationFn: (payload: CreateConfigurationPayload) =>
+      mode === 'edit' && configuration
+        ? updateConfiguration(configuration.id, payload)
+        : createConfiguration(payload),
     onSuccess: () => {
       reset()
       onOpenChange(false)
       onSaved?.()
-      toast.success('Configuração cadastrada.')
+      toast.success(mode === 'edit' ? 'Configuração atualizada.' : 'Configuração cadastrada.')
     },
     onError: (error) => {
       toast.error(
-        error instanceof ApiError ? error.message : 'Não foi possível cadastrar a configuração.',
+        error instanceof ApiError ? error.message : 'Não foi possível salvar a configuração.',
       )
     },
   })
 
   function onSubmit(values: ConfigurationFormValues) {
     const finalMonitorId = hasIntegratedScreen ? undefined : values.monitorId || undefined
-    mutation.mutate({
+    saveMutation.mutate({
       equipmentModelId: values.equipmentModelId,
       operatingSystem: values.operatingSystem.trim(),
       monitorId: finalMonitorId ?? null,
@@ -106,7 +118,7 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
       reset()
-      mutation.reset()
+      saveMutation.reset()
     }
     onOpenChange(nextOpen)
   }
@@ -115,7 +127,9 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[500px] gap-0 p-0">
         <DialogHeader className="px-7 pt-5 pb-4">
-          <DialogTitle className="text-base font-semibold">Nova Configuração</DialogTitle>
+          <DialogTitle className="text-base font-semibold">
+            {mode === 'edit' ? 'Editar Configuração' : 'Nova Configuração'}
+          </DialogTitle>
           <DialogDescription>
             Uma combinação de computador, sistema operacional e monitor — reutilizável em qualquer
             laboratório.
@@ -167,7 +181,7 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
             </div>
 
             {hasIntegratedScreen ? (
-              <div className="flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200">
+              <div className="flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
                 <Monitor className="size-3.5 shrink-0" />
                 <span>Este computador possui tela integrada — monitor externo não aplicável.</span>
               </div>
@@ -196,10 +210,10 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
             )}
 
             {showMonitorWarning && (
-              <div className="flex flex-col gap-3 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950">
+              <div className="flex flex-col gap-3 rounded-md border border-amber-200 bg-amber-50 p-3">
                 <div className="flex items-start gap-2">
-                  <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
-                  <div className="flex flex-col gap-1 text-xs text-amber-800 dark:text-amber-200">
+                  <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
+                  <div className="flex flex-col gap-1 text-xs text-amber-800">
                     <span className="font-medium">
                       Sem monitor, o resultado fica subestimado
                     </span>
@@ -210,7 +224,7 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
                     </span>
                   </div>
                 </div>
-                <label className="flex items-center gap-2 text-xs text-amber-800 dark:text-amber-200">
+                <label className="flex items-center gap-2 text-xs text-amber-800">
                   <Checkbox />
                   <span>Confirmo que estas estações não têm monitor</span>
                 </label>
@@ -222,8 +236,8 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={mutation.isPending}>
-              Cadastrar Configuração
+            <Button type="submit" disabled={saveMutation.isPending}>
+              {mode === 'edit' ? 'Salvar alterações' : 'Cadastrar Configuração'}
             </Button>
           </DialogFooter>
         </form>

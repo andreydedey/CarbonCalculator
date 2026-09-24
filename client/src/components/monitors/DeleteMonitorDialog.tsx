@@ -27,7 +27,7 @@ export const DeleteMonitorDialog: React.FC<DeleteMonitorDialogProps> = ({
   onOpenChange,
   onDeleted,
 }) => {
-  const mutation = useMutation({
+  const deleteMutation = useMutation({
     mutationFn: () => deleteMonitor(monitor.id),
     onSuccess: () => {
       onOpenChange(false)
@@ -50,13 +50,13 @@ export const DeleteMonitorDialog: React.FC<DeleteMonitorDialogProps> = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={mutation.isPending}>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel disabled={deleteMutation.isPending}>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
-            disabled={mutation.isPending}
+            disabled={deleteMutation.isPending}
             onClick={(e) => {
               e.preventDefault()
-              mutation.mutate()
+              deleteMutation.mutate()
             }}
           >
             Excluir

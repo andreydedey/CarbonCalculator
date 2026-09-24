@@ -1,11 +1,12 @@
 import { useInfiniteQuery, useMutation } from '@tanstack/react-query'
-import { Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import type React from 'react'
 import { toast } from 'sonner'
 import { ConfigurationForm } from '@/components/configurations/ConfigurationForm'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
+import { useDialog } from '@/hooks/use-dialog'
 import { ApiError } from '@/lib/api/client'
 import {
   type Configuration,
@@ -35,6 +36,8 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
   formOpen,
   onFormOpenChange,
 }) => {
+  const editDialog = useDialog<Configuration>()
+
   const {
     data: configurationsData,
     isLoading,
@@ -65,14 +68,19 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
     },
   })
 
-  const isFormOpen = formOpen ?? false
+  const isCreateFormOpen = formOpen ?? false
+  const isFormOpen = isCreateFormOpen || editDialog.open
 
   function handleFormOpenChange(open: boolean) {
-    if (!open) onFormOpenChange?.(false)
+    if (!open) {
+      onFormOpenChange?.(false)
+      editDialog.closeDialog()
+    }
   }
 
   function handleSaved() {
     onFormOpenChange?.(false)
+    editDialog.closeDialog()
     refetch()
   }
 
@@ -85,6 +93,7 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
   return (
     <div className="flex flex-col gap-6">
       <ConfigurationForm
+        configuration={editDialog.data ?? undefined}
         open={isFormOpen}
         onOpenChange={handleFormOpenChange}
         onSaved={handleSaved}
@@ -125,20 +134,31 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
                       {usageLabel(config)}
                     </td>
                     <td className="px-4 py-2 text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-7 text-destructive"
-                        onClick={() => deleteMutation.mutate(config.id)}
-                        disabled={config.usageLabCount > 0}
-                        title={
-                          config.usageLabCount > 0
-                            ? 'Remova de todos os laboratórios antes de excluir'
-                            : 'Excluir configuração'
-                        }
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7"
+                          onClick={() => editDialog.openDialog(config)}
+                          title="Editar configuração"
+                        >
+                          <Pencil className="size-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 text-destructive"
+                          onClick={() => deleteMutation.mutate(config.id)}
+                          disabled={config.usageLabCount > 0}
+                          title={
+                            config.usageLabCount > 0
+                              ? 'Remova de todos os laboratórios antes de excluir'
+                              : 'Excluir configuração'
+                          }
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}

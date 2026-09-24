@@ -84,7 +84,7 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
     },
   })
 
-  const mutation = useMutation({
+  const saveMutation = useMutation({
     mutationFn: (payload: CreateLaboratoryEquipmentPayload) =>
       mode === 'edit' && equipment
         ? updateLabEquipment(labId, equipment.id, payload)
@@ -101,7 +101,7 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
   })
 
   function onSubmit(values: LinkFormValues) {
-    mutation.mutate({
+    saveMutation.mutate({
       configurationId: values.configurationId,
       quantity: values.quantity,
     })
@@ -110,7 +110,7 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
       reset()
-      mutation.reset()
+      saveMutation.reset()
     }
     onOpenChange(nextOpen)
   }
@@ -169,7 +169,7 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={mutation.isPending}>
+            <Button type="submit" disabled={saveMutation.isPending}>
               {mode === 'edit' ? 'Salvar alterações' : 'Adicionar'}
             </Button>
           </DialogFooter>
