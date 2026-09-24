@@ -7,7 +7,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import com.example.carboncalculator.entities.Laboratory;
 
-public interface LaboratoryRepository extends JpaRepository<Laboratory, UUID>, JpaSpecificationExecutor<Laboratory> {
+public interface LaboratoryRepository
+        extends JpaRepository<Laboratory, UUID>, JpaSpecificationExecutor<Laboratory>, LaboratoryRepositoryCustom {
 
     @org.springframework.data.jpa.repository.Query(
             "SELECT CASE WHEN COUNT(le) > 0 THEN true ELSE false END " +

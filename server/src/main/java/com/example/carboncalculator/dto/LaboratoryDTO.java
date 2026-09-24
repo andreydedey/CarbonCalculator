@@ -8,7 +8,7 @@ public record LaboratoryDTO(
         String name,
         String description,
         boolean active,
-        int configurationCount,
-        int totalStations,
+        long configurationCount,
+        long totalStations,
         OffsetDateTime createdAt) {
 }

@@ -1,7 +1,5 @@
 package com.example.carboncalculator.services;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -22,7 +20,6 @@ import com.example.carboncalculator.exceptions.LaboratoryNotFoundException;
 import com.example.carboncalculator.exceptions.MissingLaboratoryNameException;
 import com.example.carboncalculator.mappers.LaboratoryMapper;
 import com.example.carboncalculator.repositories.InstitutionRepository;
-import com.example.carboncalculator.repositories.LaboratoryEquipmentRepository;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
 import com.example.carboncalculator.specifications.LaboratorySpecification;
 
@@ -35,7 +32,6 @@ public class LaboratoryService {
     private static final Logger log = LoggerFactory.getLogger(LaboratoryService.class);
 
     private final LaboratoryRepository laboratoryRepository;
-    private final LaboratoryEquipmentRepository laboratoryEquipmentRepository;
     private final InstitutionRepository institutionRepository;
 
     @Transactional
@@ -78,23 +74,7 @@ public class LaboratoryService {
         if (name != null && !name.isBlank()) {
             spec = spec.and(LaboratorySpecification.nameContains(name));
         }
-        Page<Laboratory> page = laboratoryRepository.findAll(spec, pageable);
-
-        var labIds = page.getContent().stream().map(Laboratory::getId).toList();
-        Map<UUID, int[]> statsMap = new HashMap<>();
-        if (!labIds.isEmpty()) {
-            for (Object[] row : laboratoryEquipmentRepository.countStationsByLaboratoryIds(labIds)) {
-                UUID labId = (UUID) row[0];
-                int configCount = ((Number) row[1]).intValue();
-                int totalStations = ((Number) row[2]).intValue();
-                statsMap.put(labId, new int[] { configCount, totalStations });
-            }
-        }
-
-        return page.map(lab -> {
-            int[] stats = statsMap.getOrDefault(lab.getId(), new int[] { 0, 0 });
-            return LaboratoryMapper.toDTO(lab, stats[0], stats[1]);
-        });
+        return laboratoryRepository.findAllWithCounts(spec, pageable);
     }
 
     @Transactional
