@@ -57,6 +57,7 @@ public class GlobalExceptionHandler {
             EquipmentModelNotFoundException.class,
             LaboratoryEquipmentNotFoundException.class,
             MonitorNotFoundException.class,
+            ConfigurationNotFoundException.class,
             MemberNotFoundException.class,
             InstitutionNotFoundException.class
     })
@@ -73,6 +74,8 @@ public class GlobalExceptionHandler {
             LaboratoryHasDependentsException.class,
             EquipmentModelHasDependentsException.class,
             MonitorHasDependentsException.class,
+            ConfigurationHasDependentsException.class,
+            DuplicateConfigurationException.class,
             DuplicateLaboratoryEquipmentException.class
     })
     public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex, HttpServletRequest request) {

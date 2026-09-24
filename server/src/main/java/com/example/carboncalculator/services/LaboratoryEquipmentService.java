@@ -11,10 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.carboncalculator.dto.CreateLaboratoryEquipmentRequest;
 import com.example.carboncalculator.dto.LaboratoryCompositionDTO;
 import com.example.carboncalculator.dto.LaboratoryEquipmentDTO;
-import com.example.carboncalculator.entities.EquipmentModel;
+import com.example.carboncalculator.entities.Configuration;
 import com.example.carboncalculator.entities.Laboratory;
 import com.example.carboncalculator.entities.LaboratoryEquipment;
-import com.example.carboncalculator.entities.Monitor;
 import com.example.carboncalculator.exceptions.DuplicateLaboratoryEquipmentException;
 import com.example.carboncalculator.exceptions.InvalidQuantityException;
 import com.example.carboncalculator.exceptions.LaboratoryEquipmentNotFoundException;
@@ -32,32 +31,28 @@ public class LaboratoryEquipmentService {
 
     private final LaboratoryEquipmentRepository laboratoryEquipmentRepository;
     private final LaboratoryRepository laboratoryRepository;
-    private final EquipmentModelService equipmentModelService;
-    private final MonitorService monitorService;
+    private final ConfigurationService configurationService;
 
     @Transactional
     public LaboratoryEquipmentDTO create(UUID laboratoryId, CreateLaboratoryEquipmentRequest request) {
         validateQuantity(request.quantity());
 
         Laboratory laboratory = laboratoryRepository.getReferenceById(laboratoryId);
-        EquipmentModel model = equipmentModelService.getOrThrow(request.equipmentModelId());
-        Monitor monitor = request.monitorId() != null ? monitorService.getOrThrow(request.monitorId()) : null;
+        Configuration configuration = configurationService.getOrThrow(request.configurationId());
 
-        if (laboratoryEquipmentRepository.existsDuplicate(
-                laboratoryId, request.equipmentModelId(), request.operatingSystem(), request.monitorId())) {
+        if (laboratoryEquipmentRepository.existsByLaboratoryIdAndConfigurationId(
+                laboratoryId, request.configurationId())) {
             throw new DuplicateLaboratoryEquipmentException();
         }
 
         LaboratoryEquipment equipment = LaboratoryEquipment.builder()
                 .laboratory(laboratory)
-                .equipmentModel(model)
-                .operatingSystem(request.operatingSystem())
-                .monitor(monitor)
+                .configuration(configuration)
                 .quantity(request.quantity())
                 .build();
 
         LaboratoryEquipmentDTO dto = LaboratoryEquipmentMapper.toDTO(laboratoryEquipmentRepository.save(equipment));
-        log.info("Equipment linked to laboratory: laboratoryId={}, equipmentId={}", laboratoryId, dto.id());
+        log.info("Configuration linked to laboratory: laboratoryId={}, configurationId={}", laboratoryId, request.configurationId());
         return dto;
     }
 
@@ -66,13 +61,9 @@ public class LaboratoryEquipmentService {
         validateQuantity(request.quantity());
 
         LaboratoryEquipment equipment = getOrThrow(id);
-        Monitor monitor = request.monitorId() != null ? monitorService.getOrThrow(request.monitorId()) : null;
-
-        equipment.setOperatingSystem(request.operatingSystem());
-        equipment.setMonitor(monitor);
         equipment.setQuantity(request.quantity());
 
-        log.info("Equipment updated in laboratory: id={}", id);
+        log.info("Laboratory equipment updated: id={}", id);
         return LaboratoryEquipmentMapper.toDTO(laboratoryEquipmentRepository.save(equipment));
     }
 
@@ -85,7 +76,8 @@ public class LaboratoryEquipmentService {
 
         int totalMachines = items.stream().mapToInt(LaboratoryEquipment::getQuantity).sum();
         long configurationsWithoutMonitor = items.stream()
-                .filter(le -> le.getMonitor() == null && !le.getEquipmentModel().isHasIntegratedScreen())
+                .filter(le -> le.getConfiguration().getMonitor() == null
+                        && !le.getConfiguration().getEquipmentModel().isHasIntegratedScreen())
                 .count();
 
         return new LaboratoryCompositionDTO(dtos, totalMachines, (int) configurationsWithoutMonitor);
@@ -95,7 +87,7 @@ public class LaboratoryEquipmentService {
     public void delete(UUID laboratoryId, UUID id) {
         LaboratoryEquipment equipment = getOrThrow(id);
         laboratoryEquipmentRepository.delete(equipment);
-        log.info("Equipment removed from laboratory: laboratoryId={}, id={}", laboratoryId, id);
+        log.info("Configuration removed from laboratory: laboratoryId={}, id={}", laboratoryId, id);
     }
 
     private LaboratoryEquipment getOrThrow(UUID id) {

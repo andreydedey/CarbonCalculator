@@ -5,6 +5,7 @@ import java.util.UUID;
 
 public record LaboratoryEquipmentDTO(
         UUID id,
+        UUID configurationId,
         EquipmentModelSummaryDTO equipmentModel,
         String operatingSystem,
         MonitorDTO monitor,

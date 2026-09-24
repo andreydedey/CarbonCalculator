@@ -21,28 +21,32 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "laboratory_equipment")
+@Table(name = "configuration")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class LaboratoryEquipment {
+public class Configuration {
 
     @Id
     @GeneratedValue
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "laboratory_id", nullable = false)
-    private Laboratory laboratory;
+    @JoinColumn(name = "institution_id", nullable = false)
+    private Institution institution;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "configuration_id", nullable = false)
-    private Configuration configuration;
+    @JoinColumn(name = "equipment_model_id", nullable = false)
+    private EquipmentModel equipmentModel;
 
-    @Column(nullable = false)
-    private int quantity;
+    @Column(name = "operating_system", nullable = false, length = 100)
+    private String operatingSystem;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "monitor_id")
+    private Monitor monitor;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;

@@ -1,22 +1,19 @@
 package com.example.carboncalculator.mappers;
 
-import com.example.carboncalculator.dto.LaboratoryEquipmentDTO;
+import com.example.carboncalculator.dto.ConfigurationDTO;
 import com.example.carboncalculator.dto.LaboratoryEquipmentDTO.EquipmentModelSummaryDTO;
 import com.example.carboncalculator.entities.Configuration;
 import com.example.carboncalculator.entities.EquipmentModel;
-import com.example.carboncalculator.entities.LaboratoryEquipment;
 
-public final class LaboratoryEquipmentMapper {
+public final class ConfigurationMapper {
 
-    private LaboratoryEquipmentMapper() {
+    private ConfigurationMapper() {
     }
 
-    public static LaboratoryEquipmentDTO toDTO(LaboratoryEquipment entity) {
-        Configuration config = entity.getConfiguration();
-        EquipmentModel model = config.getEquipmentModel();
-        return new LaboratoryEquipmentDTO(
+    public static ConfigurationDTO toDTO(Configuration entity, int labCount, int stationCount) {
+        EquipmentModel model = entity.getEquipmentModel();
+        return new ConfigurationDTO(
                 entity.getId(),
-                config.getId(),
                 new EquipmentModelSummaryDTO(
                         model.getId(),
                         model.getName(),
@@ -25,9 +22,10 @@ public final class LaboratoryEquipmentMapper {
                         model.getCoreCount(),
                         model.getMemoryGb(),
                         model.isHasIntegratedScreen()),
-                config.getOperatingSystem(),
-                MonitorMapper.toDTO(config.getMonitor()),
-                entity.getQuantity(),
+                entity.getOperatingSystem(),
+                MonitorMapper.toDTO(entity.getMonitor()),
+                labCount,
+                stationCount,
                 entity.getCreatedAt());
     }
 }

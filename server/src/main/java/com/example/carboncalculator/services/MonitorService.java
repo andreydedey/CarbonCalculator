@@ -20,7 +20,7 @@ import com.example.carboncalculator.exceptions.MonitorHasDependentsException;
 import com.example.carboncalculator.exceptions.MonitorNotFoundException;
 import com.example.carboncalculator.mappers.MonitorMapper;
 import com.example.carboncalculator.repositories.InstitutionRepository;
-import com.example.carboncalculator.repositories.LaboratoryEquipmentRepository;
+import com.example.carboncalculator.repositories.ConfigurationRepository;
 import com.example.carboncalculator.repositories.MonitorRepository;
 import com.example.carboncalculator.specifications.MonitorSpecification;
 
@@ -33,7 +33,7 @@ public class MonitorService {
     private static final Logger log = LoggerFactory.getLogger(MonitorService.class);
 
     private final MonitorRepository monitorRepository;
-    private final LaboratoryEquipmentRepository laboratoryEquipmentRepository;
+    private final ConfigurationRepository configurationRepository;
     private final InstitutionRepository institutionRepository;
 
     @Transactional
@@ -79,7 +79,7 @@ public class MonitorService {
     @Transactional
     public void delete(UUID id) {
         Monitor monitor = getOrThrow(id);
-        if (laboratoryEquipmentRepository.existsByMonitorId(id)) {
+        if (configurationRepository.existsByMonitorId(id)) {
             throw new MonitorHasDependentsException(id);
         }
         monitorRepository.delete(monitor);

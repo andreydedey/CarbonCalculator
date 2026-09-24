@@ -20,9 +20,9 @@ import com.example.carboncalculator.exceptions.EquipmentModelNotFoundException;
 import com.example.carboncalculator.exceptions.GpuTdpRequiredException;
 import com.example.carboncalculator.exceptions.MissingEquipmentModelNameException;
 import com.example.carboncalculator.mappers.EquipmentModelMapper;
+import com.example.carboncalculator.repositories.ConfigurationRepository;
 import com.example.carboncalculator.repositories.EquipmentModelRepository;
 import com.example.carboncalculator.repositories.InstitutionRepository;
-import com.example.carboncalculator.repositories.LaboratoryEquipmentRepository;
 import com.example.carboncalculator.specifications.EquipmentModelSpecification;
 
 import lombok.RequiredArgsConstructor;
@@ -34,7 +34,7 @@ public class EquipmentModelService {
     private static final Logger log = LoggerFactory.getLogger(EquipmentModelService.class);
 
     private final EquipmentModelRepository equipmentModelRepository;
-    private final LaboratoryEquipmentRepository laboratoryEquipmentRepository;
+    private final ConfigurationRepository configurationRepository;
     private final InstitutionRepository institutionRepository;
 
     @Transactional
@@ -98,7 +98,7 @@ public class EquipmentModelService {
     @Transactional
     public void delete(UUID id) {
         EquipmentModel model = getOrThrow(id);
-        if (laboratoryEquipmentRepository.existsByEquipmentModelId(id)) {
+        if (configurationRepository.existsByEquipmentModelId(id)) {
             throw new EquipmentModelHasDependentsException(id);
         }
         equipmentModelRepository.delete(model);
