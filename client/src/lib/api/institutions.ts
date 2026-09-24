@@ -27,6 +27,8 @@ export type Institution = {
   city: string | null
   state: string
   active: boolean
+  laboratoryCount: number
+  equipmentCount: number
   createdAt: string
 }
 

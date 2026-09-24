@@ -48,11 +48,11 @@ export const InstitutionCard: React.FC<InstitutionCardProps> = ({
     <div className="flex items-center gap-5 px-5 py-3">
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <Cpu className="size-3.5" />
-        <span>— laboratórios</span>
+        <span>{institution.laboratoryCount} laboratórios</span>
       </div>
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <Monitor className="size-3.5" />
-        <span>— equipamentos</span>
+        <span>{institution.equipmentCount} equipamentos</span>
       </div>
     </div>
 
