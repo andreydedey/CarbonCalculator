@@ -10,5 +10,7 @@ public record InstitutionDTO(
         String city,
         String state,
         boolean active,
+        long laboratoryCount,
+        long equipmentCount,
         OffsetDateTime createdAt) {
 }

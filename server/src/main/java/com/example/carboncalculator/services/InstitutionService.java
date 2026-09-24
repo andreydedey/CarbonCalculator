@@ -52,7 +52,7 @@ public class InstitutionService {
             spec = spec.and(InstitutionSpecification.nameOrAcronymContains(search.trim()));
         }
 
-        return institutionRepository.findAll(spec, pageable).map(InstitutionMapper::toDTO);
+        return institutionRepository.findAllWithCounts(spec, pageable);
     }
 
     @Transactional(readOnly = true)
