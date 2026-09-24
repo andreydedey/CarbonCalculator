@@ -2,6 +2,8 @@ package com.example.carboncalculator.services;
 
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -27,6 +29,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LaboratoryService {
 
+    private static final Logger log = LoggerFactory.getLogger(LaboratoryService.class);
+
     private final LaboratoryRepository laboratoryRepository;
     private final InstitutionRepository institutionRepository;
 
@@ -41,7 +45,9 @@ public class LaboratoryService {
                 .description(request.description())
                 .build();
 
-        return LaboratoryMapper.toDTO(laboratoryRepository.save(laboratory));
+        LaboratoryDTO dto = LaboratoryMapper.toDTO(laboratoryRepository.save(laboratory));
+        log.info("Laboratory created: id={}", dto.id());
+        return dto;
     }
 
     public LaboratoryDTO getById(UUID id) {
@@ -54,6 +60,7 @@ public class LaboratoryService {
         Laboratory laboratory = getOrThrow(id);
         laboratory.setName(request.name());
         laboratory.setDescription(request.description());
+        log.info("Laboratory updated: id={}", id);
         return LaboratoryMapper.toDTO(laboratoryRepository.save(laboratory));
     }
 
@@ -72,6 +79,7 @@ public class LaboratoryService {
     public LaboratoryDTO activate(UUID id) {
         Laboratory laboratory = getOrThrow(id);
         laboratory.setActive(true);
+        log.info("Laboratory activated: id={}", id);
         return LaboratoryMapper.toDTO(laboratoryRepository.save(laboratory));
     }
 
@@ -79,6 +87,7 @@ public class LaboratoryService {
     public LaboratoryDTO deactivate(UUID id) {
         Laboratory laboratory = getOrThrow(id);
         laboratory.setActive(false);
+        log.info("Laboratory deactivated: id={}", id);
         return LaboratoryMapper.toDTO(laboratoryRepository.save(laboratory));
     }
 
@@ -89,6 +98,7 @@ public class LaboratoryService {
             throw new LaboratoryHasDependentsException(id);
         }
         laboratoryRepository.delete(laboratory);
+        log.info("Laboratory deleted: id={}", id);
     }
 
     private Laboratory getOrThrow(UUID id) {

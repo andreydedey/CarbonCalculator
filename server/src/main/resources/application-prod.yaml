@@ -1,0 +1,12 @@
+logging:
+  level:
+    root: INFO
+    com.example.carboncalculator: INFO
+  structured:
+    format:
+      console: ecs
+    ecs:
+      service:
+        name: carboncalculator
+        version: ${app.version:0.0.1}
+        environment: production

@@ -7,6 +7,9 @@ import java.util.UUID;
 
 import javax.sql.DataSource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
@@ -28,6 +31,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class TenantFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(TenantFilter.class);
 
     public static final String TENANT_HEADER = "X-Institution-Id";
 
@@ -54,15 +59,18 @@ public class TenantFilter extends OncePerRequestFilter {
 
         String institutionId = request.getHeader(TENANT_HEADER);
         if (institutionId == null || institutionId.isBlank()) {
+            log.warn("Missing {} header on {} {}", TENANT_HEADER, request.getMethod(), stripContextPath(request));
             respondMissingInstitutionHeader(response);
             return;
         }
 
         if (!hasAccess(institutionId)) {
+            log.warn("Access denied to institution {} on {} {}", institutionId, request.getMethod(), stripContextPath(request));
             respondForbidden(response);
             return;
         }
 
+        MDC.put("institutionId", institutionId);
         try {
             TenantContext.setInstitutionId(institutionId);
             addInstitutionRolesToAuth(institutionId);
