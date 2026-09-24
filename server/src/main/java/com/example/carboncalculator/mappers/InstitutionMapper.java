@@ -19,6 +19,10 @@ public final class InstitutionMapper {
     }
 
     public static InstitutionDTO toDTO(Institution entity) {
+        return toDTO(entity, 0, 0);
+    }
+
+    public static InstitutionDTO toDTO(Institution entity, long laboratoryCount, long equipmentCount) {
         return new InstitutionDTO(
                 entity.getId(),
                 entity.getName(),
@@ -26,6 +30,8 @@ public final class InstitutionMapper {
                 entity.getCity(),
                 entity.getState(),
                 entity.isActive(),
+                laboratoryCount,
+                equipmentCount,
                 entity.getCreatedAt());
     }
 }

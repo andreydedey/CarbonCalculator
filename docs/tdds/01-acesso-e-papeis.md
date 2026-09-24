@@ -5,9 +5,9 @@
 | Tech Lead        | Andrey Dedey                                   |
 | PRD de origem    | `docs/prds/01-acesso-e-papeis.md`              |
 | ADRs relevantes  | ADR-001 (stack), ADR-004 (multi-tenancy RLS)   |
-| Status           | Draft                                          |
+| Status           | Em progresso                                   |
 | Criado em        | 2026-09-20                                     |
-| Atualizado em    | 2026-09-20                                     |
+| Atualizado em    | 2026-09-24                                     |
 
 ---
 
@@ -21,8 +21,10 @@ O design (Pencil) define três telas: Login (1a), Registro (1c) e Gestão de Usu
 
 - **Um usuário pode pertencer a mais de uma instituição.** O modelo usa uma tabela associativa `user_institution` com papel por vínculo. Na prática, isso serve pesquisadores que atuam em mais de uma universidade.
 - **Resultados agregados podem ser públicos, mas opt-in.** A instituição escolhe se compartilha seus resultados. Isso será implementado como um flag `public_results` na tabela `institution` — mas a funcionalidade de exibição pública fica para um PRD futuro. Neste TDD, apenas adicionamos a coluna.
-- **Google OAuth será implementado nesta fase.** O design mostra "Continuar com Google" tanto no login quanto no registro. Usaremos Spring Security OAuth2 Client.
-- **Autocadastro de usuários é aberto, mas sem acesso até ser vinculado.** Qualquer pessoa pode criar conta (tela 1c), mas sem vínculo a uma instituição não acessa nenhum dado. O gestor convida por email; se o email já tem conta, o vínculo é criado direto; se não, o convite fica pendente até o registro.
+- **Google OAuth permanece no escopo.** O design mostra "Continuar com Google" e a funcionalidade será implementada. Login e registro por email/senha já funcionam; OAuth2 com Google será adicionado em seguida.
+- **Autocadastro de usuários é aberto, mas sem acesso até ser vinculado.** Qualquer pessoa pode criar conta (tela 1c), mas sem vínculo a uma instituição não acessa nenhum dado. O manager convida por email; se o email já tem conta, o vínculo é criado direto; se não, o convite fica pendente até o registro.
+- **Papéis usam nomes em inglês no código.** O PRD usa GESTOR/PESQUISADOR, mas a implementação usa `MANAGER`/`RESEARCHER` internamente (Spring Security `ROLE_MANAGER`, `ROLE_RESEARCHER`). A hierarquia é `ADMIN > MANAGER > RESEARCHER`.
+- **Tela de Instituições é acessível a todos os usuários.** Não é exclusiva do admin. Usuários comuns veem apenas as instituições onde têm vínculo; o admin vê todas e pode criar/editar/excluir.
 
 ## Definição do Problema
 
@@ -46,14 +48,15 @@ Sem autenticação, o `X-Institution-Id` é confiado cegamente — qualquer clie
 - Autenticação por email/senha com JWT (stateless)
 - Autenticação via Google OAuth2
 - Registro de novos usuários (nome, email, senha)
-- Três papéis: `ADMIN` (global), `GESTOR` (por instituição), `PESQUISADOR` (por instituição)
+- Três papéis: `ADMIN` (global), `MANAGER` (por instituição), `RESEARCHER` (por instituição)
 - `@PreAuthorize` em todos os endpoints existentes e futuros
 - Tela de login (1a) com email/senha e Google
 - Tela de registro (1c) com formulário e Google
 - Tela de gestão de usuários (1b) com tabela, convite, alteração de papel e revogação
-- Tela de administração global de instituições (0) para admins
+- Tela de instituições (0) acessível a todos os usuários (grid de cards; admin vê todas, demais vêem apenas as suas)
 - Interceptor HTTP no frontend que envia JWT no header `Authorization`
 - Validação no `TenantFilter`: após autenticação, verificar que o usuário tem vínculo com a instituição do header
+- Frontend role gating: ocultar botões de criação/edição/exclusão para usuários com papel RESEARCHER
 - Coluna `public_results` em `institution` (apenas a coluna, sem funcionalidade de exibição)
 
 ### Fora do escopo
@@ -108,7 +111,7 @@ Sem autenticação, o `X-Institution-Id` é confiado cegamente — qualquer clie
 | `id`            | `UUID`               | PK, gerado automaticamente    |
 | `name`          | `VARCHAR(255)`       | NOT NULL                       |
 | `email`         | `VARCHAR(255)`       | NOT NULL, UNIQUE               |
-| `password_hash` | `VARCHAR(255)`       | NULL (null para OAuth-only)    |
+| `password_hash` | `VARCHAR(255)`       | NULL (null para contas OAuth-only) |
 | `is_admin`      | `BOOLEAN`            | NOT NULL, DEFAULT FALSE        |
 | `active`        | `BOOLEAN`            | NOT NULL, DEFAULT TRUE         |
 | `created_at`    | `TIMESTAMP WITH TZ`  | NOT NULL                       |
@@ -119,13 +122,16 @@ Sem autenticação, o `X-Institution-Id` é confiado cegamente — qualquer clie
 | Coluna           | Tipo                 | Restrições                             |
 | ---------------- | -------------------- | -------------------------------------- |
 | `id`             | `UUID`               | PK, gerado automaticamente            |
-| `user_id`        | `UUID`               | FK → app_user(id), NOT NULL            |
+| `user_id`        | `UUID`               | FK → app_user(id), NULL (preenchido quando o convidado se registra) |
+| `user_email`     | `VARCHAR(255)`       | NOT NULL (identifica o convidado antes do registro) |
 | `institution_id` | `UUID`               | FK → institution(id), NOT NULL         |
-| `role`           | `VARCHAR(20)`        | NOT NULL, CHECK IN ('GESTOR','PESQUISADOR') |
+| `role`           | `VARCHAR(20)`        | NOT NULL, CHECK IN ('MANAGER','RESEARCHER') |
 | `status`         | `VARCHAR(20)`        | NOT NULL, CHECK IN ('ACTIVE','PENDING')  |
 | `created_at`     | `TIMESTAMP WITH TZ`  | NOT NULL                               |
 
-**Constraint:** UNIQUE(user_id, institution_id) — um usuário tem no máximo um vínculo por instituição.
+**Constraints:**
+- UNIQUE(user_id, institution_id) WHERE user_id IS NOT NULL — um usuário registrado tem no máximo um vínculo por instituição
+- UNIQUE(user_email, institution_id) — não duplicar convites para o mesmo email na mesma instituição
 
 **Alteração em `institution`:**
 
@@ -172,21 +178,21 @@ Sem autenticação, o `X-Institution-Id` é confiado cegamente — qualquer clie
 
 **Papéis:**
 
-| Papel     | Escopo       | Permissões                                                              |
-| --------- | ------------ | ----------------------------------------------------------------------- |
-| `ADMIN`   | Global       | CRUD de instituições, edição de fatores de emissão, convite de gestores |
-| `GESTOR`  | Instituição  | CRUD de labs, equipamentos, medições, calendário; convite/revogação de membros |
-| `PESQUISADOR`| Instituição  | Somente leitura de todos os dados da instituição; acesso a simulações e resultados |
+| Papel        | Escopo       | Permissões                                                              |
+| ------------ | ------------ | ----------------------------------------------------------------------- |
+| `ADMIN`      | Global       | CRUD de instituições, edição de fatores de emissão, convite de gestores |
+| `MANAGER`    | Instituição  | CRUD de labs, equipamentos, medições, calendário; convite/revogação de membros |
+| `RESEARCHER` | Instituição  | Somente leitura de todos os dados da instituição; acesso a simulações e resultados |
 
 **Hierarquia de papéis (Spring Security `RoleHierarchy`):**
 
 ```
-ADMIN > GESTOR > PESQUISADOR
+ADMIN > MANAGER > RESEARCHER
 ```
 
-- **ADMIN** herda todas as permissões de GESTOR e PESQUISADOR. Pode operar em qualquer instituição sem vínculo explícito.
-- **GESTOR** herda as permissões de PESQUISADOR. Pode ler e também criar/editar/excluir dados da sua instituição.
-- **PESQUISADOR** é o papel base. Somente leitura dos dados da instituição à qual está vinculado.
+- **ADMIN** herda todas as permissões de MANAGER e RESEARCHER. Pode operar em qualquer instituição sem vínculo explícito.
+- **MANAGER** herda as permissões de RESEARCHER. Pode ler e também criar/editar/excluir dados da sua instituição.
+- **RESEARCHER** é o papel base. Somente leitura dos dados da instituição à qual está vinculado.
 
 A hierarquia é configurada como bean no Spring Security:
 
@@ -194,21 +200,21 @@ A hierarquia é configurada como bean no Spring Security:
 @Bean
 RoleHierarchy roleHierarchy() {
     return RoleHierarchyImpl.fromHierarchy("""
-        ROLE_ADMIN > ROLE_GESTOR
-        ROLE_GESTOR > ROLE_PESQUISADOR
+        ROLE_ADMIN > ROLE_MANAGER
+        ROLE_MANAGER > ROLE_RESEARCHER
     """);
 }
 ```
 
-Isso permite que `@PreAuthorize("hasRole('PESQUISADOR')")` autorize automaticamente GESTOR e ADMIN, sem precisar listar todos os papéis em cada anotação.
+Isso permite que `@PreAuthorize("hasRole('RESEARCHER')")` autorize automaticamente MANAGER e ADMIN, sem precisar listar todos os papéis em cada anotação.
 
 **Resolução de authorities:**
 
 | Usuário | `is_admin` | Vínculos | Authorities resultantes (na instituição X) |
 | ------- | ---------- | -------- | ------------------------------------------ |
-| Carlos  | true       | UFPA/GESTOR | ROLE_ADMIN, ROLE_GESTOR, ROLE_PESQUISADOR |
-| Ana     | false      | UFPA/GESTOR | ROLE_GESTOR, ROLE_PESQUISADOR |
-| Bruno   | false      | UFPA/PESQUISADOR | ROLE_PESQUISADOR |
+| Carlos  | true       | UFPA/MANAGER | ROLE_ADMIN, ROLE_MANAGER, ROLE_RESEARCHER |
+| Ana     | false      | UFPA/MANAGER | ROLE_MANAGER, ROLE_RESEARCHER |
+| Bruno   | false      | UFPA/RESEARCHER | ROLE_RESEARCHER |
 | Rafael  | false      | (nenhum) | (sem acesso à instituição X) |
 
 **Regras de `@PreAuthorize`:**
@@ -221,15 +227,15 @@ Isso permite que `@PreAuthorize("hasRole('PESQUISADOR')")` autorize automaticame
 | `POST /institutions`                    | ADMIN                                     |
 | `GET /institutions/{id}`                | ADMIN ou membro da instituição            |
 | `PUT /institutions/{id}`                | ADMIN                                     |
-| `POST /laboratories`                    | GESTOR da instituição do header           |
-| `GET /laboratories`                     | Membro da instituição do header           |
-| `PATCH /laboratories/{id}/activate`     | GESTOR da instituição do header           |
-| `PATCH /laboratories/{id}/deactivate`   | GESTOR da instituição do header           |
-| `DELETE /laboratories/{id}`             | GESTOR da instituição do header           |
-| `GET /users` (da instituição)           | GESTOR da instituição do header           |
-| `POST /users/invite`                    | GESTOR da instituição do header           |
-| `PATCH /users/{id}/role`                | GESTOR da instituição do header           |
-| `DELETE /users/{id}` (revogar)          | GESTOR da instituição do header           |
+| `POST /laboratories`                    | MANAGER da instituição do header          |
+| `GET /laboratories`                     | RESEARCHER da instituição do header       |
+| `PATCH /laboratories/{id}/activate`     | MANAGER da instituição do header          |
+| `PATCH /laboratories/{id}/deactivate`   | MANAGER da instituição do header          |
+| `DELETE /laboratories/{id}`             | MANAGER da instituição do header          |
+| `GET /users` (da instituição)           | MANAGER da instituição do header          |
+| `POST /users/invite`                    | MANAGER da instituição do header          |
+| `PATCH /users/{id}/role`                | MANAGER da instituição do header          |
+| `DELETE /users/{id}` (revogar)          | MANAGER da instituição do header          |
 
 **TenantFilter atualizado:**
 
@@ -304,7 +310,7 @@ O `TenantFilter` existente será modificado para, após extrair o `X-Institution
     {
       "institutionId": "660e8400-...",
       "name": "UFPA",
-      "role": "GESTOR",
+      "role": "MANAGER",
       "status": "ACTIVE"
     }
   ]
@@ -331,14 +337,14 @@ O `TenantFilter` existente será modificado para, após extrair o `X-Institution
     "id": "550e8400-...",
     "name": "Carlos Mendes",
     "email": "carlos.mendes@ufpa.br",
-    "role": "GESTOR",
+    "role": "MANAGER",
     "status": "ACTIVE"
   },
   {
     "id": "770e8400-...",
     "name": "Rafael Souza",
     "email": "rafael.souza@ufpa.br",
-    "role": "PESQUISADOR",
+    "role": "RESEARCHER",
     "status": "PENDING"
   }
 ]
@@ -350,14 +356,14 @@ O `TenantFilter` existente será modificado para, após extrair o `X-Institution
 // Request
 {
   "email": "novo.pesquisador@ufpa.br",
-  "role": "PESQUISADOR"
+  "role": "RESEARCHER"
 }
 
 // Response 201
 {
   "id": "880e8400-...",
   "email": "novo.pesquisador@ufpa.br",
-  "role": "PESQUISADOR",
+  "role": "RESEARCHER",
   "status": "PENDING"
 }
 ```
@@ -367,7 +373,7 @@ O `TenantFilter` existente será modificado para, após extrair o `X-Institution
 // Header: X-Institution-Id: 660e8400-...
 // Request
 {
-  "role": "GESTOR"
+  "role": "MANAGER"
 }
 
 // Response 200
@@ -375,14 +381,14 @@ O `TenantFilter` existente será modificado para, após extrair o `X-Institution
   "id": "770e8400-...",
   "name": "Rafael Souza",
   "email": "rafael.souza@ufpa.br",
-  "role": "GESTOR",
+  "role": "MANAGER",
   "status": "ACTIVE"
 }
 ```
 
 **Regras de negócio na API:**
-- O gestor não pode revogar o próprio acesso (design mostra "(você)" sem botões de ação)
-- O gestor não pode alterar o próprio papel
+- O manager não pode revogar o próprio acesso (design mostra "(você)" sem botões de ação)
+- O manager não pode alterar o próprio papel
 - Convite duplicado (mesmo email + mesma instituição) retorna `409 Conflict`
 - Convite para email já vinculado à instituição retorna `409 Conflict`
 - Login com credenciais inválidas retorna `401 Unauthorized` com mensagem genérica
@@ -401,8 +407,8 @@ O `TenantFilter` existente será modificado para, após extrair o `X-Institution
 
 - Rotas públicas: `/login`, `/register`
 - Rotas autenticadas: todas as demais (envolvidas por um `<ProtectedRoute>`)
-- Rota admin: `/institutions` (visão global, só admin)
-- A visão de gestão de usuários será acessível pela sidebar: "Administração > Usuários"
+- Rota `/institutions`: acessível a todos os usuários autenticados. Admin vê todas as instituições; demais vêem apenas as suas.
+- A visão de gestão de usuários será acessível pela sidebar: "Administração > Usuários" (visível para MANAGER e ADMIN)
 
 **Páginas (conforme design):**
 
@@ -411,13 +417,13 @@ O `TenantFilter` existente será modificado para, após extrair o `X-Institution
 | Login                       | `/login`         | Email/senha + Google OAuth                             |
 | Registro                    | `/register`      | Nome, email, senha + Google OAuth                      |
 | Gestão de Usuários          | `/users`         | Tabela de membros com convite, alterar papel, revogar  |
-| Instituições (Global Admin) | `/institutions`  | Grid de cards com todas as instituições (somente admin) |
+| Instituições                | `/institutions`  | Grid de cards com as instituições do usuário (admin vê todas) |
 
 **Modificações em componentes existentes:**
 
-- `InstitutionSwitcher`: filtrar para mostrar apenas instituições às quais o usuário está vinculado
+- `InstitutionSwitcher`: já alimentado pelo backend que filtra por vínculo do usuário (admin vê todas)
 - `AppLayout`: exibir nome do usuário + avatar no top bar, botão de logout
-- `Sidebar`: adicionar item "Usuários" na seção "Administração" (visível apenas para gestores)
+- `Sidebar`: adicionar item "Usuários" na seção "Administração" (visível apenas para MANAGER e ADMIN)
 - Axios interceptor: adicionar `Authorization: Bearer <jwt>` além do `X-Institution-Id`
 
 ### Dependências (bibliotecas)
@@ -440,44 +446,46 @@ O `TenantFilter` existente será modificado para, após extrair o `X-Institution
 | JWT secret vazado expõe todas as sessões | Alto | Baixa | Variável de ambiente, nunca commitada; rotação periódica |
 | Google OAuth callback mal configurado em produção | Médio | Média | Documentar configuração do Google Cloud Console; testar em staging |
 | Token armazenado em localStorage é vulnerável a XSS | Alto | Média | Armazenar access token apenas em memória; refresh token em httpOnly cookie |
-| Gestor remove todos os gestores de uma instituição, ficando sem acesso | Médio | Baixa | Validar que pelo menos um gestor ativo permanece |
+| Manager remove todos os managers de uma instituição, ficando sem acesso | Médio | Baixa | Validar que pelo menos um manager ativo permanece |
 | TenantFilter não valida vínculo corretamente, permitindo acesso cross-tenant | Alto | Baixa | Testes de integração explícitos para cenários cross-tenant |
 
 ---
 
 ## Plano de Implementação
 
-| Fase | Tarefa | Descrição | Estimativa |
-|------|--------|-----------|------------|
-| **1 — Banco** | Migration V4 — app_user | Criar tabela `app_user` | 0.5d |
-| **1 — Banco** | Migration V5 — user_institution | Criar tabela `user_institution` com constraints | 0.5d |
-| **1 — Banco** | Migration V6 — public_results | Adicionar coluna `public_results` em `institution` | 0.25d |
-| **1 — Banco** | Entities | JPA entities `AppUser` e `UserInstitution` | 0.5d |
-| **2 — Auth** | JWT service | Geração, validação e refresh de tokens JWT | 1d |
-| **2 — Auth** | SecurityFilterChain | JWT filter, public endpoints, CORS config | 0.5d |
-| **2 — Auth** | AuthController | Endpoints de register, login, refresh, me | 1d |
-| **2 — Auth** | Google OAuth2 | OAuth2 client config, callback handler, geração de JWT após OAuth | 1d |
-| **2 — Auth** | TenantFilter update | Validar vínculo user↔institution após autenticação | 0.5d |
-| **3 — Backend** | UserService + Controller | CRUD de membros: listar, convidar, alterar papel, revogar | 1d |
-| **3 — Backend** | @PreAuthorize | Anotações em todos os controllers existentes e novos | 0.5d |
-| **3 — Backend** | InstitutionService update | Filtrar instituições por vínculo do usuário (exceto admin) | 0.5d |
-| **4 — Frontend** | AuthContext + interceptor | Contexto de auth, JWT em memória, Axios interceptor | 1d |
-| **4 — Frontend** | Login page | Tela de login conforme design (1a) | 0.5d |
-| **4 — Frontend** | Register page | Tela de registro conforme design (1c) | 0.5d |
-| **4 — Frontend** | ProtectedRoute | Componente wrapper que redireciona para login | 0.25d |
-| **4 — Frontend** | User management page | Tela de gestão de usuários conforme design (1b) | 1d |
-| **4 — Frontend** | Admin institutions page | Tela de administração global conforme design (0) | 1d |
-| **4 — Frontend** | Layout updates | Avatar/nome no topbar, item Usuários na sidebar, logout | 0.5d |
-| **5 — Testes** | Testes de integração | Auth endpoints, @PreAuthorize, cross-tenant validation | 1.5d |
-| **5 — Testes** | Testes unitários | JWT service, validações de negócio | 0.5d |
+| Fase | Tarefa | Descrição | Status |
+|------|--------|-----------|--------|
+| **1 — Banco** | Migration V4 — app_user | Criar tabela `app_user` | Concluído |
+| **1 — Banco** | Migration V5 — user_institution | Criar tabela `user_institution` com constraints | Concluído |
+| **1 — Banco** | Migration V6 — public_results | Adicionar coluna `public_results` em `institution` | Concluído |
+| **1 — Banco** | Migration V7 — user_email | Tornar `user_id` nullable e adicionar `user_email` para convites pendentes | Concluído |
+| **1 — Banco** | Migration V8 — rename roles | Renomear GESTOR→MANAGER, PESQUISADOR→RESEARCHER | Concluído |
+| **1 — Banco** | Entities | JPA entities `AppUser` e `UserInstitution` | Concluído |
+| **2 — Auth** | JWT service | Geração, validação e refresh de tokens JWT | Concluído |
+| **2 — Auth** | SecurityFilterChain | JWT filter, public endpoints, CORS config | Concluído |
+| **2 — Auth** | AuthController | Endpoints de register, login, refresh, me | Concluído |
+| **2 — Auth** | Google OAuth2 | OAuth2 client config, callback handler, geração de JWT após OAuth | Pendente |
+| **2 — Auth** | TenantFilter update | Validar vínculo user↔institution e injetar role do membro | Concluído |
+| **3 — Backend** | UserService + Controller | CRUD de membros: listar, convidar, alterar papel, revogar | Concluído |
+| **3 — Backend** | @PreAuthorize | Anotações em todos os controllers existentes e novos | Concluído |
+| **3 — Backend** | InstitutionService update | Filtrar instituições por vínculo do usuário (exceto admin) | Concluído |
+| **4 — Frontend** | AuthContext + interceptor | Contexto de auth, JWT em memória, Axios interceptor | Concluído |
+| **4 — Frontend** | Login page | Tela de login conforme design (1a) — email/senha | Concluído |
+| **4 — Frontend** | Register page | Tela de registro conforme design (1c) — email/senha | Concluído |
+| **4 — Frontend** | ProtectedRoute | Componente wrapper que redireciona para login | Concluído |
+| **4 — Frontend** | User management page | Tela de gestão de usuários conforme design (1b) | Concluído |
+| **4 — Frontend** | Institutions page | Grid de cards com instituições (todos vêem as suas, admin vê todas) | Pendente |
+| **4 — Frontend** | Frontend role gating | Ocultar ações de escrita para RESEARCHER nas páginas existentes | Pendente |
+| **4 — Frontend** | Login/Register Google | Adicionar botão "Continuar com Google" nas telas 1a e 1c | Pendente |
+| **4 — Frontend** | Layout updates | Nome do usuário no topbar, item Usuários na sidebar, logout | Concluído |
+| **5 — Testes** | Testes de integração | Auth endpoints, @PreAuthorize, cross-tenant validation | Pendente |
+| **5 — Testes** | Testes unitários | JWT service, validações de negócio | Pendente |
 
-**Estimativa total**: ~13 dias úteis
-
-**Dependências entre fases:**
-- Fase 1 desbloqueia Fase 2 e 3
-- Fase 2 desbloqueia Fase 3 e 4
-- Fase 3 pode rodar em paralelo com Fase 4
-- Fase 5 pode começar após Fase 2
+**Tarefas restantes:**
+1. Google OAuth2 (backend + frontend)
+2. Tela de instituições com listagem em grid de cards
+3. Frontend role gating (ocultar botões de criação/edição/exclusão para RESEARCHER)
+4. Testes de integração e unitários
 
 ---
 
@@ -502,21 +510,21 @@ O `TenantFilter` existente será modificado para, após extrair o `X-Institution
 
 **Autorização:**
 - Admin acessa `GET /institutions` → vê todas
-- Gestor acessa `GET /institutions` → vê apenas as suas
-- Gestor acessa `POST /laboratories` com `X-Institution-Id` da sua instituição → 201
-- Gestor acessa `POST /laboratories` com `X-Institution-Id` de outra instituição → 403
-- Consulta acessa `GET /laboratories` → 200
-- Consulta acessa `POST /laboratories` → 403
-- Consulta acessa `DELETE /laboratories/{id}` → 403
+- Manager acessa `GET /institutions` → vê apenas as suas
+- Manager acessa `POST /laboratories` com `X-Institution-Id` da sua instituição → 201
+- Manager acessa `POST /laboratories` com `X-Institution-Id` de outra instituição → 403
+- Researcher acessa `GET /laboratories` → 200
+- Researcher acessa `POST /laboratories` → 403
+- Researcher acessa `DELETE /laboratories/{id}` → 403
 - Admin cria instituição → 201
-- Gestor cria instituição → 403
+- Manager cria instituição → 403
 
 **Gestão de usuários:**
-- Gestor convida usuário → 201 + status PENDING
+- Manager convida usuário → 201 + status PENDING
 - Convite duplicado → 409 Conflict
-- Gestor altera papel de membro → 200
-- Gestor tenta alterar o próprio papel → 400
-- Gestor revoga acesso de membro → 204
-- Gestor tenta revogar o próprio acesso → 400
-- Gestor tenta revogar quando é o último gestor → 400
+- Manager altera papel de membro → 200
+- Manager tenta alterar o próprio papel → 400
+- Manager revoga acesso de membro → 204
+- Manager tenta revogar o próprio acesso → 400
+- Manager tenta revogar quando é o último manager → 400
 - Registro de usuário com convite pendente → vínculo ativado automaticamente

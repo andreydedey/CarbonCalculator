@@ -10,13 +10,16 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.carboncalculator.dto.CreateInstitutionRequest;
 import com.example.carboncalculator.dto.InstitutionDTO;
 import com.example.carboncalculator.dto.PageResponse;
+import com.example.carboncalculator.dto.UpdateInstitutionRequest;
 import com.example.carboncalculator.entities.AppUser;
 import com.example.carboncalculator.services.InstitutionService;
 
@@ -31,8 +34,11 @@ public class InstitutionController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public PageResponse<InstitutionDTO> list(@AuthenticationPrincipal AppUser user, Pageable pageable) {
-        return PageResponse.from(institutionService.listForUser(user, pageable));
+    public PageResponse<InstitutionDTO> list(
+            @AuthenticationPrincipal AppUser user,
+            @RequestParam(required = false) String search,
+            Pageable pageable) {
+        return PageResponse.from(institutionService.listForUser(user, search, pageable));
     }
 
     @GetMapping("/{id}")
@@ -48,6 +54,12 @@ public class InstitutionController {
     public ResponseEntity<InstitutionDTO> create(@RequestBody CreateInstitutionRequest request) {
         InstitutionDTO response = institutionService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<InstitutionDTO> update(@PathVariable UUID id, @RequestBody UpdateInstitutionRequest request) {
+        return ResponseEntity.ok(institutionService.update(id, request));
     }
 
 }

@@ -12,7 +12,7 @@ public final class LaboratoryMapper {
         return toDTO(entity, 0, 0);
     }
 
-    public static LaboratoryDTO toDTO(Laboratory entity, int configurationCount, int totalStations) {
+    public static LaboratoryDTO toDTO(Laboratory entity, long configurationCount, long totalStations) {
         return new LaboratoryDTO(
                 entity.getId(),
                 entity.getName(),

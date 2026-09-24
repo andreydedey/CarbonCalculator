@@ -57,7 +57,7 @@ export const EquipmentModelForm: React.FC<EquipmentModelFormProps> = ({
     reset,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<EquipmentModelFormValues>({
     resolver: zodResolver(equipmentModelFormSchema),
     values: {
@@ -256,7 +256,7 @@ export const EquipmentModelForm: React.FC<EquipmentModelFormProps> = ({
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={saveMutation.isPending}>
+            <Button type="submit" disabled={!isDirty || saveMutation.isPending}>
               {mode === 'edit' ? 'Salvar alterações' : 'Cadastrar Computador'}
             </Button>
           </DialogFooter>

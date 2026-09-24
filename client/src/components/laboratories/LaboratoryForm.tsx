@@ -40,7 +40,7 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<LaboratoryFormValues>({
     resolver: zodResolver(laboratoryFormSchema),
     values: { name: laboratory?.name ?? '', description: laboratory?.description ?? '' },
@@ -146,7 +146,7 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={mutation.isPending}>
+            <Button type="submit" disabled={!isDirty || mutation.isPending}>
               {mode === 'edit' ? 'Salvar alterações' : 'Criar Laboratório'}
             </Button>
           </DialogFooter>
