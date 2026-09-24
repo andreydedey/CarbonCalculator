@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
 import { useDialog } from '@/hooks/use-dialog'
-import { ApiError } from '@/lib/api/client'
+import { isApiError } from '@/lib/api/client'
 import {
   type Configuration,
   deleteConfiguration,
@@ -63,7 +63,7 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
     },
     onError: (error) => {
       toast.error(
-        error instanceof ApiError ? error.message : 'Não foi possível excluir a configuração.',
+        isApiError(error) ? error.message : 'Não foi possível excluir a configuração.',
       )
     },
   })

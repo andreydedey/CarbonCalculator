@@ -11,7 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { ApiError } from '@/lib/api/client'
+import { isApiError } from '@/lib/api/client'
 import { deleteEquipmentModel, type EquipmentModel } from '@/lib/api/equipment-models'
 
 interface DeleteEquipmentModelDialogProps {
@@ -35,7 +35,7 @@ export const DeleteEquipmentModelDialog: React.FC<DeleteEquipmentModelDialogProp
       toast.success('Modelo excluído.')
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : 'Não foi possível excluir o modelo.')
+      toast.error(isApiError(error) ? error.message : 'Não foi possível excluir o modelo.')
     },
   })
 

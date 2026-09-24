@@ -11,7 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { ApiError } from '@/lib/api/client'
+import { isApiError } from '@/lib/api/client'
 import { deleteMonitor, type Monitor } from '@/lib/api/monitors'
 
 interface DeleteMonitorDialogProps {
@@ -35,7 +35,7 @@ export const DeleteMonitorDialog: React.FC<DeleteMonitorDialogProps> = ({
       toast.success('Monitor excluído.')
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : 'Não foi possível excluir o monitor.')
+      toast.error(isApiError(error) ? error.message : 'Não foi possível excluir o monitor.')
     },
   })
 

@@ -17,7 +17,7 @@ import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { ApiError } from '@/lib/api/client'
+import { isApiError } from '@/lib/api/client'
 import type { CreateLaboratoryPayload } from '@/lib/api/laboratories'
 import { createLaboratory, type Laboratory, updateLaboratory } from '@/lib/api/laboratories'
 import { type LaboratoryFormValues, laboratoryFormSchema } from '@/lib/schemas/laboratorySchema'
@@ -59,7 +59,7 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
     },
     onError: (error) => {
       toast.error(
-        error instanceof ApiError ? error.message : 'Não foi possível salvar o laboratório.',
+        isApiError(error) ? error.message : 'Não foi possível salvar o laboratório.',
       )
     },
   })

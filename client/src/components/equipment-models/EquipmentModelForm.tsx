@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ApiError } from '@/lib/api/client'
+import { isApiError } from '@/lib/api/client'
 import {
   type CreateEquipmentModelPayload,
   createEquipmentModel,
@@ -88,7 +88,7 @@ export const EquipmentModelForm: React.FC<EquipmentModelFormProps> = ({
       toast.success(mode === 'edit' ? 'Modelo atualizado.' : 'Modelo criado.')
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : 'Não foi possível salvar o modelo.')
+      toast.error(isApiError(error) ? error.message : 'Não foi possível salvar o modelo.')
     },
   })
 
