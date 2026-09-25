@@ -1,10 +1,22 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { Plus, Search } from 'lucide-react'
 import type React from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { toast } from 'sonner'
 import { useDebounce } from 'use-debounce'
 import { InstitutionCard } from '@/components/institutions/InstitutionCard'
 import { InstitutionFormDialog } from '@/components/institutions/InstitutionFormDialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
@@ -16,9 +28,9 @@ import { type Institution, listInstitutions } from '@/lib/api/institutions'
 export const InstitutionsPage: React.FC = () => {
   const { user } = useAuth()
   const { institutionId, setInstitutionId } = useInstitution()
-  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const formDialog = useDialog<Institution>()
+  const [pendingInstitution, setPendingInstitution] = useState<Institution | null>(null)
 
   const search = searchParams.get('q') ?? ''
   const [debouncedSearch] = useDebounce(search, 400)
@@ -46,8 +58,19 @@ export const InstitutionsPage: React.FC = () => {
   const institutions = data?.pages.flatMap((p) => p.content) ?? []
 
   function handleEnter(institution: Institution) {
+    if (institutionId && institutionId !== institution.id) {
+      setPendingInstitution(institution)
+      return
+    }
     setInstitutionId(institution.id)
-    navigate('/laboratories')
+    toast.success(`Você entrou em ${institution.acronym}.`)
+  }
+
+  function confirmSwitch() {
+    if (!pendingInstitution) return
+    setInstitutionId(pendingInstitution.id)
+    toast.success(`Você trocou para ${pendingInstitution.acronym}.`)
+    setPendingInstitution(null)
   }
 
   function handleSaved() {
@@ -116,6 +139,28 @@ export const InstitutionsPage: React.FC = () => {
         onOpenChange={(open) => !open && formDialog.closeDialog()}
         onSaved={handleSaved}
       />
+
+      <AlertDialog
+        open={!!pendingInstitution}
+        onOpenChange={(open) => !open && setPendingInstitution(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Trocar de instituição</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está prestes a trocar para{' '}
+              <span className="font-medium text-foreground">
+                {pendingInstitution?.acronym} — {pendingInstitution?.name}
+              </span>
+              . Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSwitch}>Trocar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
