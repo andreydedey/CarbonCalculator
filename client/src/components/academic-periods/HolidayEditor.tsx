@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Trash2 } from 'lucide-react'
 import type React from 'react'
 import { useState } from 'react'
@@ -9,7 +9,6 @@ import { isApiError } from '@/lib/api/client'
 import {
   type AcademicPeriod,
   type Holiday,
-  getAcademicPeriod,
   replaceHolidays,
 } from '@/lib/api/academic-periods'
 
@@ -20,21 +19,8 @@ interface HolidayEditorProps {
 export const HolidayEditor: React.FC<HolidayEditorProps> = ({ period }) => {
   const queryClient = useQueryClient()
   const [holidays, setHolidays] = useState<Holiday[]>([])
-  const [loaded, setLoaded] = useState(false)
   const [newDate, setNewDate] = useState('')
   const [newDescription, setNewDescription] = useState('')
-
-  // Load holidays from detail endpoint (includes holidays)
-  useQuery({
-    queryKey: ['academic-period-holidays', period.id],
-    queryFn: async () => {
-      // Holidays come as part of the replace response, we initialize from current state
-      // For now, use a simple fetch via the replace with empty = not ideal
-      // We'll just load from what we have and let the user manage
-      return [] as Holiday[]
-    },
-    enabled: !loaded,
-  })
 
   const saveMutation = useMutation({
     mutationFn: (updated: Holiday[]) => replaceHolidays(period.id, updated),

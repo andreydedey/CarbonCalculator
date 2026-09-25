@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import type React from 'react'
-import { type PeriodSummary as PeriodSummaryType, getPeriodSummary } from '@/lib/api/academic-periods'
+import { getPeriodSummary } from '@/lib/api/academic-periods'
 
 interface PeriodSummaryProps {
   periodId: string
