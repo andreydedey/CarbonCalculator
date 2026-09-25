@@ -4,6 +4,7 @@ import type React from 'react'
 import { toast } from 'sonner'
 import { AcademicPeriodCard } from '@/components/academic-periods/AcademicPeriodCard'
 import { AcademicPeriodForm } from '@/components/academic-periods/AcademicPeriodForm'
+import { CopyPeriodDialog } from '@/components/academic-periods/CopyPeriodDialog'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -25,6 +26,7 @@ import { isApiError } from '@/lib/api/client'
 export const AcademicPeriodsPage: React.FC = () => {
   const form = useDialog<AcademicPeriod>()
   const deleteDialog = useDialog<AcademicPeriod>()
+  const copyDialog = useDialog<AcademicPeriod>()
 
   const {
     data: periodsData,
@@ -99,6 +101,7 @@ export const AcademicPeriodsPage: React.FC = () => {
               period={period}
               onEdit={(p) => form.openDialog(p)}
               onDelete={(p) => deleteDialog.openDialog(p)}
+              onCopy={(p) => copyDialog.openDialog(p)}
             />
           ))}
         </div>
@@ -109,6 +112,18 @@ export const AcademicPeriodsPage: React.FC = () => {
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
       />
+
+      {copyDialog.data && (
+        <CopyPeriodDialog
+          sourcePeriod={copyDialog.data}
+          open={copyDialog.open}
+          onOpenChange={(open) => !open && copyDialog.closeDialog()}
+          onCopied={() => {
+            copyDialog.closeDialog()
+            refetch()
+          }}
+        />
+      )}
 
       {deleteDialog.data && (
         <Dialog

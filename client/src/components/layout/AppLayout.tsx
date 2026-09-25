@@ -1,4 +1,4 @@
-import { Building2, Cpu, FlaskConical, LogOut, Users } from 'lucide-react'
+import { Building2, Calendar, Cpu, FlaskConical, LogOut, Users } from 'lucide-react'
 import type React from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -32,6 +32,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Instituições', href: '/institutions', icon: Building2 },
   { label: 'Laboratórios', href: '/laboratories', icon: FlaskConical },
   { label: 'Equipamentos', href: '/equipment-models', icon: Cpu },
+  { label: 'Calendário', href: '/academic-periods', icon: Calendar },
   { label: 'Usuários', href: '/users', icon: Users, requiresRole: 'MANAGER' },
 ]
 
@@ -63,7 +64,7 @@ const AppSidebar: React.FC = () => {
             <SidebarMenu>
               {visibleItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton asChild isActive={location.pathname === item.href}>
+                  <SidebarMenuButton asChild isActive={location.pathname.startsWith(item.href)}>
                     <Link to={item.href}>
                       <item.icon />
                       <span>{item.label}</span>

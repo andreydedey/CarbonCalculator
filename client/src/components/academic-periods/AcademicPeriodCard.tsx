@@ -1,4 +1,4 @@
-import { Calendar, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { Calendar, Copy, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import type React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
@@ -16,6 +16,7 @@ interface AcademicPeriodCardProps {
   period: AcademicPeriod
   onEdit: (period: AcademicPeriod) => void
   onDelete: (period: AcademicPeriod) => void
+  onCopy: (period: AcademicPeriod) => void
 }
 
 function formatDate(dateStr: string): string {
@@ -34,6 +35,7 @@ export const AcademicPeriodCard: React.FC<AcademicPeriodCardProps> = ({
   period,
   onEdit,
   onDelete,
+  onCopy,
 }) => {
   const navigate = useNavigate()
   const status = periodStatus(period)
@@ -76,6 +78,15 @@ export const AcademicPeriodCard: React.FC<AcademicPeriodCardProps> = ({
               >
                 <Pencil className="mr-2 size-4" />
                 Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onCopy(period)
+                }}
+              >
+                <Copy className="mr-2 size-4" />
+                Copiar
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive"
