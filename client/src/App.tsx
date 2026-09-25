@@ -11,6 +11,8 @@ import { RegisterPage } from '@/pages/auth/RegisterPage'
 import { EquipmentModelsPage } from '@/pages/equipment-models/EquipmentModelsPage'
 import { InstitutionsPage } from '@/pages/institutions/InstitutionsPage'
 import { LaboratoriesPage } from '@/pages/laboratories/LaboratoriesPage'
+import { AcademicPeriodDetailPage } from '@/pages/academic-periods/AcademicPeriodDetailPage'
+import { AcademicPeriodsPage } from '@/pages/academic-periods/AcademicPeriodsPage'
 import { UsersPage } from '@/pages/users/UsersPage'
 
 export const App: React.FC = () => (
@@ -25,6 +27,8 @@ export const App: React.FC = () => (
             <Route path="/institutions" element={<InstitutionsPage />} />
             <Route path="/laboratories" element={<LaboratoriesPage />} />
             <Route path="/equipment-models" element={<EquipmentModelsPage />} />
+            <Route path="/academic-periods" element={<AcademicPeriodsPage />} />
+            <Route path="/academic-periods/:id" element={<AcademicPeriodDetailPage />} />
             <Route path="/users" element={<UsersPage />} />
           </Route>
         </Route>

@@ -35,7 +35,7 @@ class InstitutionControllerTest {
     @Test
     void deveCriarInstituicaoComLaboratorioVinculadoNumaUnicaRequisicao() throws Exception {
         InstitutionDTO response = new InstitutionDTO(
-                UUID.randomUUID(), "Universidade Federal do Pará", "UFPA", "Belém", "PA", true, OffsetDateTime.now());
+                UUID.randomUUID(), "Universidade Federal do Pará", "UFPA", "Belém", "PA", true, 0, 0, OffsetDateTime.now());
         when(institutionService.create(any(CreateInstitutionRequest.class))).thenReturn(response);
 
         mockMvc.perform(post("/institutions")

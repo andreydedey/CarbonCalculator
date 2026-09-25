@@ -57,8 +57,8 @@ public class InstitutionRepositoryImpl implements InstitutionRepositoryCustom {
                 root.get("city"),
                 root.get("state"),
                 root.get("active"),
-                labCountSq.getSelection(),
-                equipCountSq.getSelection(),
+                labCountSq,
+                equipCountSq,
                 root.get("createdAt")));
 
         Predicate predicate = spec.toPredicate(root, cq, cb);

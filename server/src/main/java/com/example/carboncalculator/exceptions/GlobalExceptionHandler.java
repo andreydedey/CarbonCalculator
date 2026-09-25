@@ -28,7 +28,10 @@ public class GlobalExceptionHandler {
             GpuTdpRequiredException.class,
             InvalidQuantityException.class,
             CannotModifySelfException.class,
-            LastManagerException.class
+            LastManagerException.class,
+            HolidayOutOfRangeException.class,
+            ScheduleBlockOverlapException.class,
+            IllegalArgumentException.class
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException ex, HttpServletRequest request) {
         log.warn("Bad request on {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
@@ -59,7 +62,8 @@ public class GlobalExceptionHandler {
             MonitorNotFoundException.class,
             ConfigurationNotFoundException.class,
             MemberNotFoundException.class,
-            InstitutionNotFoundException.class
+            InstitutionNotFoundException.class,
+            PeriodNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request);
@@ -76,7 +80,8 @@ public class GlobalExceptionHandler {
             MonitorHasDependentsException.class,
             ConfigurationHasDependentsException.class,
             DuplicateConfigurationException.class,
-            DuplicateLaboratoryEquipmentException.class
+            DuplicateLaboratoryEquipmentException.class,
+            PeriodOverlapException.class
     })
     public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex, HttpServletRequest request) {
         log.warn("Conflict on {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
