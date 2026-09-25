@@ -59,7 +59,7 @@ public class LaboratoryScheduleService {
                 .map(block -> LaboratorySchedule.builder()
                         .academicPeriod(period)
                         .laboratory(laboratory)
-                        .dayOfWeek(block.dayOfWeek())
+                        .dayOfWeek((short) block.dayOfWeek())
                         .startTime(block.startTime())
                         .endTime(block.endTime())
                         .build())

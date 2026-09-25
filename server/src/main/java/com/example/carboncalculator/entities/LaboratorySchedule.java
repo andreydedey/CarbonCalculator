@@ -42,7 +42,7 @@ public class LaboratorySchedule {
     private Laboratory laboratory;
 
     @Column(name = "day_of_week", nullable = false)
-    private int dayOfWeek;
+    private short dayOfWeek;
 
     @Column(name = "start_time", nullable = false)
     private LocalTime startTime;
