@@ -58,7 +58,7 @@ export const AcademicPeriodDetailPage: React.FC = () => {
       </div>
 
       <Tabs defaultValue="summary">
-        <TabsList>
+        <TabsList variant="line">
           <TabsTrigger value="summary">Resumo</TabsTrigger>
           <TabsTrigger value="holidays">Feriados</TabsTrigger>
           <TabsTrigger value="schedules">Grades de Ocupação</TabsTrigger>
@@ -78,16 +78,11 @@ export const AcademicPeriodDetailPage: React.FC = () => {
               Nenhum laboratório cadastrado na instituição.
             </p>
           ) : (
-            <div className="flex flex-col gap-8">
-              {laboratories.map((lab) => (
-                <ScheduleGrid
-                  key={lab.id}
-                  periodId={period.id}
-                  laboratoryId={lab.id}
-                  laboratoryName={lab.name}
-                />
-              ))}
-            </div>
+            <ScheduleGrid
+              periodId={period.id}
+              periodName={period.name}
+              laboratories={laboratories.map((l) => ({ id: l.id, name: l.name }))}
+            />
           )}
         </TabsContent>
       </Tabs>
