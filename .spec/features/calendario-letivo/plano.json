@@ -1,0 +1,246 @@
+{
+  "runId": "CarbonCalculatorTCC-calendario-letivo-mug6s1zr",
+  "feature": "calendario-letivo",
+  "agent": "claude",
+  "modo": "sequencial",
+  "paralelizar": null,
+  "modeloForcado": null,
+  "esforcoForcado": null,
+  "geradoEm": "2026-09-24 23:52",
+  "branchTrabalho": "spec/calendario-letivo",
+  "baseDir": ".spec/features/calendario-letivo",
+  "specDir": ".spec",
+  "repoName": "CarbonCalculatorTCC",
+  "logsDir": "../onp-worktrees/CarbonCalculatorTCC-calendario-letivo-logs",
+  "ondas": [],
+  "faixas": [],
+  "sequenciais": [
+    {
+      "id": "T-014",
+      "titulo": "Migrations e entidades JPA",
+      "modelo": "claude-sonnet-5",
+      "esforco": "medium",
+      "arquivos": [
+        "server/src/main/resources/db/migration/V15__create_academic_period_tables.sql",
+        "server/src/main/java/com/example/carboncalculator/entities/AcademicPeriod.java",
+        "server/src/main/java/com/example/carboncalculator/entities/AcademicPeriodHoliday.java",
+        "server/src/main/java/com/example/carboncalculator/entities/LaboratorySchedule.java"
+      ],
+      "refs": [
+        "US-018",
+        "US-019",
+        "US-020",
+        "AC-051",
+        "AC-066"
+      ]
+    },
+    {
+      "id": "T-015",
+      "titulo": "Repositories e DTOs",
+      "modelo": "claude-sonnet-5",
+      "esforco": "medium",
+      "arquivos": [
+        "server/src/main/java/com/example/carboncalculator/repositories/AcademicPeriodRepository.java",
+        "server/src/main/java/com/example/carboncalculator/repositories/AcademicPeriodHolidayRepository.java",
+        "server/src/main/java/com/example/carboncalculator/repositories/LaboratoryScheduleRepository.java",
+        "server/src/main/java/com/example/carboncalculator/dto/AcademicPeriodDTO.java",
+        "server/src/main/java/com/example/carboncalculator/dto/HolidayDTO.java",
+        "server/src/main/java/com/example/carboncalculator/dto/ScheduleBlockDTO.java",
+        "server/src/main/java/com/example/carboncalculator/dto/CreateAcademicPeriodRequest.java",
+        "server/src/main/java/com/example/carboncalculator/dto/UpdateAcademicPeriodRequest.java",
+        "server/src/main/java/com/example/carboncalculator/dto/ReplaceHolidaysRequest.java",
+        "server/src/main/java/com/example/carboncalculator/dto/ReplaceScheduleRequest.java",
+        "server/src/main/java/com/example/carboncalculator/dto/CopyPeriodRequest.java",
+        "server/src/main/java/com/example/carboncalculator/dto/PeriodSummaryDTO.java"
+      ],
+      "refs": [
+        "US-018",
+        "US-019",
+        "US-020",
+        "AC-054"
+      ]
+    },
+    {
+      "id": "T-016",
+      "titulo": "AcademicPeriodService com validações",
+      "modelo": "claude-sonnet-5",
+      "esforco": "high",
+      "arquivos": [
+        "server/src/main/java/com/example/carboncalculator/services/AcademicPeriodService.java",
+        "server/src/main/java/com/example/carboncalculator/exceptions/PeriodOverlapException.java",
+        "server/src/main/java/com/example/carboncalculator/exceptions/PeriodNotFoundException.java",
+        "server/src/main/java/com/example/carboncalculator/exceptions/HolidayOutOfRangeException.java"
+      ],
+      "refs": [
+        "US-018",
+        "US-019",
+        "US-022",
+        "AC-051",
+        "AC-052",
+        "AC-053",
+        "AC-055",
+        "AC-056",
+        "AC-057",
+        "AC-058",
+        "AC-065"
+      ]
+    },
+    {
+      "id": "T-017",
+      "titulo": "LaboratoryScheduleService com validações",
+      "modelo": "claude-sonnet-5",
+      "esforco": "medium",
+      "arquivos": [
+        "server/src/main/java/com/example/carboncalculator/services/LaboratoryScheduleService.java",
+        "server/src/main/java/com/example/carboncalculator/exceptions/ScheduleBlockOverlapException.java"
+      ],
+      "refs": [
+        "US-020",
+        "AC-059",
+        "AC-060",
+        "AC-061"
+      ]
+    },
+    {
+      "id": "T-018",
+      "titulo": "PeriodSummaryService (cálculos derivados)",
+      "modelo": "claude-sonnet-5",
+      "esforco": "high",
+      "arquivos": [
+        "server/src/main/java/com/example/carboncalculator/services/PeriodSummaryService.java"
+      ],
+      "refs": [
+        "US-021",
+        "AC-062",
+        "AC-063",
+        "AC-064"
+      ]
+    },
+    {
+      "id": "T-019",
+      "titulo": "Controllers REST",
+      "modelo": "claude-sonnet-5",
+      "esforco": "medium",
+      "arquivos": [
+        "server/src/main/java/com/example/carboncalculator/controllers/AcademicPeriodController.java",
+        "server/src/main/java/com/example/carboncalculator/controllers/LaboratoryScheduleController.java"
+      ],
+      "refs": [
+        "US-018",
+        "US-019",
+        "US-020",
+        "US-021",
+        "US-022",
+        "AC-051",
+        "AC-054",
+        "AC-057",
+        "AC-059",
+        "AC-062",
+        "AC-065"
+      ]
+    },
+    {
+      "id": "T-020",
+      "titulo": "GlobalExceptionHandler — novas exceções",
+      "modelo": "claude-sonnet-5",
+      "esforco": "low",
+      "arquivos": [
+        "server/src/main/java/com/example/carboncalculator/exceptions/GlobalExceptionHandler.java"
+      ],
+      "refs": [
+        "AC-052",
+        "AC-053",
+        "AC-058",
+        "AC-060",
+        "AC-061"
+      ]
+    },
+    {
+      "id": "T-021",
+      "titulo": "Seed data para calendário",
+      "modelo": "claude-sonnet-5",
+      "esforco": "low",
+      "arquivos": [
+        "server/src/main/resources/db/migration/afterMigrate.sql"
+      ],
+      "refs": [
+        "US-018",
+        "US-019",
+        "US-020"
+      ]
+    },
+    {
+      "id": "T-022",
+      "titulo": "Frontend: API client e tipos",
+      "modelo": "claude-sonnet-5",
+      "esforco": "low",
+      "arquivos": [
+        "client/src/lib/api/academic-periods.ts",
+        "client/src/lib/schemas/academicPeriodSchema.ts"
+      ],
+      "refs": [
+        "US-018",
+        "US-019",
+        "US-020",
+        "US-021",
+        "US-022"
+      ]
+    },
+    {
+      "id": "T-023",
+      "titulo": "Frontend: listagem e CRUD de períodos",
+      "modelo": "claude-sonnet-5",
+      "esforco": "medium",
+      "arquivos": [
+        "client/src/pages/academic-periods/AcademicPeriodsPage.tsx",
+        "client/src/components/academic-periods/AcademicPeriodCard.tsx",
+        "client/src/components/academic-periods/AcademicPeriodForm.tsx"
+      ],
+      "refs": [
+        "US-018",
+        "AC-051",
+        "AC-054",
+        "AC-055",
+        "AC-056"
+      ]
+    },
+    {
+      "id": "T-024",
+      "titulo": "Frontend: detalhe do período (feriados + grades + resumo)",
+      "modelo": "claude-sonnet-5",
+      "esforco": "high",
+      "arquivos": [
+        "client/src/pages/academic-periods/AcademicPeriodDetailPage.tsx",
+        "client/src/components/academic-periods/HolidayEditor.tsx",
+        "client/src/components/academic-periods/ScheduleGrid.tsx",
+        "client/src/components/academic-periods/PeriodSummary.tsx"
+      ],
+      "refs": [
+        "US-019",
+        "US-020",
+        "US-021",
+        "AC-057",
+        "AC-059",
+        "AC-062",
+        "AC-063"
+      ]
+    },
+    {
+      "id": "T-025",
+      "titulo": "Frontend: sidebar, rotas e cópia de período",
+      "modelo": "claude-sonnet-5",
+      "esforco": "low",
+      "arquivos": [
+        "client/src/components/layout/AppLayout.tsx",
+        "client/src/App.tsx",
+        "client/src/components/academic-periods/CopyPeriodDialog.tsx"
+      ],
+      "refs": [
+        "US-022",
+        "AC-065"
+      ]
+    }
+  ],
+  "concluidas": [],
+  "avisos": []
+}
