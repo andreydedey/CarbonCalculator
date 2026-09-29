@@ -123,6 +123,7 @@ export const LinkEquipmentDialog: React.FC<LinkEquipmentDialogProps> = ({
         className="sm:max-w-[500px] gap-0 p-0"
         onPointerDownOutside={(e) => e.stopPropagation()}
         onInteractOutside={(e) => e.stopPropagation()}
+        onCloseAutoFocus={(e) => e.preventDefault()}
       >
         <DialogHeader className="px-7 pt-5 pb-4">
           <DialogTitle className="text-base font-semibold">
