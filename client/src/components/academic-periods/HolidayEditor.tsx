@@ -1,32 +1,97 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2 } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Trash2 } from 'lucide-react'
 import type React from 'react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { DatePicker } from '@/components/ui/date-picker'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { isApiError } from '@/lib/api/client'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   type AcademicPeriod,
+  getHolidays,
   type Holiday,
+  type HolidayType,
   replaceHolidays,
 } from '@/lib/api/academic-periods'
+import { isApiError } from '@/lib/api/client'
 
 interface HolidayEditorProps {
   period: AcademicPeriod
+  addDialogOpen?: boolean
+  onAddDialogOpenChange?: (open: boolean) => void
 }
 
-export const HolidayEditor: React.FC<HolidayEditorProps> = ({ period }) => {
+const HOLIDAY_TYPE_LABELS: Record<HolidayType, string> = {
+  NATIONAL: 'Feriado Nacional',
+  STATE: 'Feriado Estadual',
+  MUNICIPAL: 'Feriado Municipal',
+  RECESS: 'Recesso',
+}
+
+const HOLIDAY_TYPE_BADGE_STYLES: Record<HolidayType, string> = {
+  NATIONAL: 'bg-[#DEECE2] text-[#1B5238]',
+  STATE: 'bg-[#E0E7FF] text-[#3730A3]',
+  MUNICIPAL: 'bg-[#F0E4FF] text-[#6B21A8]',
+  RECESS: 'bg-[#FEF9C3] text-[#854D0E]',
+}
+
+function formatDateShort(dateStr: string): string {
+  const [, month, day] = dateStr.split('-')
+  return `${day}/${month}`
+}
+
+export const HolidayEditor: React.FC<HolidayEditorProps> = ({
+  period,
+  addDialogOpen: externalOpen,
+  onAddDialogOpenChange,
+}) => {
   const queryClient = useQueryClient()
   const [holidays, setHolidays] = useState<Holiday[]>([])
+  const [dirty, setDirty] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+
+  const addDialogOpen = externalOpen ?? internalOpen
+  const setAddDialogOpen = (open: boolean) => {
+    setInternalOpen(open)
+    onAddDialogOpenChange?.(open)
+  }
   const [newDate, setNewDate] = useState('')
   const [newDescription, setNewDescription] = useState('')
+  const [newType, setNewType] = useState<HolidayType>('NATIONAL')
+
+  const { data: serverHolidays } = useQuery({
+    queryKey: ['holidays', period.id],
+    queryFn: () => getHolidays(period.id),
+  })
+
+  useEffect(() => {
+    if (serverHolidays && !dirty) {
+      setHolidays(serverHolidays)
+    }
+  }, [serverHolidays, dirty])
 
   const saveMutation = useMutation({
     mutationFn: (updated: Holiday[]) => replaceHolidays(period.id, updated),
     onSuccess: (saved) => {
       setHolidays(saved)
+      setDirty(false)
+      queryClient.invalidateQueries({ queryKey: ['holidays', period.id] })
       queryClient.invalidateQueries({ queryKey: ['academic-periods'] })
+      queryClient.invalidateQueries({ queryKey: ['academic-period', period.id] })
       queryClient.invalidateQueries({ queryKey: ['period-summary', period.id] })
       toast.success('Feriados salvos.')
     },
@@ -36,101 +101,131 @@ export const HolidayEditor: React.FC<HolidayEditorProps> = ({ period }) => {
   })
 
   function addHoliday() {
-    if (!newDate) return
+    if (!newDate || !newDescription) {
+      toast.error('Informe data e descrição.')
+      return
+    }
     if (holidays.some((h) => h.date === newDate)) {
       toast.error('Já existe um feriado nesta data.')
       return
     }
-    const updated = [...holidays, { date: newDate, description: newDescription || undefined }]
-      .sort((a, b) => a.date.localeCompare(b.date))
+    const updated = [
+      ...holidays,
+      { date: newDate, description: newDescription, type: newType },
+    ].sort((a, b) => a.date.localeCompare(b.date))
     setHolidays(updated)
+    setDirty(true)
+    setAddDialogOpen(false)
     setNewDate('')
     setNewDescription('')
+    setNewType('NATIONAL')
+    saveMutation.mutate(updated)
   }
 
   function removeHoliday(date: string) {
-    setHolidays(holidays.filter((h) => h.date !== date))
-  }
-
-  function formatDate(dateStr: string): string {
-    const [year, month, day] = dateStr.split('-')
-    return `${day}/${month}/${year}`
+    const updated = holidays.filter((h) => h.date !== date)
+    setHolidays(updated)
+    setDirty(true)
+    saveMutation.mutate(updated)
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Feriados e Recessos</h3>
-        <Button
-          size="sm"
-          disabled={saveMutation.isPending}
-          onClick={() => saveMutation.mutate(holidays)}
-        >
-          Salvar Feriados
-        </Button>
-      </div>
-
-      <div className="flex items-end gap-2">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-muted-foreground">Data</label>
-          <Input
-            type="date"
-            className="w-40"
-            value={newDate}
-            min={period.startDate}
-            max={period.endDate}
-            onChange={(e) => setNewDate(e.target.value)}
-          />
-        </div>
-        <div className="flex flex-1 flex-col gap-1">
-          <label className="text-xs text-muted-foreground">Descrição (opcional)</label>
-          <Input
-            placeholder="Ex: Sexta-feira Santa"
-            value={newDescription}
-            onChange={(e) => setNewDescription(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addHoliday())}
-          />
-        </div>
-        <Button type="button" variant="outline" size="icon" onClick={addHoliday}>
-          <Plus className="size-4" />
-        </Button>
-      </div>
-
+    <div className="flex flex-col gap-3">
       {holidays.length === 0 ? (
-        <p className="text-xs text-muted-foreground italic py-4 text-center">
-          Nenhum feriado cadastrado. Adicione feriados e clique em "Salvar Feriados".
+        <p className="text-sm text-muted-foreground italic py-4 text-center">
+          Nenhum feriado cadastrado.
         </p>
       ) : (
         <div className="rounded-lg border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="px-4 py-2 text-left font-medium">Data</th>
-                <th className="px-4 py-2 text-left font-medium">Descrição</th>
-                <th className="px-4 py-2 w-10" />
-              </tr>
-            </thead>
-            <tbody>
-              {holidays.map((holiday) => (
-                <tr key={holiday.date} className="border-b last:border-0">
-                  <td className="px-4 py-2 font-mono text-xs">{formatDate(holiday.date)}</td>
-                  <td className="px-4 py-2 text-muted-foreground">{holiday.description ?? '—'}</td>
-                  <td className="px-4 py-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-7"
-                      onClick={() => removeHoliday(holiday.date)}
-                    >
-                      <Trash2 className="size-3.5 text-destructive" />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {/* Header */}
+          <div className="flex items-center border-b bg-muted/50 px-6 py-2.5">
+            <span className="w-40 shrink-0 text-[11px] font-medium tracking-wide text-muted-foreground">
+              DATA
+            </span>
+            <span className="flex-1 text-[11px] font-medium tracking-wide text-muted-foreground">
+              FERIADO / RECESSO
+            </span>
+            <span className="w-44 shrink-0 text-[11px] font-medium tracking-wide text-muted-foreground">
+              TIPO
+            </span>
+          </div>
+
+          {/* Rows */}
+          {holidays.map((holiday) => (
+            <div
+              key={holiday.date}
+              className="group flex items-center border-b last:border-0 px-6 py-2.5"
+            >
+              <span className="w-40 shrink-0 text-sm text-muted-foreground">
+                {formatDateShort(holiday.date)}
+              </span>
+              <span className="flex-1 text-sm">{holiday.description}</span>
+              <div className="w-44 shrink-0 flex items-center gap-2">
+                <span
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${HOLIDAY_TYPE_BADGE_STYLES[holiday.type]}`}
+                >
+                  {HOLIDAY_TYPE_LABELS[holiday.type]}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => removeHoliday(holiday.date)}
+                >
+                  <Trash2 className="size-3 text-destructive" />
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
+
+      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Adicionar Feriado</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium">Data</span>
+              <DatePicker value={newDate} onChange={setNewDate} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="holiday-desc" className="text-sm font-medium">
+                Descrição
+              </label>
+              <Input
+                id="holiday-desc"
+                placeholder="Ex: Sexta-feira Santa"
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="holiday-type" className="text-sm font-medium">
+                Tipo
+              </label>
+              <Select value={newType} onValueChange={(v) => setNewType(v as HolidayType)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NATIONAL">Feriado Nacional</SelectItem>
+                  <SelectItem value="STATE">Feriado Estadual</SelectItem>
+                  <SelectItem value="MUNICIPAL">Feriado Municipal</SelectItem>
+                  <SelectItem value="RECESS">Recesso</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={addHoliday}>Adicionar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

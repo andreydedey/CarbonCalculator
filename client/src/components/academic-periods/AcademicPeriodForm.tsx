@@ -1,9 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
 import type React from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { DatePicker } from '@/components/ui/date-picker'
 import {
   Dialog,
   DialogContent,
@@ -15,13 +16,13 @@ import {
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { isApiError } from '@/lib/api/client'
 import {
   type AcademicPeriod,
   type CreateAcademicPeriodPayload,
   createAcademicPeriod,
   updateAcademicPeriod,
 } from '@/lib/api/academic-periods'
+import { isApiError } from '@/lib/api/client'
 import {
   type AcademicPeriodFormValues,
   academicPeriodFormSchema,
@@ -45,6 +46,8 @@ export const AcademicPeriodForm: React.FC<AcademicPeriodFormProps> = ({
     register,
     handleSubmit,
     reset,
+    control,
+    watch,
     formState: { errors, isDirty },
   } = useForm<AcademicPeriodFormValues>({
     resolver: zodResolver(academicPeriodFormSchema),
@@ -113,23 +116,27 @@ export const AcademicPeriodForm: React.FC<AcademicPeriodFormProps> = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="period-start">Data de Início *</Label>
-              <Input
-                id="period-start"
-                type="date"
-                aria-invalid={!!errors.startDate}
-                {...register('startDate')}
+              <Label>Data de Início *</Label>
+              <Controller
+                control={control}
+                name="startDate"
+                render={({ field }) => <DatePicker value={field.value} onChange={field.onChange} />}
               />
               <FieldError message={errors.startDate?.message} />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="period-end">Data de Fim *</Label>
-              <Input
-                id="period-end"
-                type="date"
-                aria-invalid={!!errors.endDate}
-                {...register('endDate')}
+              <Label>Data de Fim *</Label>
+              <Controller
+                control={control}
+                name="endDate"
+                render={({ field }) => (
+                  <DatePicker
+                    value={field.value}
+                    onChange={field.onChange}
+                    minDate={watch('startDate')}
+                  />
+                )}
               />
               <FieldError message={errors.endDate?.message} />
             </div>
