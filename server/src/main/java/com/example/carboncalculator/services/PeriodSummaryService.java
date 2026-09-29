@@ -1,7 +1,6 @@
 package com.example.carboncalculator.services;
 
 import java.time.DayOfWeek;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
@@ -23,6 +22,7 @@ import com.example.carboncalculator.dto.PeriodSummaryDTO.MonthSchoolDays;
 import com.example.carboncalculator.dto.PeriodSummaryDTO.PeriodInfo;
 import com.example.carboncalculator.entities.AcademicPeriod;
 import com.example.carboncalculator.entities.AcademicPeriodHoliday;
+import com.example.carboncalculator.entities.AcademicPeriodShift;
 import com.example.carboncalculator.entities.Laboratory;
 import com.example.carboncalculator.entities.LaboratorySchedule;
 import com.example.carboncalculator.exceptions.PeriodNotFoundException;
@@ -51,9 +51,22 @@ public class PeriodSummaryService {
                 .map(AcademicPeriodHoliday::getDate)
                 .collect(Collectors.toSet());
 
-        // Calculate school days per month
+        // Collect all active days across enabled shifts
+        Set<DayOfWeek> allActiveDays = period.getShifts().stream()
+                .filter(AcademicPeriodShift::isEnabled)
+                .flatMap(shift -> {
+                    short[] days = shift.getActiveDays();
+                    List<DayOfWeek> dowList = new ArrayList<>();
+                    for (short d : days) {
+                        dowList.add(DayOfWeek.of(d));
+                    }
+                    return dowList.stream();
+                })
+                .collect(Collectors.toSet());
+
+        // Calculate school days per month (union of all active days from enabled shifts)
         Map<YearMonth, Integer> schoolDaysByMonth = calculateSchoolDaysPerMonth(
-                period.getStartDate(), period.getEndDate(), holidayDates);
+                period.getStartDate(), period.getEndDate(), holidayDates, allActiveDays);
 
         List<MonthSchoolDays> schoolDaysPerMonth = schoolDaysByMonth.entrySet().stream()
                 .map(e -> new MonthSchoolDays(e.getKey().format(MONTH_FORMAT), e.getValue()))
@@ -63,18 +76,26 @@ public class PeriodSummaryService {
         Map<YearMonth, Map<DayOfWeek, Integer>> schoolDaysByMonthAndDow = calculateSchoolDaysByMonthAndDow(
                 period.getStartDate(), period.getEndDate(), holidayDates);
 
-        // Get all schedules for this period and group by lab
-        List<LaboratorySchedule> allSchedules = scheduleRepository.findByAcademicPeriodId(periodId);
+        // Index enabled shifts by ID
+        Map<UUID, AcademicPeriodShift> enabledShiftsById = period.getShifts().stream()
+                .filter(AcademicPeriodShift::isEnabled)
+                .collect(Collectors.toMap(AcademicPeriodShift::getId, s -> s));
+
+        // Get all schedules for this period
+        List<LaboratorySchedule> allSchedules = scheduleRepository.findByPeriodId(periodId);
+
+        // Filter to only schedules whose shift is enabled
         Map<UUID, List<LaboratorySchedule>> schedulesByLab = allSchedules.stream()
+                .filter(s -> enabledShiftsById.containsKey(s.getShift().getId()))
                 .collect(Collectors.groupingBy(s -> s.getLaboratory().getId()));
 
-        // Get all labs in the institution to include labs without schedule
+        // Get all labs in the institution
         List<Laboratory> allLabs = laboratoryRepository.findAll();
 
         List<LaboratorySummary> labSummaries = new ArrayList<>();
         for (Laboratory lab : allLabs) {
             List<LaboratorySchedule> labSchedules = schedulesByLab.getOrDefault(lab.getId(), List.of());
-            List<MonthHours> hoursPerMonth = calculateHoursPerMonth(labSchedules, schoolDaysByMonthAndDow);
+            List<MonthHours> hoursPerMonth = calculateHoursPerMonth(labSchedules, enabledShiftsById, schoolDaysByMonthAndDow);
             double totalHours = hoursPerMonth.stream().mapToDouble(MonthHours::hours).sum();
             labSummaries.add(new LaboratorySummary(lab.getId(), lab.getName(), hoursPerMonth, totalHours));
         }
@@ -86,13 +107,13 @@ public class PeriodSummaryService {
     }
 
     private Map<YearMonth, Integer> calculateSchoolDaysPerMonth(
-            LocalDate start, LocalDate end, Set<LocalDate> holidays) {
+            LocalDate start, LocalDate end, Set<LocalDate> holidays, Set<DayOfWeek> activeDays) {
         Map<YearMonth, Integer> result = new LinkedHashMap<>();
         LocalDate current = start;
 
         while (!current.isAfter(end)) {
-            YearMonth ym = YearMonth.from(current);
-            if (isSchoolDay(current, holidays)) {
+            if (isSchoolDay(current, holidays, activeDays)) {
+                YearMonth ym = YearMonth.from(current);
                 result.merge(ym, 1, Integer::sum);
             }
             current = current.plusDays(1);
@@ -107,7 +128,8 @@ public class PeriodSummaryService {
         LocalDate current = start;
 
         while (!current.isAfter(end)) {
-            if (isSchoolDay(current, holidays)) {
+            // Sundays are never school days
+            if (current.getDayOfWeek() != DayOfWeek.SUNDAY && !holidays.contains(current)) {
                 YearMonth ym = YearMonth.from(current);
                 result.computeIfAbsent(ym, k -> new LinkedHashMap<>())
                         .merge(current.getDayOfWeek(), 1, Integer::sum);
@@ -118,16 +140,19 @@ public class PeriodSummaryService {
         return result;
     }
 
-    private boolean isSchoolDay(LocalDate date, Set<LocalDate> holidays) {
-        // Sundays are never school days (ASM-012)
+    private boolean isSchoolDay(LocalDate date, Set<LocalDate> holidays, Set<DayOfWeek> activeDays) {
         if (date.getDayOfWeek() == DayOfWeek.SUNDAY) {
             return false;
         }
-        return !holidays.contains(date);
+        if (holidays.contains(date)) {
+            return false;
+        }
+        return activeDays.contains(date.getDayOfWeek());
     }
 
     private List<MonthHours> calculateHoursPerMonth(
             List<LaboratorySchedule> schedules,
+            Map<UUID, AcademicPeriodShift> enabledShiftsById,
             Map<YearMonth, Map<DayOfWeek, Integer>> schoolDaysByMonthAndDow) {
 
         List<MonthHours> result = new ArrayList<>();
@@ -138,22 +163,21 @@ public class PeriodSummaryService {
 
             double monthHours = 0;
             for (LaboratorySchedule schedule : schedules) {
-                DayOfWeek dow = javaDayOfWeek(schedule.getDayOfWeek());
+                AcademicPeriodShift shift = enabledShiftsById.get(schedule.getShift().getId());
+                if (shift == null) continue;
+
+                DayOfWeek dow = DayOfWeek.of(schedule.getDayOfWeek());
                 int daysInMonth = dowCounts.getOrDefault(dow, 0);
-                double blockHours = Duration.between(schedule.getStartTime(), schedule.getEndTime()).toMinutes() / 60.0;
-                monthHours += daysInMonth * blockHours;
+
+                // hours = len(occupiedSlots) × classDurationMinutes × daysInMonth / 60
+                int slotCount = schedule.getOccupiedSlots() != null ? schedule.getOccupiedSlots().length : 0;
+                double hours = slotCount * shift.getClassDurationMinutes() * daysInMonth / 60.0;
+                monthHours += hours;
             }
 
-            result.add(new MonthHours(month.format(MONTH_FORMAT), monthHours));
+            result.add(new MonthHours(month.format(MONTH_FORMAT), Math.round(monthHours * 10) / 10.0));
         }
 
         return result;
-    }
-
-    /**
-     * Convert our day_of_week (1=Monday..6=Saturday) to Java DayOfWeek.
-     */
-    private DayOfWeek javaDayOfWeek(int dayOfWeek) {
-        return DayOfWeek.of(dayOfWeek);
     }
 }

@@ -30,7 +30,7 @@ public class GlobalExceptionHandler {
             CannotModifySelfException.class,
             LastManagerException.class,
             HolidayOutOfRangeException.class,
-            ScheduleBlockOverlapException.class,
+            ShiftValidationException.class,
             IllegalArgumentException.class
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException ex, HttpServletRequest request) {

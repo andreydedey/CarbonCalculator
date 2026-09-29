@@ -21,12 +21,12 @@ import com.example.carboncalculator.dto.ReplaceHolidaysRequest;
 import com.example.carboncalculator.dto.UpdateAcademicPeriodRequest;
 import com.example.carboncalculator.entities.AcademicPeriod;
 import com.example.carboncalculator.entities.AcademicPeriodHoliday;
+import com.example.carboncalculator.entities.AcademicPeriodShift;
 import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.LaboratorySchedule;
 import com.example.carboncalculator.exceptions.HolidayOutOfRangeException;
 import com.example.carboncalculator.exceptions.PeriodNotFoundException;
 import com.example.carboncalculator.exceptions.PeriodOverlapException;
-import com.example.carboncalculator.repositories.AcademicPeriodHolidayRepository;
 import com.example.carboncalculator.repositories.AcademicPeriodRepository;
 import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.LaboratoryScheduleRepository;
@@ -40,9 +40,9 @@ public class AcademicPeriodService {
     private static final Logger log = LoggerFactory.getLogger(AcademicPeriodService.class);
 
     private final AcademicPeriodRepository periodRepository;
-    private final AcademicPeriodHolidayRepository holidayRepository;
     private final LaboratoryScheduleRepository scheduleRepository;
     private final InstitutionRepository institutionRepository;
+    private final ShiftService shiftService;
 
     @Transactional(readOnly = true)
     public Page<AcademicPeriodDTO> list(Pageable pageable) {
@@ -92,6 +92,15 @@ public class AcademicPeriodService {
         log.info("Academic period deleted: id={}", id);
     }
 
+    @Transactional(readOnly = true)
+    public List<HolidayDTO> getHolidays(UUID periodId) {
+        AcademicPeriod period = getOrThrow(periodId);
+        return period.getHolidays().stream()
+                .map(h -> new HolidayDTO(h.getDate(), h.getDescription(), h.getType()))
+                .sorted((a, b) -> a.date().compareTo(b.date()))
+                .toList();
+    }
+
     @Transactional
     public List<HolidayDTO> replaceHolidays(UUID periodId, ReplaceHolidaysRequest request) {
         AcademicPeriod period = getOrThrow(periodId);
@@ -110,6 +119,7 @@ public class AcademicPeriodService {
                     .academicPeriod(period)
                     .date(h.date())
                     .description(h.description())
+                    .type(h.type())
                     .build();
             period.getHolidays().add(holiday);
         }
@@ -117,7 +127,7 @@ public class AcademicPeriodService {
 
         log.info("Holidays replaced for period {}: {} holidays", periodId, request.holidays().size());
         return period.getHolidays().stream()
-                .map(h -> new HolidayDTO(h.getDate(), h.getDescription()))
+                .map(h -> new HolidayDTO(h.getDate(), h.getDescription(), h.getType()))
                 .toList();
     }
 
@@ -144,22 +154,40 @@ public class AcademicPeriodService {
                         .academicPeriod(newPeriod)
                         .date(h.getDate())
                         .description(h.getDescription())
+                        .type(h.getType())
                         .build();
                 newPeriod.getHolidays().add(copy);
             }
         }
 
-        // Copy all schedule blocks
-        List<LaboratorySchedule> sourceSchedules = scheduleRepository.findByAcademicPeriodId(source.getId());
-        for (LaboratorySchedule s : sourceSchedules) {
-            LaboratorySchedule copy = LaboratorySchedule.builder()
+        // Copy shifts and their schedules
+        for (AcademicPeriodShift sourceShift : source.getShifts()) {
+            AcademicPeriodShift newShift = AcademicPeriodShift.builder()
                     .academicPeriod(newPeriod)
-                    .laboratory(s.getLaboratory())
-                    .dayOfWeek(s.getDayOfWeek())
-                    .startTime(s.getStartTime())
-                    .endTime(s.getEndTime())
+                    .shiftType(sourceShift.getShiftType())
+                    .startTime(sourceShift.getStartTime())
+                    .endTime(sourceShift.getEndTime())
+                    .classesPerDay(sourceShift.getClassesPerDay())
+                    .classDurationMinutes(sourceShift.getClassDurationMinutes())
+                    .breakDurationMinutes(sourceShift.getBreakDurationMinutes())
+                    .activeDays(sourceShift.getActiveDays().clone())
+                    .enabled(sourceShift.isEnabled())
                     .build();
-            newPeriod.getSchedules().add(copy);
+            newPeriod.getShifts().add(newShift);
+
+            // Must flush to get the new shift's ID before copying schedules
+            periodRepository.saveAndFlush(newPeriod);
+
+            List<LaboratorySchedule> sourceSchedules = scheduleRepository.findByShiftId(sourceShift.getId());
+            for (LaboratorySchedule s : sourceSchedules) {
+                LaboratorySchedule copy = LaboratorySchedule.builder()
+                        .shift(newShift)
+                        .laboratory(s.getLaboratory())
+                        .dayOfWeek(s.getDayOfWeek())
+                        .occupiedSlots(s.getOccupiedSlots().clone())
+                        .build();
+                scheduleRepository.save(copy);
+            }
         }
 
         newPeriod = periodRepository.save(newPeriod);
@@ -167,7 +195,7 @@ public class AcademicPeriodService {
         return toDTO(newPeriod);
     }
 
-    private AcademicPeriod getOrThrow(UUID id) {
+    AcademicPeriod getOrThrow(UUID id) {
         return periodRepository.findById(id).orElseThrow(() -> new PeriodNotFoundException(id));
     }
 
@@ -198,6 +226,7 @@ public class AcademicPeriodService {
                 period.getStartDate(),
                 period.getEndDate(),
                 period.getHolidays().size(),
+                period.getShifts().stream().map(shiftService::toDTO).toList(),
                 period.getCreatedAt());
     }
 
