@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Calendar, Plus } from 'lucide-react'
 import type React from 'react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { AcademicPeriodCard } from '@/components/academic-periods/AcademicPeriodCard'
@@ -64,18 +64,19 @@ export const AcademicPeriodsPage: React.FC = () => {
 
   const periods = useMemo(() => periodsData?.pages.flatMap((p) => p.content) ?? [], [periodsData])
 
-  // Auto-select the first/active period
-  useEffect(() => {
-    if (periods.length > 0 && !selectedPeriodId) {
-      const today = new Date().toISOString().split('T')[0]
-      const active = periods.find((p) => p.startDate <= today && p.endDate >= today)
-      setSelectedPeriodId(active?.id ?? periods[0].id)
+  const resolvedPeriodId = useMemo(() => {
+    if (selectedPeriodId && periods.some((p) => p.id === selectedPeriodId)) {
+      return selectedPeriodId
     }
+    if (periods.length === 0) return null
+    const today = new Date().toISOString().split('T')[0]
+    const active = periods.find((p) => p.startDate <= today && p.endDate >= today)
+    return active?.id ?? periods[0].id
   }, [periods, selectedPeriodId])
 
   const selectedPeriod = useMemo(
-    () => periods.find((p) => p.id === selectedPeriodId) ?? null,
-    [periods, selectedPeriodId],
+    () => periods.find((p) => p.id === resolvedPeriodId) ?? null,
+    [periods, resolvedPeriodId],
   )
 
   const handleSelect = useCallback((period: AcademicPeriod) => {
@@ -132,7 +133,7 @@ export const AcademicPeriodsPage: React.FC = () => {
               <AcademicPeriodCard
                 key={period.id}
                 period={period}
-                selected={period.id === selectedPeriodId}
+                selected={period.id === resolvedPeriodId}
                 onSelect={handleSelect}
                 onEdit={(p) => form.openDialog(p)}
                 onConfigureShifts={(p) => setShiftModalPeriod(p)}

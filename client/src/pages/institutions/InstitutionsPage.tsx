@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation } from '@tanstack/react-query'
 import { Plus, Search } from 'lucide-react'
 import type React from 'react'
 import { useState } from 'react'
@@ -23,7 +23,7 @@ import { LoadMoreButton } from '@/components/ui/load-more-button'
 import { useAuth } from '@/context/AuthContext'
 import { useInstitution } from '@/context/InstitutionContext'
 import { useDialog } from '@/hooks/use-dialog'
-import { type Institution, listInstitutions } from '@/lib/api/institutions'
+import { getInstitution, type Institution, listInstitutions } from '@/lib/api/institutions'
 
 export const InstitutionsPage: React.FC = () => {
   const { user } = useAuth()
@@ -57,20 +57,34 @@ export const InstitutionsPage: React.FC = () => {
 
   const institutions = data?.pages.flatMap((p) => p.content) ?? []
 
+  const selectMutation = useMutation({
+    mutationFn: (institution: Institution) => getInstitution(institution.id),
+    onSuccess: (_, institution) => {
+      setInstitutionId(institution.id)
+      toast.success(
+        pendingInstitution
+          ? `Você trocou para ${institution.acronym}.`
+          : `Você entrou em ${institution.acronym}.`,
+      )
+      setPendingInstitution(null)
+    },
+    onError: () => {
+      toast.error('Não foi possível acessar esta instituição.')
+      setPendingInstitution(null)
+    },
+  })
+
   function handleEnter(institution: Institution) {
     if (institutionId && institutionId !== institution.id) {
       setPendingInstitution(institution)
       return
     }
-    setInstitutionId(institution.id)
-    toast.success(`Você entrou em ${institution.acronym}.`)
+    selectMutation.mutate(institution)
   }
 
   function confirmSwitch() {
     if (!pendingInstitution) return
-    setInstitutionId(pendingInstitution.id)
-    toast.success(`Você trocou para ${pendingInstitution.acronym}.`)
-    setPendingInstitution(null)
+    selectMutation.mutate(pendingInstitution)
   }
 
   function handleSaved() {

@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query'
 import { Moon, Sun, Sunset } from 'lucide-react'
 import type React from 'react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,13 +15,14 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { isApiError } from '@/lib/api/client'
+import { DAY_OPTIONS, SHIFT_ORDER } from '@/lib/academic-period-constants'
 import {
+  replaceShifts,
   type Shift,
   type ShiftInput,
   type ShiftType,
-  replaceShifts,
 } from '@/lib/api/academic-periods'
+import { isApiError } from '@/lib/api/client'
 
 interface ShiftConfigModalProps {
   periodId: string
@@ -31,22 +32,11 @@ interface ShiftConfigModalProps {
   onSaved: () => void
 }
 
-const SHIFT_ORDER: ShiftType[] = ['MORNING', 'AFTERNOON', 'EVENING']
-
 const SHIFT_META = {
   MORNING: { label: 'Manhã', icon: Sun, color: 'text-amber-500', defaultStart: '07:30' },
   AFTERNOON: { label: 'Tarde', icon: Sunset, color: 'text-orange-500', defaultStart: '13:30' },
   EVENING: { label: 'Noite', icon: Moon, color: 'text-indigo-500', defaultStart: '18:50' },
 } as const
-
-const DAY_OPTIONS = [
-  { value: 1, label: 'Seg' },
-  { value: 2, label: 'Ter' },
-  { value: 3, label: 'Qua' },
-  { value: 4, label: 'Qui' },
-  { value: 5, label: 'Sex' },
-  { value: 6, label: 'Sáb' },
-]
 
 type ShiftFormState = {
   enabled: boolean
@@ -81,7 +71,8 @@ function fromExisting(shift: Shift): ShiftFormState {
 
 function calculateEndTime(s: ShiftFormState): string {
   const [h, m] = s.startTime.split(':').map(Number)
-  const totalMinutes = (s.classesPerDay * s.classDurationMinutes) + ((s.classesPerDay - 1) * s.breakDurationMinutes)
+  const totalMinutes =
+    s.classesPerDay * s.classDurationMinutes + (s.classesPerDay - 1) * s.breakDurationMinutes
   const endH = h + Math.floor((m + totalMinutes) / 60)
   const endM = (m + totalMinutes) % 60
   return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`
@@ -103,17 +94,6 @@ export const ShiftConfigModal: React.FC<ShiftConfigModalProps> = ({
     return state
   })
 
-  useEffect(() => {
-    if (open) {
-      const state = {} as Record<ShiftType, ShiftFormState>
-      for (const type of SHIFT_ORDER) {
-        const existing = currentShifts.find((s) => s.shiftType === type)
-        state[type] = existing ? fromExisting(existing) : defaultShift(type)
-      }
-      setShifts(state)
-    }
-  }, [open, currentShifts])
-
   const saveMutation = useMutation({
     mutationFn: (inputs: ShiftInput[]) => replaceShifts(periodId, inputs),
     onSuccess: () => {
@@ -132,26 +112,28 @@ export const ShiftConfigModal: React.FC<ShiftConfigModalProps> = ({
   function toggleDay(type: ShiftType, day: number) {
     setShifts((prev) => {
       const current = prev[type].activeDays
-      const next = current.includes(day) ? current.filter((d) => d !== day) : [...current, day].sort()
+      const next = current.includes(day)
+        ? current.filter((d) => d !== day)
+        : [...current, day].sort()
       return { ...prev, [type]: { ...prev[type], activeDays: next } }
     })
   }
 
   function handleSave() {
-    const inputs: ShiftInput[] = SHIFT_ORDER
-      .filter((type) => shifts[type].enabled || currentShifts.some((s) => s.shiftType === type))
-      .map((type) => {
-        const s = shifts[type]
-        return {
-          shiftType: type,
-          startTime: s.startTime,
-          classesPerDay: s.classesPerDay,
-          classDurationMinutes: s.classDurationMinutes,
-          breakDurationMinutes: s.breakDurationMinutes,
-          activeDays: s.activeDays,
-          enabled: s.enabled,
-        }
-      })
+    const inputs: ShiftInput[] = SHIFT_ORDER.filter(
+      (type) => shifts[type].enabled || currentShifts.some((s) => s.shiftType === type),
+    ).map((type) => {
+      const s = shifts[type]
+      return {
+        shiftType: type,
+        startTime: s.startTime,
+        classesPerDay: s.classesPerDay,
+        classDurationMinutes: s.classDurationMinutes,
+        breakDurationMinutes: s.breakDurationMinutes,
+        activeDays: s.activeDays,
+        enabled: s.enabled,
+      }
+    })
     saveMutation.mutate(inputs)
   }
 
@@ -207,7 +189,9 @@ export const ShiftConfigModal: React.FC<ShiftConfigModalProps> = ({
                           min={1}
                           max={10}
                           value={s.classesPerDay}
-                          onChange={(e) => updateShift(type, { classesPerDay: Number(e.target.value) })}
+                          onChange={(e) =>
+                            updateShift(type, { classesPerDay: Number(e.target.value) })
+                          }
                         />
                       </div>
                       <div className="flex flex-col gap-1.5">
@@ -216,7 +200,9 @@ export const ShiftConfigModal: React.FC<ShiftConfigModalProps> = ({
                           type="number"
                           min={1}
                           value={s.classDurationMinutes}
-                          onChange={(e) => updateShift(type, { classDurationMinutes: Number(e.target.value) })}
+                          onChange={(e) =>
+                            updateShift(type, { classDurationMinutes: Number(e.target.value) })
+                          }
                         />
                       </div>
                     </div>
@@ -228,7 +214,9 @@ export const ShiftConfigModal: React.FC<ShiftConfigModalProps> = ({
                           type="number"
                           min={0}
                           value={s.breakDurationMinutes}
-                          onChange={(e) => updateShift(type, { breakDurationMinutes: Number(e.target.value) })}
+                          onChange={(e) =>
+                            updateShift(type, { breakDurationMinutes: Number(e.target.value) })
+                          }
                         />
                       </div>
                       <div className="flex flex-col gap-1.5">
@@ -253,7 +241,11 @@ export const ShiftConfigModal: React.FC<ShiftConfigModalProps> = ({
                     </div>
 
                     <div className="rounded bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-                      {s.classesPerDay} aulas × {s.classDurationMinutes}min + {s.classesPerDay - 1} intervalos × {s.breakDurationMinutes}min = {s.classesPerDay * s.classDurationMinutes + (s.classesPerDay - 1) * s.breakDurationMinutes}min ({s.startTime} → {endTime})
+                      {s.classesPerDay} aulas × {s.classDurationMinutes}min + {s.classesPerDay - 1}{' '}
+                      intervalos × {s.breakDurationMinutes}min ={' '}
+                      {s.classesPerDay * s.classDurationMinutes +
+                        (s.classesPerDay - 1) * s.breakDurationMinutes}
+                      min ({s.startTime} → {endTime})
                     </div>
                   </div>
                 )}

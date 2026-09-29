@@ -1,24 +1,12 @@
 import type React from 'react'
-import type { Shift, ShiftType } from '@/lib/api/academic-periods'
+import { DAY_OPTIONS, SHIFT_LABELS } from '@/lib/academic-period-constants'
+import type { Shift } from '@/lib/api/academic-periods'
 
 interface ShiftSummaryTableProps {
   shifts: Shift[]
 }
 
-const SHIFT_LABELS: Record<ShiftType, string> = {
-  MORNING: 'Manhã',
-  AFTERNOON: 'Tarde',
-  EVENING: 'Noite',
-}
-
-const DAY_LABELS: Record<number, string> = {
-  1: 'Seg',
-  2: 'Ter',
-  3: 'Qua',
-  4: 'Qui',
-  5: 'Sex',
-  6: 'Sáb',
-}
+const DAY_LABELS = Object.fromEntries(DAY_OPTIONS.map((d) => [d.value, d.label]))
 
 function formatTime(time: string): string {
   return time.substring(0, 5)

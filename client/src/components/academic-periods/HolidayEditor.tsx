@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Trash2 } from 'lucide-react'
 import type React from 'react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/date-picker'
@@ -60,8 +60,6 @@ export const HolidayEditor: React.FC<HolidayEditorProps> = ({
   onAddDialogOpenChange,
 }) => {
   const queryClient = useQueryClient()
-  const [holidays, setHolidays] = useState<Holiday[]>([])
-  const [dirty, setDirty] = useState(false)
   const [internalOpen, setInternalOpen] = useState(false)
 
   const addDialogOpen = externalOpen ?? internalOpen
@@ -73,25 +71,16 @@ export const HolidayEditor: React.FC<HolidayEditorProps> = ({
   const [newDescription, setNewDescription] = useState('')
   const [newType, setNewType] = useState<HolidayType>('NATIONAL')
 
-  const { data: serverHolidays } = useQuery({
+  const { data: holidays = [], refetch } = useQuery({
     queryKey: ['holidays', period.id],
     queryFn: () => getHolidays(period.id),
   })
 
-  useEffect(() => {
-    if (serverHolidays && !dirty) {
-      setHolidays(serverHolidays)
-    }
-  }, [serverHolidays, dirty])
-
   const saveMutation = useMutation({
     mutationFn: (updated: Holiday[]) => replaceHolidays(period.id, updated),
-    onSuccess: (saved) => {
-      setHolidays(saved)
-      setDirty(false)
-      queryClient.invalidateQueries({ queryKey: ['holidays', period.id] })
+    onSuccess: () => {
+      refetch()
       queryClient.invalidateQueries({ queryKey: ['academic-periods'] })
-      queryClient.invalidateQueries({ queryKey: ['academic-period', period.id] })
       queryClient.invalidateQueries({ queryKey: ['period-summary', period.id] })
       toast.success('Feriados salvos.')
     },
@@ -113,8 +102,6 @@ export const HolidayEditor: React.FC<HolidayEditorProps> = ({
       ...holidays,
       { date: newDate, description: newDescription, type: newType },
     ].sort((a, b) => a.date.localeCompare(b.date))
-    setHolidays(updated)
-    setDirty(true)
     setAddDialogOpen(false)
     setNewDate('')
     setNewDescription('')
@@ -124,8 +111,6 @@ export const HolidayEditor: React.FC<HolidayEditorProps> = ({
 
   function removeHoliday(date: string) {
     const updated = holidays.filter((h) => h.date !== date)
-    setHolidays(updated)
-    setDirty(true)
     saveMutation.mutate(updated)
   }
 

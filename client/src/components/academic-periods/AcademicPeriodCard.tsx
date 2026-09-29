@@ -42,13 +42,11 @@ export const AcademicPeriodCard: React.FC<AcademicPeriodCardProps> = ({
       onClick={() => onSelect(period)}
     >
       <CardContent className="flex flex-col gap-4 p-5">
-        {/* Header: title + badge */}
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold">{period.name}</span>
           <Badge variant={status.variant}>{status.label}</Badge>
         </div>
 
-        {/* Details row: INÍCIO, FIM, TOTAL */}
         <div className="flex items-start gap-6">
           <div className="flex flex-col gap-0.5">
             <span className="text-[11px] font-medium tracking-wide text-muted-foreground">
@@ -70,7 +68,6 @@ export const AcademicPeriodCard: React.FC<AcademicPeriodCardProps> = ({
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
