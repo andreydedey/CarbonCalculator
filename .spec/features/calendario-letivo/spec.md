@@ -10,6 +10,11 @@ O calendário letivo transforma consumo instantâneo (watts) em energia de perí
 informando quantos dias letivos existem, quais são feriados e em quais horários
 cada laboratório opera.
 
+Os turnos (Manhã, Tarde, Noite) são configurados por período letivo e definem
+a estrutura temporal das aulas: horário início, quantidade de aulas/dia, duração
+de cada aula e intervalo entre elas. A ocupação de cada laboratório é registrada
+por slot individual de aula (ex: 3 dos 5 horários da manhã na segunda-feira).
+
 ## Histórias
 
 ### US-018 — Cadastrar período letivo
@@ -49,19 +54,19 @@ para que o cálculo cubra exatamente o intervalo correto.
 
 #### AC-056 — Exclusão de período com cascade
 
-- **Dado** que existe um período com feriados e grades cadastrados
+- **Dado** que existe um período com feriados, turnos e grades cadastrados
 - **Quando** excluo o período
-- **Então** feriados e grades associados são excluídos junto
+- **Então** feriados, turnos e grades associados são excluídos junto
 
 ### US-019 — Registrar feriados e recessos
 
 Como gestor institucional, quero excluir feriados e recessos do período,
 para não superestimar as emissões.
 
-#### AC-057 — Substituição da lista de feriados
+#### AC-057 — Substituição da lista de feriados com tipo
 
 - **Dado** que existe um período cadastrado
-- **Quando** envio uma nova lista de feriados via PUT
+- **Quando** envio uma nova lista de feriados com data, descrição e tipo (NATIONAL, STATE, MUNICIPAL, RECESS) via PUT
 - **Então** a lista anterior é substituída integralmente pela nova
 
 #### AC-058 — Rejeição de feriado fora do intervalo
@@ -70,27 +75,57 @@ para não superestimar as emissões.
 - **Quando** tento cadastrar um feriado em 2024-12-25
 - **Então** o sistema rejeita com erro de validação (HTTP 400)
 
-### US-020 — Definir grade de ocupação do laboratório
+### US-024 — Configurar turnos de aula do período
 
-Como gestor de laboratório, quero informar em quais dias e horários cada laboratório
-é usado, para refletir a ocupação real.
+Como gestor institucional, quero definir os turnos de aula (Manhã, Tarde, Noite)
+com horários, quantidade de aulas, duração e intervalo, para estruturar a grade
+de ocupação dos laboratórios.
 
-#### AC-059 — Substituição da grade de ocupação
+#### AC-067 — Substituição da configuração de turnos
 
-- **Dado** que existe um período e um laboratório
-- **Quando** envio uma grade de blocos horários via PUT
-- **Então** a grade anterior é substituída pela nova
+- **Dado** que existe um período cadastrado
+- **Quando** envio a configuração dos turnos via PUT com shiftType, startTime, classesPerDay, classDurationMinutes, breakDurationMinutes, activeDays e enabled
+- **Então** os turnos são salvos e o endTime é calculado automaticamente como start + (aulas × duração) + ((aulas-1) × intervalo)
 
-#### AC-060 — Rejeição de bloco com horário inválido
+#### AC-068 — Rejeição de turno com classesPerDay zero
 
-- **Dado** que envio um bloco com hora final anterior à inicial
-- **Quando** tento salvar a grade
+- **Dado** que envio um turno com classesPerDay = 0
+- **Quando** tento salvar a configuração
 - **Então** o sistema rejeita com erro de validação (HTTP 400)
 
-#### AC-061 — Rejeição de blocos sobrepostos no mesmo dia
+#### AC-069 — Rejeição de turno duplicado no mesmo período
 
-- **Dado** que envio dois blocos no mesmo dia com horários que se cruzam
-- **Quando** tento salvar a grade
+- **Dado** que envio dois turnos com shiftType = MORNING no mesmo request
+- **Quando** tento salvar a configuração
+- **Então** o sistema rejeita com erro de validação (HTTP 400)
+
+#### AC-070 — Turno desativado não contabiliza no cálculo
+
+- **Dado** que o turno Noite está com enabled = false
+- **Quando** consulto o resumo do período
+- **Então** as horas de uso dos slots noturnos não são contabilizadas
+
+### US-020 — Definir grade de ocupação do laboratório
+
+Como gestor de laboratório, quero informar quais slots de aula cada laboratório
+usa em cada turno e dia da semana, para refletir a ocupação real.
+
+#### AC-059 — Substituição da grade de ocupação por slots
+
+- **Dado** que existe um período com turnos configurados e um laboratório
+- **Quando** envio a grade com entries contendo shiftId, dayOfWeek e occupiedSlots (array de números dos slots ocupados)
+- **Então** a grade anterior é substituída pela nova
+
+#### AC-060 — Rejeição de slot fora do range do turno
+
+- **Dado** que o turno Manhã tem classesPerDay = 5
+- **Quando** envio occupiedSlots contendo o valor 6
+- **Então** o sistema rejeita com erro de validação (HTTP 400)
+
+#### AC-061 — Rejeição de dia fora dos activeDays do turno
+
+- **Dado** que o turno Manhã tem activeDays = [1,2,3,4,5] (Seg–Sex)
+- **Quando** envio uma entry com dayOfWeek = 7 (Domingo)
 - **Então** o sistema rejeita com erro de validação (HTTP 400)
 
 ### US-021 — Consultar resumo de dias letivos e horas de uso
@@ -104,11 +139,11 @@ horas cada laboratório operou, para interpretar corretamente os resultados.
 - **Quando** consulto o resumo do período
 - **Então** vejo os dias letivos por mês, descontando fins de semana e feriados
 
-#### AC-063 — Cálculo de horas de uso por laboratório por mês
+#### AC-063 — Cálculo de horas de uso por slots ocupados
 
-- **Dado** que LABCOMP-01 opera seg-sex 14h-18h (4h/dia)
+- **Dado** que LABCOMP-01 tem 3 slots de Manhã (50min cada) ocupados seg-sex
 - **Quando** consulto o resumo do período
-- **Então** vejo as horas de uso por mês = dias_letivos_do_mês × 4
+- **Então** vejo as horas de uso por mês = len(occupiedSlots) × classDurationMinutes × diasLetivos ÷ 60
 
 #### AC-064 — Laboratório sem grade retorna zero horas
 
@@ -121,11 +156,11 @@ horas cada laboratório operou, para interpretar corretamente os resultados.
 Como gestor institucional, quero reaproveitar o calendário de um período anterior
 como ponto de partida, para não recomeçar do zero a cada semestre.
 
-#### AC-065 — Cópia de período com feriados e grades
+#### AC-065 — Cópia de período com turnos, feriados e grades
 
-- **Dado** que o período 2024.1 tem feriados e grades cadastrados
+- **Dado** que o período 2024.1 tem turnos, feriados e grades cadastrados
 - **Quando** copio o período informando novo nome e novas datas
-- **Então** um novo período é criado com os mesmos feriados (filtrados para o novo intervalo) e mesmas grades
+- **Então** um novo período é criado com os mesmos turnos, feriados (filtrados para o novo intervalo) e mesmas grades
 
 ### US-023 — Isolamento entre instituições
 
@@ -140,11 +175,12 @@ para minha instituição.
 
 ## Fora de escopo
 
-- Ocupação parcial (percentual de máquinas ligadas)
+- Ocupação parcial (percentual de máquinas ligadas por slot)
 - Consumo fora dos horários de aula (máquinas ociosas)
 - Integração com calendário acadêmico oficial da instituição
 - Reserva de laboratório ou alocação de turmas/disciplinas
 - Diferenciação por semana dentro do mesmo período (a grade é uniforme)
+- Turnos customizados além dos 3 fixos (Manhã, Tarde, Noite)
 
 ## Suposições
 
@@ -153,6 +189,9 @@ para minha instituição.
 | ASM-010 | A ocupação é constante ao longo do período letivo — a grade semanal se repete uniformemente | confirmada | Decisão do TDD, consistente com o estudo de referência |
 | ASM-011 | Durante um horário ocupado, todas as máquinas do laboratório estão em uso (100% de ocupação) | confirmada | Decisão do TDD, conservadora (superestima levemente) |
 | ASM-012 | Apenas domingos nunca são dias letivos; sábados podem ter aulas | confirmada | Resposta do usuário: permitir sábados na grade |
+| ASM-013 | O intervalo entre aulas é constante dentro de um turno (ex: sempre 10min) | confirmada | Decisão do TDD e design, campo break_duration_minutes por turno |
+| ASM-014 | O horário fim do turno é calculado, não informado manualmente | confirmada | Design mostra "FIM (CALCULADO)" na tabela de turnos |
+| ASM-015 | O tipo de feriado (Nacional, Estadual, Municipal, Recesso) é informativo e não altera o cálculo | confirmada | Decisão do TDD — qualquer tipo desconta igualmente o dia |
 
 ## Perguntas em aberto
 

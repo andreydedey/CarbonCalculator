@@ -1,12 +1,12 @@
 {
-  "runId": "CarbonCalculatorTCC-calendario-letivo-mug6s1zr",
+  "runId": "CarbonCalculatorTCC-calendario-letivo-muh8nw6h",
   "feature": "calendario-letivo",
   "agent": "claude",
   "modo": "sequencial",
   "paralelizar": null,
   "modeloForcado": null,
   "esforcoForcado": null,
-  "geradoEm": "2026-09-24 23:52",
+  "geradoEm": "2026-09-25 17:32",
   "branchTrabalho": "spec/calendario-letivo",
   "baseDir": ".spec/features/calendario-letivo",
   "specDir": ".spec",
@@ -16,60 +16,87 @@
   "faixas": [],
   "sequenciais": [
     {
-      "id": "T-014",
-      "titulo": "Migrations e entidades JPA",
+      "id": "T-026",
+      "titulo": "Migrations: turnos e novo modelo de schedule",
       "modelo": "claude-sonnet-5",
       "esforco": "medium",
       "arquivos": [
-        "server/src/main/resources/db/migration/V15__create_academic_period_tables.sql",
+        "server/src/main/resources/db/migration/V15__create_academic_period_tables.sql"
+      ],
+      "refs": [
+        "US-024",
+        "US-020",
+        "AC-067",
+        "AC-059"
+      ]
+    },
+    {
+      "id": "T-027",
+      "titulo": "Entidades JPA atualizadas",
+      "modelo": "claude-sonnet-5",
+      "esforco": "medium",
+      "arquivos": [
         "server/src/main/java/com/example/carboncalculator/entities/AcademicPeriod.java",
         "server/src/main/java/com/example/carboncalculator/entities/AcademicPeriodHoliday.java",
+        "server/src/main/java/com/example/carboncalculator/entities/AcademicPeriodShift.java",
         "server/src/main/java/com/example/carboncalculator/entities/LaboratorySchedule.java"
       ],
       "refs": [
-        "US-018",
-        "US-019",
+        "US-024",
         "US-020",
-        "AC-051",
-        "AC-066"
+        "US-019",
+        "AC-067",
+        "AC-059",
+        "AC-057"
       ]
     },
     {
-      "id": "T-015",
-      "titulo": "Repositories e DTOs",
+      "id": "T-028",
+      "titulo": "DTOs e schemas atualizados",
       "modelo": "claude-sonnet-5",
       "esforco": "medium",
       "arquivos": [
-        "server/src/main/java/com/example/carboncalculator/repositories/AcademicPeriodRepository.java",
-        "server/src/main/java/com/example/carboncalculator/repositories/AcademicPeriodHolidayRepository.java",
-        "server/src/main/java/com/example/carboncalculator/repositories/LaboratoryScheduleRepository.java",
+        "server/src/main/java/com/example/carboncalculator/dto/ShiftDTO.java",
+        "server/src/main/java/com/example/carboncalculator/dto/ReplaceShiftsRequest.java",
         "server/src/main/java/com/example/carboncalculator/dto/AcademicPeriodDTO.java",
         "server/src/main/java/com/example/carboncalculator/dto/HolidayDTO.java",
-        "server/src/main/java/com/example/carboncalculator/dto/ScheduleBlockDTO.java",
-        "server/src/main/java/com/example/carboncalculator/dto/CreateAcademicPeriodRequest.java",
-        "server/src/main/java/com/example/carboncalculator/dto/UpdateAcademicPeriodRequest.java",
         "server/src/main/java/com/example/carboncalculator/dto/ReplaceHolidaysRequest.java",
+        "server/src/main/java/com/example/carboncalculator/dto/ScheduleEntryDTO.java",
         "server/src/main/java/com/example/carboncalculator/dto/ReplaceScheduleRequest.java",
-        "server/src/main/java/com/example/carboncalculator/dto/CopyPeriodRequest.java",
         "server/src/main/java/com/example/carboncalculator/dto/PeriodSummaryDTO.java"
       ],
       "refs": [
-        "US-018",
-        "US-019",
+        "US-024",
         "US-020",
-        "AC-054"
+        "US-019",
+        "AC-067",
+        "AC-059",
+        "AC-057"
       ]
     },
     {
-      "id": "T-016",
-      "titulo": "AcademicPeriodService com validações",
+      "id": "T-029",
+      "titulo": "ShiftService com validações",
+      "modelo": "claude-sonnet-5",
+      "esforco": "medium",
+      "arquivos": [
+        "server/src/main/java/com/example/carboncalculator/services/ShiftService.java",
+        "server/src/main/java/com/example/carboncalculator/repositories/AcademicPeriodShiftRepository.java"
+      ],
+      "refs": [
+        "US-024",
+        "AC-067",
+        "AC-068",
+        "AC-069"
+      ]
+    },
+    {
+      "id": "T-030",
+      "titulo": "AcademicPeriodService atualizado",
       "modelo": "claude-sonnet-5",
       "esforco": "high",
       "arquivos": [
-        "server/src/main/java/com/example/carboncalculator/services/AcademicPeriodService.java",
-        "server/src/main/java/com/example/carboncalculator/exceptions/PeriodOverlapException.java",
-        "server/src/main/java/com/example/carboncalculator/exceptions/PeriodNotFoundException.java",
-        "server/src/main/java/com/example/carboncalculator/exceptions/HolidayOutOfRangeException.java"
+        "server/src/main/java/com/example/carboncalculator/services/AcademicPeriodService.java"
       ],
       "refs": [
         "US-018",
@@ -86,13 +113,13 @@
       ]
     },
     {
-      "id": "T-017",
-      "titulo": "LaboratoryScheduleService com validações",
+      "id": "T-031",
+      "titulo": "LaboratoryScheduleService com validação de slots",
       "modelo": "claude-sonnet-5",
       "esforco": "medium",
       "arquivos": [
         "server/src/main/java/com/example/carboncalculator/services/LaboratoryScheduleService.java",
-        "server/src/main/java/com/example/carboncalculator/exceptions/ScheduleBlockOverlapException.java"
+        "server/src/main/java/com/example/carboncalculator/repositories/LaboratoryScheduleRepository.java"
       ],
       "refs": [
         "US-020",
@@ -102,8 +129,8 @@
       ]
     },
     {
-      "id": "T-018",
-      "titulo": "PeriodSummaryService (cálculos derivados)",
+      "id": "T-032",
+      "titulo": "PeriodSummaryService com cálculo por slots",
       "modelo": "claude-sonnet-5",
       "esforco": "high",
       "arquivos": [
@@ -113,12 +140,13 @@
         "US-021",
         "AC-062",
         "AC-063",
-        "AC-064"
+        "AC-064",
+        "AC-070"
       ]
     },
     {
-      "id": "T-019",
-      "titulo": "Controllers REST",
+      "id": "T-033",
+      "titulo": "Controllers REST atualizados",
       "modelo": "claude-sonnet-5",
       "esforco": "medium",
       "arquivos": [
@@ -131,47 +159,34 @@
         "US-020",
         "US-021",
         "US-022",
+        "US-024",
         "AC-051",
         "AC-054",
         "AC-057",
         "AC-059",
         "AC-062",
-        "AC-065"
+        "AC-065",
+        "AC-067"
       ]
     },
     {
-      "id": "T-020",
-      "titulo": "GlobalExceptionHandler — novas exceções",
+      "id": "T-034",
+      "titulo": "Seed data com turnos e slots",
       "modelo": "claude-sonnet-5",
-      "esforco": "low",
-      "arquivos": [
-        "server/src/main/java/com/example/carboncalculator/exceptions/GlobalExceptionHandler.java"
-      ],
-      "refs": [
-        "AC-052",
-        "AC-053",
-        "AC-058",
-        "AC-060",
-        "AC-061"
-      ]
-    },
-    {
-      "id": "T-021",
-      "titulo": "Seed data para calendário",
-      "modelo": "claude-sonnet-5",
-      "esforco": "low",
+      "esforco": "medium",
       "arquivos": [
         "server/src/main/resources/db/migration/afterMigrate.sql"
       ],
       "refs": [
         "US-018",
         "US-019",
-        "US-020"
+        "US-020",
+        "US-024"
       ]
     },
     {
-      "id": "T-022",
-      "titulo": "Frontend: API client e tipos",
+      "id": "T-035",
+      "titulo": "Frontend: API client e tipos atualizados",
       "modelo": "claude-sonnet-5",
       "esforco": "low",
       "arquivos": [
@@ -183,60 +198,89 @@
         "US-019",
         "US-020",
         "US-021",
-        "US-022"
+        "US-022",
+        "US-024"
       ]
     },
     {
-      "id": "T-023",
-      "titulo": "Frontend: listagem e CRUD de períodos",
-      "modelo": "claude-sonnet-5",
-      "esforco": "medium",
-      "arquivos": [
-        "client/src/pages/academic-periods/AcademicPeriodsPage.tsx",
-        "client/src/components/academic-periods/AcademicPeriodCard.tsx",
-        "client/src/components/academic-periods/AcademicPeriodForm.tsx"
-      ],
-      "refs": [
-        "US-018",
-        "AC-051",
-        "AC-054",
-        "AC-055",
-        "AC-056"
-      ]
-    },
-    {
-      "id": "T-024",
-      "titulo": "Frontend: detalhe do período (feriados + grades + resumo)",
+      "id": "T-036",
+      "titulo": "Frontend: página Calendário Letivo (cards + turnos + resumo)",
       "modelo": "claude-sonnet-5",
       "esforco": "high",
       "arquivos": [
-        "client/src/pages/academic-periods/AcademicPeriodDetailPage.tsx",
-        "client/src/components/academic-periods/HolidayEditor.tsx",
-        "client/src/components/academic-periods/ScheduleGrid.tsx",
-        "client/src/components/academic-periods/PeriodSummary.tsx"
+        "client/src/pages/academic-periods/AcademicPeriodsPage.tsx",
+        "client/src/components/academic-periods/AcademicPeriodCard.tsx",
+        "client/src/components/academic-periods/ShiftSummaryTable.tsx",
+        "client/src/components/academic-periods/OccupationSummaryGrid.tsx"
       ],
       "refs": [
-        "US-019",
-        "US-020",
-        "US-021",
-        "AC-057",
-        "AC-059",
-        "AC-062",
-        "AC-063"
+        "US-018",
+        "US-024",
+        "AC-051",
+        "AC-054",
+        "AC-067"
       ]
     },
     {
-      "id": "T-025",
-      "titulo": "Frontend: sidebar, rotas e cópia de período",
+      "id": "T-037",
+      "titulo": "Frontend: modal Configurar Turnos",
       "modelo": "claude-sonnet-5",
-      "esforco": "low",
+      "esforco": "high",
+      "arquivos": [
+        "client/src/components/academic-periods/ShiftConfigModal.tsx"
+      ],
+      "refs": [
+        "US-024",
+        "AC-067",
+        "AC-068",
+        "AC-069"
+      ]
+    },
+    {
+      "id": "T-038",
+      "titulo": "Frontend: página Ocupação dos Laboratórios",
+      "modelo": "claude-sonnet-5",
+      "esforco": "xhigh",
+      "arquivos": [
+        "client/src/pages/academic-periods/OccupationEditorPage.tsx",
+        "client/src/components/academic-periods/OccupationGrid.tsx"
+      ],
+      "refs": [
+        "US-020",
+        "AC-059",
+        "AC-060",
+        "AC-061"
+      ]
+    },
+    {
+      "id": "T-039",
+      "titulo": "Frontend: editor de feriados com calendário shadcn",
+      "modelo": "claude-sonnet-5",
+      "esforco": "medium",
+      "arquivos": [
+        "client/src/components/academic-periods/HolidayEditor.tsx"
+      ],
+      "refs": [
+        "US-019",
+        "AC-057",
+        "AC-058"
+      ]
+    },
+    {
+      "id": "T-040",
+      "titulo": "Frontend: sidebar, rotas e formulários",
+      "modelo": "claude-sonnet-5",
+      "esforco": "medium",
       "arquivos": [
         "client/src/components/layout/AppLayout.tsx",
         "client/src/App.tsx",
+        "client/src/components/academic-periods/AcademicPeriodForm.tsx",
         "client/src/components/academic-periods/CopyPeriodDialog.tsx"
       ],
       "refs": [
+        "US-018",
         "US-022",
+        "AC-055",
         "AC-065"
       ]
     }

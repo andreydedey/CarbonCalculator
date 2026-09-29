@@ -38,9 +38,9 @@
 </style>
 <main>
   <h1>Plano de execução — calendario-letivo</h1>
-  <p class="sub">gerado por <code>onp-spec plano</code> em 2026-09-24 23:52 · regenere após mudar tasks.md</p>
+  <p class="sub">gerado por <code>onp-spec plano</code> em 2026-09-25 17:32 · regenere após mudar tasks.md</p>
   <div class="resumo">
-    <div><b>12</b> tarefa(s), uma após a outra</div>
+    <div><b>15</b> tarefa(s), uma após a outra</div>
     <div>modo <b>sequencial</b> (escolha do usuário)</div>
     <div>branch <code>spec/calendario-letivo</code></div>
   </div>
@@ -61,76 +61,94 @@
       <h3>Ordem de execução <small>uma tarefa após a outra, na árvore principal</small></h3>
       <div class="grade"><div class="faixa">
         <div class="tarefa">
-          <span class="tid">T-014</span>
-          <span class="ttitulo">Migrations e entidades JPA</span>
+          <span class="tid">T-026</span>
+          <span class="ttitulo">Migrations: turnos e novo modelo de schedule</span>
           <span class="meta"><code>claude-sonnet-5</code> · esforço <b>medium</b></span>
-          <span class="arquivos"><code>server/src/main/resources/db/migration/V15__create_academic_period_tables.sql</code> <code>server/src/main/java/com/example/carboncalculator/entities/AcademicPeriod.java</code> <code>server/src/main/java/com/example/carboncalculator/entities/AcademicPeriodHoliday.java</code> <code>server/src/main/java/com/example/carboncalculator/entities/LaboratorySchedule.java</code></span>
+          <span class="arquivos"><code>server/src/main/resources/db/migration/V15__create_academic_period_tables.sql</code></span>
         </div>
         <div class="tarefa">
-          <span class="tid">T-015</span>
-          <span class="ttitulo">Repositories e DTOs</span>
+          <span class="tid">T-027</span>
+          <span class="ttitulo">Entidades JPA atualizadas</span>
           <span class="meta"><code>claude-sonnet-5</code> · esforço <b>medium</b></span>
-          <span class="arquivos"><code>server/src/main/java/com/example/carboncalculator/repositories/AcademicPeriodRepository.java</code> <code>server/src/main/java/com/example/carboncalculator/repositories/AcademicPeriodHolidayRepository.java</code> <code>server/src/main/java/com/example/carboncalculator/repositories/LaboratoryScheduleRepository.java</code> <code>server/src/main/java/com/example/carboncalculator/dto/AcademicPeriodDTO.java</code> <code>server/src/main/java/com/example/carboncalculator/dto/HolidayDTO.java</code> <code>server/src/main/java/com/example/carboncalculator/dto/ScheduleBlockDTO.java</code> <code>server/src/main/java/com/example/carboncalculator/dto/CreateAcademicPeriodRequest.java</code> <code>server/src/main/java/com/example/carboncalculator/dto/UpdateAcademicPeriodRequest.java</code> <code>server/src/main/java/com/example/carboncalculator/dto/ReplaceHolidaysRequest.java</code> <code>server/src/main/java/com/example/carboncalculator/dto/ReplaceScheduleRequest.java</code> <code>server/src/main/java/com/example/carboncalculator/dto/CopyPeriodRequest.java</code> <code>server/src/main/java/com/example/carboncalculator/dto/PeriodSummaryDTO.java</code></span>
+          <span class="arquivos"><code>server/src/main/java/com/example/carboncalculator/entities/AcademicPeriod.java</code> <code>server/src/main/java/com/example/carboncalculator/entities/AcademicPeriodHoliday.java</code> <code>server/src/main/java/com/example/carboncalculator/entities/AcademicPeriodShift.java</code> <code>server/src/main/java/com/example/carboncalculator/entities/LaboratorySchedule.java</code></span>
         </div>
         <div class="tarefa">
-          <span class="tid">T-016</span>
-          <span class="ttitulo">AcademicPeriodService com validações</span>
+          <span class="tid">T-028</span>
+          <span class="ttitulo">DTOs e schemas atualizados</span>
+          <span class="meta"><code>claude-sonnet-5</code> · esforço <b>medium</b></span>
+          <span class="arquivos"><code>server/src/main/java/com/example/carboncalculator/dto/ShiftDTO.java</code> <code>server/src/main/java/com/example/carboncalculator/dto/ReplaceShiftsRequest.java</code> <code>server/src/main/java/com/example/carboncalculator/dto/AcademicPeriodDTO.java</code> <code>server/src/main/java/com/example/carboncalculator/dto/HolidayDTO.java</code> <code>server/src/main/java/com/example/carboncalculator/dto/ReplaceHolidaysRequest.java</code> <code>server/src/main/java/com/example/carboncalculator/dto/ScheduleEntryDTO.java</code> <code>server/src/main/java/com/example/carboncalculator/dto/ReplaceScheduleRequest.java</code> <code>server/src/main/java/com/example/carboncalculator/dto/PeriodSummaryDTO.java</code></span>
+        </div>
+        <div class="tarefa">
+          <span class="tid">T-029</span>
+          <span class="ttitulo">ShiftService com validações</span>
+          <span class="meta"><code>claude-sonnet-5</code> · esforço <b>medium</b></span>
+          <span class="arquivos"><code>server/src/main/java/com/example/carboncalculator/services/ShiftService.java</code> <code>server/src/main/java/com/example/carboncalculator/repositories/AcademicPeriodShiftRepository.java</code></span>
+        </div>
+        <div class="tarefa">
+          <span class="tid">T-030</span>
+          <span class="ttitulo">AcademicPeriodService atualizado</span>
           <span class="meta"><code>claude-sonnet-5</code> · esforço <b>high</b></span>
-          <span class="arquivos"><code>server/src/main/java/com/example/carboncalculator/services/AcademicPeriodService.java</code> <code>server/src/main/java/com/example/carboncalculator/exceptions/PeriodOverlapException.java</code> <code>server/src/main/java/com/example/carboncalculator/exceptions/PeriodNotFoundException.java</code> <code>server/src/main/java/com/example/carboncalculator/exceptions/HolidayOutOfRangeException.java</code></span>
+          <span class="arquivos"><code>server/src/main/java/com/example/carboncalculator/services/AcademicPeriodService.java</code></span>
         </div>
         <div class="tarefa">
-          <span class="tid">T-017</span>
-          <span class="ttitulo">LaboratoryScheduleService com validações</span>
+          <span class="tid">T-031</span>
+          <span class="ttitulo">LaboratoryScheduleService com validação de slots</span>
           <span class="meta"><code>claude-sonnet-5</code> · esforço <b>medium</b></span>
-          <span class="arquivos"><code>server/src/main/java/com/example/carboncalculator/services/LaboratoryScheduleService.java</code> <code>server/src/main/java/com/example/carboncalculator/exceptions/ScheduleBlockOverlapException.java</code></span>
+          <span class="arquivos"><code>server/src/main/java/com/example/carboncalculator/services/LaboratoryScheduleService.java</code> <code>server/src/main/java/com/example/carboncalculator/repositories/LaboratoryScheduleRepository.java</code></span>
         </div>
         <div class="tarefa">
-          <span class="tid">T-018</span>
-          <span class="ttitulo">PeriodSummaryService (cálculos derivados)</span>
+          <span class="tid">T-032</span>
+          <span class="ttitulo">PeriodSummaryService com cálculo por slots</span>
           <span class="meta"><code>claude-sonnet-5</code> · esforço <b>high</b></span>
           <span class="arquivos"><code>server/src/main/java/com/example/carboncalculator/services/PeriodSummaryService.java</code></span>
         </div>
         <div class="tarefa">
-          <span class="tid">T-019</span>
-          <span class="ttitulo">Controllers REST</span>
+          <span class="tid">T-033</span>
+          <span class="ttitulo">Controllers REST atualizados</span>
           <span class="meta"><code>claude-sonnet-5</code> · esforço <b>medium</b></span>
           <span class="arquivos"><code>server/src/main/java/com/example/carboncalculator/controllers/AcademicPeriodController.java</code> <code>server/src/main/java/com/example/carboncalculator/controllers/LaboratoryScheduleController.java</code></span>
         </div>
         <div class="tarefa">
-          <span class="tid">T-020</span>
-          <span class="ttitulo">GlobalExceptionHandler — novas exceções</span>
-          <span class="meta"><code>claude-sonnet-5</code> · esforço <b>low</b></span>
-          <span class="arquivos"><code>server/src/main/java/com/example/carboncalculator/exceptions/GlobalExceptionHandler.java</code></span>
-        </div>
-        <div class="tarefa">
-          <span class="tid">T-021</span>
-          <span class="ttitulo">Seed data para calendário</span>
-          <span class="meta"><code>claude-sonnet-5</code> · esforço <b>low</b></span>
+          <span class="tid">T-034</span>
+          <span class="ttitulo">Seed data com turnos e slots</span>
+          <span class="meta"><code>claude-sonnet-5</code> · esforço <b>medium</b></span>
           <span class="arquivos"><code>server/src/main/resources/db/migration/afterMigrate.sql</code></span>
         </div>
         <div class="tarefa">
-          <span class="tid">T-022</span>
-          <span class="ttitulo">Frontend: API client e tipos</span>
+          <span class="tid">T-035</span>
+          <span class="ttitulo">Frontend: API client e tipos atualizados</span>
           <span class="meta"><code>claude-sonnet-5</code> · esforço <b>low</b></span>
           <span class="arquivos"><code>client/src/lib/api/academic-periods.ts</code> <code>client/src/lib/schemas/academicPeriodSchema.ts</code></span>
         </div>
         <div class="tarefa">
-          <span class="tid">T-023</span>
-          <span class="ttitulo">Frontend: listagem e CRUD de períodos</span>
-          <span class="meta"><code>claude-sonnet-5</code> · esforço <b>medium</b></span>
-          <span class="arquivos"><code>client/src/pages/academic-periods/AcademicPeriodsPage.tsx</code> <code>client/src/components/academic-periods/AcademicPeriodCard.tsx</code> <code>client/src/components/academic-periods/AcademicPeriodForm.tsx</code></span>
-        </div>
-        <div class="tarefa">
-          <span class="tid">T-024</span>
-          <span class="ttitulo">Frontend: detalhe do período (feriados + grades + resumo)</span>
+          <span class="tid">T-036</span>
+          <span class="ttitulo">Frontend: página Calendário Letivo (cards + turnos + resumo)</span>
           <span class="meta"><code>claude-sonnet-5</code> · esforço <b>high</b></span>
-          <span class="arquivos"><code>client/src/pages/academic-periods/AcademicPeriodDetailPage.tsx</code> <code>client/src/components/academic-periods/HolidayEditor.tsx</code> <code>client/src/components/academic-periods/ScheduleGrid.tsx</code> <code>client/src/components/academic-periods/PeriodSummary.tsx</code></span>
+          <span class="arquivos"><code>client/src/pages/academic-periods/AcademicPeriodsPage.tsx</code> <code>client/src/components/academic-periods/AcademicPeriodCard.tsx</code> <code>client/src/components/academic-periods/ShiftSummaryTable.tsx</code> <code>client/src/components/academic-periods/OccupationSummaryGrid.tsx</code></span>
         </div>
         <div class="tarefa">
-          <span class="tid">T-025</span>
-          <span class="ttitulo">Frontend: sidebar, rotas e cópia de período</span>
-          <span class="meta"><code>claude-sonnet-5</code> · esforço <b>low</b></span>
-          <span class="arquivos"><code>client/src/components/layout/AppLayout.tsx</code> <code>client/src/App.tsx</code> <code>client/src/components/academic-periods/CopyPeriodDialog.tsx</code></span>
+          <span class="tid">T-037</span>
+          <span class="ttitulo">Frontend: modal Configurar Turnos</span>
+          <span class="meta"><code>claude-sonnet-5</code> · esforço <b>high</b></span>
+          <span class="arquivos"><code>client/src/components/academic-periods/ShiftConfigModal.tsx</code></span>
+        </div>
+        <div class="tarefa">
+          <span class="tid">T-038</span>
+          <span class="ttitulo">Frontend: página Ocupação dos Laboratórios</span>
+          <span class="meta"><code>claude-sonnet-5</code> · esforço <b>xhigh</b></span>
+          <span class="arquivos"><code>client/src/pages/academic-periods/OccupationEditorPage.tsx</code> <code>client/src/components/academic-periods/OccupationGrid.tsx</code></span>
+        </div>
+        <div class="tarefa">
+          <span class="tid">T-039</span>
+          <span class="ttitulo">Frontend: editor de feriados com calendário shadcn</span>
+          <span class="meta"><code>claude-sonnet-5</code> · esforço <b>medium</b></span>
+          <span class="arquivos"><code>client/src/components/academic-periods/HolidayEditor.tsx</code></span>
+        </div>
+        <div class="tarefa">
+          <span class="tid">T-040</span>
+          <span class="ttitulo">Frontend: sidebar, rotas e formulários</span>
+          <span class="meta"><code>claude-sonnet-5</code> · esforço <b>medium</b></span>
+          <span class="arquivos"><code>client/src/components/layout/AppLayout.tsx</code> <code>client/src/App.tsx</code> <code>client/src/components/academic-periods/AcademicPeriodForm.tsx</code> <code>client/src/components/academic-periods/CopyPeriodDialog.tsx</code></span>
         </div></div></div>
     </section>
   <section class="onda">

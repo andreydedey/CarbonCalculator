@@ -24,7 +24,7 @@ O calendário letivo é a peça que transforma um valor pontual de consumo (watt
 - **A ocupação é constante ao longo do período letivo.** Assim como assumiu o estudo de referência, a grade semanal se repete uniformemente em todas as semanas do período. Não há diferenciação por semana específica.
 - **Durante um horário ocupado, todas as máquinas do laboratório estão em uso.** Ocupação parcial (metade das máquinas ligada) fica fora do escopo — a suposição atual é conservadora (superestima levemente).
 - **O consumo fora dos horários de aula não é considerado.** Máquinas ociosas fora do horário cadastrado não entram no cálculo. Isso pode subestimar, mas é consistente com o estudo de referência.
-- **Feriados são cadastrados por data, não por tipo.** Não importa se é feriado municipal, estadual ou nacional — o que importa é que naquele dia o laboratório não operou.
+- **Feriados têm tipo informativo.** O tipo (Feriado Nacional, Feriado Estadual, Feriado Municipal, Recesso) é cadastrado para visualização e organização, mas não altera o cálculo — qualquer tipo desconta igualmente o dia.
 - **O período letivo pertence à instituição, não ao laboratório.** É institucional: início, fim e feriados são comuns a todos os labs. A ocupação (grade horária) é por laboratório.
 - **O período letivo não se sobrepõe a outro da mesma instituição.** Cada semestre ou ano letivo é um período independente. A validação impede sobreposição de datas.
 - **Turnos são do período letivo, não do laboratório.** Existem 3 turnos fixos (Manhã, Tarde, Noite) configurados uma vez por período. Cada turno define: horário início/fim, quantidade de aulas por dia, duração da aula em minutos, duração do intervalo entre aulas em minutos, e dias ativos da semana. Turnos podem ser ativados ou desativados individualmente.
@@ -136,9 +136,11 @@ O sistema consegue calcular o consumo instantâneo de um laboratório (soma dos 
 | `id`                 | `UUID`              | PK, gerado automaticamente                   |
 | `academic_period_id` | `UUID`              | FK → academic_period(id) ON DELETE CASCADE    |
 | `date`               | `DATE`              | NOT NULL                                      |
-| `description`        | `VARCHAR(255)`      | NULL (ex: "Feriado de Natal", "Recesso")      |
+| `description`        | `VARCHAR(255)`      | NOT NULL (ex: "Confraternização Universal")   |
+| `type`               | `VARCHAR(20)`       | NOT NULL, CHECK (NATIONAL, STATE, MUNICIPAL, RECESS) |
 
 **Constraints:**
+- CHECK: `type IN ('NATIONAL', 'STATE', 'MUNICIPAL', 'RECESS')`
 - UNIQUE(academic_period_id, date) — não duplicar feriados
 - O feriado deve estar dentro do intervalo [start_date, end_date] do período (validado no service)
 
@@ -342,18 +344,22 @@ Esses cálculos são feitos no service e retornados pela API como dados derivado
 // Request — substitui toda a lista
 {
   "holidays": [
-    { "date": "2025-03-29", "description": "Sexta-feira Santa" },
-    { "date": "2025-04-21", "description": "Tiradentes" },
-    { "date": "2025-05-01", "description": "Dia do Trabalho" },
-    { "date": "2025-06-19", "description": "Corpus Christi" },
-    { "date": "2025-08-15", "description": "Adesão do Pará" }
+    { "date": "2025-01-01", "description": "Confraternização Universal", "type": "NATIONAL" },
+    { "date": "2025-03-03", "description": "Carnaval", "type": "RECESS" },
+    { "date": "2025-03-04", "description": "Carnaval", "type": "RECESS" },
+    { "date": "2025-03-05", "description": "Carnaval", "type": "RECESS" },
+    { "date": "2025-04-18", "description": "Sexta-feira Santa", "type": "NATIONAL" },
+    { "date": "2025-04-21", "description": "Tiradentes", "type": "NATIONAL" },
+    { "date": "2025-05-01", "description": "Dia do Trabalho", "type": "NATIONAL" },
+    { "date": "2025-08-15", "description": "Adesão do Pará", "type": "STATE" },
+    { "date": "2025-09-07", "description": "Independência do Brasil", "type": "NATIONAL" }
   ]
 }
 
 // Response 200
 {
   "holidays": [
-    { "date": "2025-03-29", "description": "Sexta-feira Santa" },
+    { "date": "2025-01-01", "description": "Confraternização Universal", "type": "NATIONAL" },
     ...
   ]
 }
