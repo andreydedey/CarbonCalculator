@@ -13,6 +13,7 @@ import { InstitutionsPage } from '@/pages/institutions/InstitutionsPage'
 import { LaboratoriesPage } from '@/pages/laboratories/LaboratoriesPage'
 import { AcademicPeriodDetailPage } from '@/pages/academic-periods/AcademicPeriodDetailPage'
 import { AcademicPeriodsPage } from '@/pages/academic-periods/AcademicPeriodsPage'
+import { OccupationEditorPage } from '@/pages/academic-periods/OccupationEditorPage'
 import { UsersPage } from '@/pages/users/UsersPage'
 
 export const App: React.FC = () => (
@@ -29,6 +30,7 @@ export const App: React.FC = () => (
             <Route path="/equipment-models" element={<EquipmentModelsPage />} />
             <Route path="/academic-periods" element={<AcademicPeriodsPage />} />
             <Route path="/academic-periods/:id" element={<AcademicPeriodDetailPage />} />
+            <Route path="/academic-periods/:id/occupation" element={<OccupationEditorPage />} />
             <Route path="/users" element={<UsersPage />} />
           </Route>
         </Route>

@@ -1,11 +1,25 @@
-import { useInfiniteQuery, useMutation } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Calendar, Plus } from 'lucide-react'
 import type React from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { AcademicPeriodCard } from '@/components/academic-periods/AcademicPeriodCard'
 import { AcademicPeriodForm } from '@/components/academic-periods/AcademicPeriodForm'
 import { CopyPeriodDialog } from '@/components/academic-periods/CopyPeriodDialog'
+import { HolidayEditor } from '@/components/academic-periods/HolidayEditor'
+import { OccupationSummary } from '@/components/academic-periods/OccupationSummary'
+import { ShiftConfigModal } from '@/components/academic-periods/ShiftConfigModal'
+import { ShiftSummaryTable } from '@/components/academic-periods/ShiftSummaryTable'
 import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -24,9 +38,14 @@ import {
 import { isApiError } from '@/lib/api/client'
 
 export const AcademicPeriodsPage: React.FC = () => {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const form = useDialog<AcademicPeriod>()
   const deleteDialog = useDialog<AcademicPeriod>()
   const copyDialog = useDialog<AcademicPeriod>()
+  const [shiftModalPeriod, setShiftModalPeriod] = useState<AcademicPeriod | null>(null)
+  const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null)
+  const [addHolidayOpen, setAddHolidayOpen] = useState(false)
 
   const {
     data: periodsData,
@@ -43,12 +62,33 @@ export const AcademicPeriodsPage: React.FC = () => {
       lastPage.page + 1 < lastPage.totalPages ? lastPage.page + 1 : undefined,
   })
 
-  const periods = periodsData?.pages.flatMap((p) => p.content) ?? []
+  const periods = useMemo(() => periodsData?.pages.flatMap((p) => p.content) ?? [], [periodsData])
+
+  // Auto-select the first/active period
+  useEffect(() => {
+    if (periods.length > 0 && !selectedPeriodId) {
+      const today = new Date().toISOString().split('T')[0]
+      const active = periods.find((p) => p.startDate <= today && p.endDate >= today)
+      setSelectedPeriodId(active?.id ?? periods[0].id)
+    }
+  }, [periods, selectedPeriodId])
+
+  const selectedPeriod = useMemo(
+    () => periods.find((p) => p.id === selectedPeriodId) ?? null,
+    [periods, selectedPeriodId],
+  )
+
+  const handleSelect = useCallback((period: AcademicPeriod) => {
+    setSelectedPeriodId(period.id)
+  }, [])
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteAcademicPeriod(id),
     onSuccess: () => {
       deleteDialog.closeDialog()
+      if (selectedPeriodId === deleteDialog.data?.id) {
+        setSelectedPeriodId(null)
+      }
       refetch()
       toast.success('Período excluído.')
     },
@@ -59,8 +99,9 @@ export const AcademicPeriodsPage: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Page header */}
       <div className="flex items-center justify-between">
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-0.5">
           <p className="text-xs font-normal text-muted-foreground">
             Cadastro &rsaquo; Calendário Letivo
           </p>
@@ -72,16 +113,7 @@ export const AcademicPeriodsPage: React.FC = () => {
         </Button>
       </div>
 
-      <AcademicPeriodForm
-        period={form.data ?? undefined}
-        open={form.open}
-        onOpenChange={(open) => !open && form.closeDialog()}
-        onSaved={() => {
-          form.closeDialog()
-          refetch()
-        }}
-      />
-
+      {/* Period cards — 2 column grid */}
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>
       ) : periods.length === 0 ? (
@@ -94,23 +126,101 @@ export const AcademicPeriodsPage: React.FC = () => {
           </Button>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
-          {periods.map((period) => (
-            <AcademicPeriodCard
-              key={period.id}
-              period={period}
-              onEdit={(p) => form.openDialog(p)}
-              onDelete={(p) => deleteDialog.openDialog(p)}
-              onCopy={(p) => copyDialog.openDialog(p)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {periods.map((period) => (
+              <AcademicPeriodCard
+                key={period.id}
+                period={period}
+                selected={period.id === selectedPeriodId}
+                onSelect={handleSelect}
+                onEdit={(p) => form.openDialog(p)}
+                onConfigureShifts={(p) => setShiftModalPeriod(p)}
+              />
+            ))}
+          </div>
+
+          <LoadMoreButton
+            fetchNextPage={fetchNextPage}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+          />
+
+          {/* Selected period sections */}
+          {selectedPeriod && (
+            <>
+              {/* Section: Turnos e Horários de Aula */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Turnos e Horários de Aula</CardTitle>
+                  <CardDescription>
+                    Configuração dos períodos de funcionamento dos laboratórios
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ShiftSummaryTable shifts={selectedPeriod.shifts} />
+                </CardContent>
+              </Card>
+
+              {/* Section: Ocupação dos Laboratórios */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Ocupação dos Laboratórios</CardTitle>
+                  <CardDescription>
+                    Aulas efetivamente ministradas em cada laboratório — base para as horas de uso
+                    do cálculo
+                  </CardDescription>
+                  <CardAction className="self-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/academic-periods/${selectedPeriod.id}/occupation`)}
+                    >
+                      Configurar Ocupação
+                    </Button>
+                  </CardAction>
+                </CardHeader>
+                <CardContent>
+                  <OccupationSummary periodId={selectedPeriod.id} shifts={selectedPeriod.shifts} />
+                </CardContent>
+              </Card>
+
+              {/* Section: Feriados e Recessos */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Feriados e Recessos</CardTitle>
+                  <CardDescription>
+                    Dias não letivos que serão descontados do cálculo de emissões
+                  </CardDescription>
+                  <CardAction className="self-center">
+                    <Button variant="outline" onClick={() => setAddHolidayOpen(true)}>
+                      <Plus className="size-4" />
+                      Adicionar
+                    </Button>
+                  </CardAction>
+                </CardHeader>
+                <CardContent>
+                  <HolidayEditor
+                    period={selectedPeriod}
+                    addDialogOpen={addHolidayOpen}
+                    onAddDialogOpenChange={setAddHolidayOpen}
+                  />
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </>
       )}
 
-      <LoadMoreButton
-        fetchNextPage={fetchNextPage}
-        hasNextPage={hasNextPage}
-        isFetchingNextPage={isFetchingNextPage}
+      {/* Dialogs */}
+      <AcademicPeriodForm
+        period={form.data ?? undefined}
+        open={form.open}
+        onOpenChange={(open) => !open && form.closeDialog()}
+        onSaved={() => {
+          form.closeDialog()
+          refetch()
+        }}
       />
 
       {copyDialog.data && (
@@ -121,6 +231,19 @@ export const AcademicPeriodsPage: React.FC = () => {
           onCopied={() => {
             copyDialog.closeDialog()
             refetch()
+          }}
+        />
+      )}
+
+      {shiftModalPeriod && (
+        <ShiftConfigModal
+          periodId={shiftModalPeriod.id}
+          currentShifts={shiftModalPeriod.shifts}
+          open={!!shiftModalPeriod}
+          onOpenChange={(open) => !open && setShiftModalPeriod(null)}
+          onSaved={() => {
+            setShiftModalPeriod(null)
+            queryClient.invalidateQueries({ queryKey: ['academic-periods'] })
           }}
         />
       )}
