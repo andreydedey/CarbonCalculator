@@ -3,24 +3,43 @@ import type { PageResponse } from './types'
 
 // --- Types ---
 
+export type ShiftType = 'MORNING' | 'AFTERNOON' | 'EVENING'
+
+export type HolidayType = 'NATIONAL' | 'STATE' | 'MUNICIPAL' | 'RECESS'
+
+export type Shift = {
+  id: string
+  shiftType: ShiftType
+  startTime: string
+  endTime: string
+  classesPerDay: number
+  classDurationMinutes: number
+  breakDurationMinutes: number
+  activeDays: number[]
+  enabled: boolean
+}
+
 export type AcademicPeriod = {
   id: string
   name: string
   startDate: string
   endDate: string
   holidayCount: number
+  shifts: Shift[]
   createdAt: string
 }
 
 export type Holiday = {
   date: string
-  description?: string
+  description: string
+  type: HolidayType
 }
 
-export type ScheduleBlock = {
+export type ScheduleEntry = {
+  shiftId: string
+  shiftType: ShiftType
   dayOfWeek: number
-  startTime: string
-  endTime: string
+  occupiedSlots: number[]
 }
 
 export type MonthSchoolDays = {
@@ -69,12 +88,25 @@ export type CopyPeriodPayload = {
   endDate: string
 }
 
+export type ShiftInput = {
+  shiftType: ShiftType
+  startTime: string
+  classesPerDay: number
+  classDurationMinutes: number
+  breakDurationMinutes: number
+  activeDays: number[]
+  enabled: boolean
+}
+
+export type ScheduleInput = {
+  shiftId: string
+  dayOfWeek: number
+  occupiedSlots: number[]
+}
+
 // --- API functions ---
 
-export function listAcademicPeriods(
-  page = 0,
-  size = 10,
-): Promise<PageResponse<AcademicPeriod>> {
+export function listAcademicPeriods(page = 0, size = 10): Promise<PageResponse<AcademicPeriod>> {
   return api.get('/academic-periods', { params: { page, size } }).then((r) => r.data)
 }
 
@@ -82,7 +114,9 @@ export function getAcademicPeriod(id: string): Promise<AcademicPeriod> {
   return api.get(`/academic-periods/${id}`).then((r) => r.data)
 }
 
-export function createAcademicPeriod(payload: CreateAcademicPeriodPayload): Promise<AcademicPeriod> {
+export function createAcademicPeriod(
+  payload: CreateAcademicPeriodPayload,
+): Promise<AcademicPeriod> {
   return api.post('/academic-periods', payload).then((r) => r.data)
 }
 
@@ -97,27 +131,36 @@ export function deleteAcademicPeriod(id: string): Promise<void> {
   return api.delete(`/academic-periods/${id}`).then(() => undefined)
 }
 
+export function replaceShifts(periodId: string, shifts: ShiftInput[]): Promise<Shift[]> {
+  return api.put(`/academic-periods/${periodId}/shifts`, { shifts }).then((r) => r.data)
+}
+
+export function getHolidays(periodId: string): Promise<Holiday[]> {
+  return api.get(`/academic-periods/${periodId}/holidays`).then((r) => r.data)
+}
+
 export function replaceHolidays(periodId: string, holidays: Holiday[]): Promise<Holiday[]> {
   return api.put(`/academic-periods/${periodId}/holidays`, { holidays }).then((r) => r.data)
 }
 
-export function copyPeriod(sourcePeriodId: string, payload: CopyPeriodPayload): Promise<AcademicPeriod> {
+export function copyPeriod(
+  sourcePeriodId: string,
+  payload: CopyPeriodPayload,
+): Promise<AcademicPeriod> {
   return api.post(`/academic-periods/${sourcePeriodId}/copy`, payload).then((r) => r.data)
 }
 
-export function getSchedule(periodId: string, labId: string): Promise<ScheduleBlock[]> {
-  return api
-    .get(`/academic-periods/${periodId}/laboratories/${labId}/schedule`)
-    .then((r) => r.data)
+export function getSchedule(periodId: string, labId: string): Promise<ScheduleEntry[]> {
+  return api.get(`/academic-periods/${periodId}/laboratories/${labId}/schedule`).then((r) => r.data)
 }
 
 export function replaceSchedule(
   periodId: string,
   labId: string,
-  blocks: ScheduleBlock[],
-): Promise<ScheduleBlock[]> {
+  entries: ScheduleInput[],
+): Promise<ScheduleEntry[]> {
   return api
-    .put(`/academic-periods/${periodId}/laboratories/${labId}/schedule`, { blocks })
+    .put(`/academic-periods/${periodId}/laboratories/${labId}/schedule`, { entries })
     .then((r) => r.data)
 }
 
