@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.carboncalculator.dto.ReplaceScheduleRequest;
-import com.example.carboncalculator.dto.ScheduleBlockDTO;
+import com.example.carboncalculator.dto.ScheduleEntryDTO;
 import com.example.carboncalculator.services.LaboratoryScheduleService;
 
 import lombok.RequiredArgsConstructor;
@@ -27,14 +27,14 @@ public class LaboratoryScheduleController {
 
     @GetMapping
     @PreAuthorize("hasRole('RESEARCHER')")
-    public ResponseEntity<List<ScheduleBlockDTO>> getSchedule(
+    public ResponseEntity<List<ScheduleEntryDTO>> getSchedule(
             @PathVariable UUID periodId, @PathVariable UUID labId) {
         return ResponseEntity.ok(scheduleService.getSchedule(periodId, labId));
     }
 
     @PutMapping
     @PreAuthorize("hasRole('MANAGER')")
-    public ResponseEntity<List<ScheduleBlockDTO>> replaceSchedule(
+    public ResponseEntity<List<ScheduleEntryDTO>> replaceSchedule(
             @PathVariable UUID periodId, @PathVariable UUID labId,
             @RequestBody ReplaceScheduleRequest request) {
         return ResponseEntity.ok(scheduleService.replaceSchedule(periodId, labId, request));

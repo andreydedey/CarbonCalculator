@@ -25,9 +25,12 @@ import com.example.carboncalculator.dto.HolidayDTO;
 import com.example.carboncalculator.dto.PageResponse;
 import com.example.carboncalculator.dto.PeriodSummaryDTO;
 import com.example.carboncalculator.dto.ReplaceHolidaysRequest;
+import com.example.carboncalculator.dto.ReplaceShiftsRequest;
+import com.example.carboncalculator.dto.ShiftDTO;
 import com.example.carboncalculator.dto.UpdateAcademicPeriodRequest;
 import com.example.carboncalculator.services.AcademicPeriodService;
 import com.example.carboncalculator.services.PeriodSummaryService;
+import com.example.carboncalculator.services.ShiftService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -38,6 +41,7 @@ public class AcademicPeriodController {
 
     private final AcademicPeriodService periodService;
     private final PeriodSummaryService summaryService;
+    private final ShiftService shiftService;
 
     @GetMapping
     @PreAuthorize("hasRole('RESEARCHER')")
@@ -70,6 +74,19 @@ public class AcademicPeriodController {
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         periodService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/shifts")
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<List<ShiftDTO>> replaceShifts(
+            @PathVariable UUID id, @RequestBody ReplaceShiftsRequest request) {
+        return ResponseEntity.ok(shiftService.replaceShifts(id, request));
+    }
+
+    @GetMapping("/{id}/holidays")
+    @PreAuthorize("hasRole('RESEARCHER')")
+    public ResponseEntity<List<HolidayDTO>> getHolidays(@PathVariable UUID id) {
+        return ResponseEntity.ok(periodService.getHolidays(id));
     }
 
     @PutMapping("/{id}/holidays")
