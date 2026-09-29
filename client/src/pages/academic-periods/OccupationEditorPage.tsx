@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, BookOpen, Clock, Percent, Save } from 'lucide-react'
 import type React from 'react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { type Occupancy, OccupationGrid } from '@/components/academic-periods/OccupationGrid'
@@ -56,8 +56,7 @@ export const OccupationEditorPage: React.FC = () => {
 
   const [selectedLabId, setSelectedLabId] = useState<string | null>(null)
   const [occupancy, setOccupancy] = useState<Occupancy>({})
-  const [dirty, setDirty] = useState(false)
-  const [stateLabId, setStateLabId] = useState<string | null>(null)
+  const prevDataRef = useRef<string | null>(null)
 
   const { data: period, isLoading: periodLoading } = useQuery({
     queryKey: ['academic-period', id],
@@ -72,28 +71,52 @@ export const OccupationEditorPage: React.FC = () => {
 
   const laboratories = labsPage?.content ?? []
 
-  // Auto-select first lab
-  useEffect(() => {
-    if (laboratories.length > 0 && !selectedLabId) {
-      setSelectedLabId(laboratories[0].id)
-    }
+  const resolvedLabId = useMemo(() => {
+    if (selectedLabId && laboratories.some((l) => l.id === selectedLabId)) return selectedLabId
+    return laboratories[0]?.id ?? null
   }, [laboratories, selectedLabId])
 
-  // Fetch schedule for selected lab
-  const { data: scheduleEntries, isLoading: scheduleLoading } = useQuery({
-    queryKey: ['schedule', id, selectedLabId],
-    queryFn: () => getSchedule(id!, selectedLabId!),
-    enabled: !!id && !!selectedLabId,
+  const {
+    data: scheduleEntries,
+    isLoading: scheduleLoading,
+    refetch: refetchSchedule,
+  } = useQuery({
+    queryKey: ['schedule', id, resolvedLabId],
+    queryFn: () => getSchedule(id!, resolvedLabId!),
+    enabled: !!id && !!resolvedLabId,
   })
 
-  // Load schedule into local state when lab changes or data arrives
-  useEffect(() => {
-    if (scheduleEntries && selectedLabId && selectedLabId !== stateLabId) {
-      setOccupancy(buildOccupancy(scheduleEntries))
-      setStateLabId(selectedLabId)
-      setDirty(false)
+  const serverOccupancy = useMemo(
+    () => (scheduleEntries ? buildOccupancy(scheduleEntries) : {}),
+    [scheduleEntries],
+  )
+
+  // Sync server data to local state on load/lab change (no useEffect)
+  const dataKey = `${resolvedLabId}-${scheduleEntries?.length ?? ''}`
+  if (dataKey !== prevDataRef.current && scheduleEntries) {
+    prevDataRef.current = dataKey
+    setOccupancy(serverOccupancy)
+  }
+
+  const dirty = useMemo(() => {
+    const serverKeys = Object.keys(serverOccupancy)
+    const localKeys = Object.keys(occupancy)
+    const allShifts = new Set([...serverKeys, ...localKeys])
+    for (const shiftId of allShifts) {
+      const serverDays = serverOccupancy[shiftId] ?? {}
+      const localDays = occupancy[shiftId] ?? {}
+      const allDays = new Set([...Object.keys(serverDays), ...Object.keys(localDays)])
+      for (const day of allDays) {
+        const serverSlots = serverDays[Number(day)] ?? new Set()
+        const localSlots = localDays[Number(day)] ?? new Set()
+        if (serverSlots.size !== localSlots.size) return true
+        for (const s of serverSlots) {
+          if (!localSlots.has(s)) return true
+        }
+      }
     }
-  }, [scheduleEntries, selectedLabId, stateLabId])
+    return false
+  }, [occupancy, serverOccupancy])
 
   const handleToggle = useCallback((shiftId: string, dayOfWeek: number, slot: number) => {
     setOccupancy((prev) => {
@@ -104,12 +127,11 @@ export const OccupationEditorPage: React.FC = () => {
       shiftDays[dayOfWeek] = daySlots
       return { ...prev, [shiftId]: shiftDays }
     })
-    setDirty(true)
   }, [])
 
   const handleLabChange = useCallback((labId: string) => {
     setSelectedLabId(labId)
-    setStateLabId(null)
+    prevDataRef.current = null
   }, [])
 
   const handleCopyFrom = useCallback(
@@ -118,7 +140,6 @@ export const OccupationEditorPage: React.FC = () => {
       try {
         const entries = await getSchedule(id, sourceLabId)
         setOccupancy(buildOccupancy(entries))
-        setDirty(true)
         toast.success('Ocupação copiada. Salve para confirmar.')
       } catch {
         toast.error('Não foi possível copiar a ocupação.')
@@ -128,10 +149,9 @@ export const OccupationEditorPage: React.FC = () => {
   )
 
   const saveMutation = useMutation({
-    mutationFn: () => replaceSchedule(id!, selectedLabId!, occupancyToInputs(occupancy)),
+    mutationFn: () => replaceSchedule(id!, resolvedLabId!, occupancyToInputs(occupancy)),
     onSuccess: () => {
-      setDirty(false)
-      queryClient.invalidateQueries({ queryKey: ['schedule', id, selectedLabId] })
+      refetchSchedule()
       queryClient.invalidateQueries({ queryKey: ['period-summary', id] })
       toast.success('Ocupação salva.')
     },
@@ -199,7 +219,7 @@ export const OccupationEditorPage: React.FC = () => {
       {laboratories.length === 0 ? (
         <p className="text-sm text-muted-foreground italic">Nenhum laboratório ativo cadastrado.</p>
       ) : (
-        <Tabs value={selectedLabId ?? undefined} onValueChange={handleLabChange}>
+        <Tabs value={resolvedLabId ?? undefined} onValueChange={handleLabChange}>
           <div className="flex items-center gap-4">
             <TabsList>
               {laboratories.map((lab) => (
@@ -209,14 +229,14 @@ export const OccupationEditorPage: React.FC = () => {
               ))}
             </TabsList>
 
-            {laboratories.length > 1 && selectedLabId && (
+            {laboratories.length > 1 && resolvedLabId && (
               <Select onValueChange={handleCopyFrom}>
                 <SelectTrigger className="w-64">
                   <SelectValue placeholder="Copiar de outro laboratório..." />
                 </SelectTrigger>
                 <SelectContent>
                   {laboratories
-                    .filter((l) => l.id !== selectedLabId)
+                    .filter((l) => l.id !== resolvedLabId)
                     .map((lab) => (
                       <SelectItem key={lab.id} value={lab.id}>
                         {lab.name}
