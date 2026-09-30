@@ -1,4 +1,4 @@
-import { Clock3, Cpu, EllipsisVertical, Layers, Leaf, Monitor } from 'lucide-react'
+import { Cpu, EllipsisVertical, Layers, Leaf, Monitor } from 'lucide-react'
 import type React from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -54,6 +54,7 @@ const StatusBadge: React.FC<{ active: boolean; label: string }> = ({ active, lab
 interface LabCardProps {
   laboratory: Laboratory
   statusLabel: string
+  emission?: { emissionKg: number; pct: number }
   onEdit: (lab: Laboratory) => void
   onActivate: (lab: Laboratory) => void
   onDeactivate: (lab: Laboratory) => void
@@ -63,6 +64,7 @@ interface LabCardProps {
 export const LabCard: React.FC<LabCardProps> = ({
   laboratory,
   statusLabel,
+  emission,
   onEdit,
   onActivate,
   onDeactivate,
@@ -73,7 +75,12 @@ export const LabCard: React.FC<LabCardProps> = ({
     tabIndex={0}
     className="w-full rounded-[10px] border border-border bg-card cursor-pointer transition-colors hover:bg-muted/40 text-left"
     onClick={() => onEdit(laboratory)}
-    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEdit(laboratory) } }}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        onEdit(laboratory)
+      }
+    }}
   >
     {/* Top */}
     <div className="flex items-center justify-between px-6 py-5">
@@ -139,22 +146,18 @@ export const LabCard: React.FC<LabCardProps> = ({
       <div className="flex items-center gap-2">
         <Leaf className="size-3.5 text-muted-foreground" />
         <span className="text-xs font-medium tracking-[0.6px] text-muted-foreground uppercase">
-          Emissão/mês:
+          Emissão:
         </span>
-        <span className="text-xs font-semibold">-</span>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <Clock3 className="size-3.5 text-muted-foreground" />
-        <span className="text-xs font-medium tracking-[0.6px] text-muted-foreground uppercase">
-          Turno:
+        <span className="text-xs font-semibold">
+          {emission ? `${Math.round(emission.emissionKg).toLocaleString('pt-BR')} kg CO₂` : '-'}
         </span>
-        <span className="text-xs font-semibold">-</span>
       </div>
 
       <div className="ml-auto flex flex-col items-end gap-1">
-        <span className="text-[11px] font-semibold text-primary">- das emissões</span>
-        <Progress value={0} className="h-1 w-[100px]" />
+        <span className="text-[11px] font-semibold text-primary">
+          {emission ? `${emission.pct.toFixed(1).replace('.', ',')}% das emissões` : '-'}
+        </span>
+        <Progress value={emission?.pct ?? 0} className="h-1 w-[100px]" />
       </div>
     </div>
   </div>

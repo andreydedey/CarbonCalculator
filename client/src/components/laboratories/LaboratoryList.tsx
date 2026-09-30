@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
 import { Cpu, Leaf, Monitor, Plus, Search } from 'lucide-react'
 import type React from 'react'
+import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useDebounce } from 'use-debounce'
@@ -20,6 +21,8 @@ import {
 } from '@/components/ui/select'
 import { useInstitution } from '@/context/InstitutionContext'
 import { useDialog } from '@/hooks/use-dialog'
+import { listAcademicPeriods } from '@/lib/api/academic-periods'
+import { getEmissions, getReadiness } from '@/lib/api/emissions'
 import { getInstitution } from '@/lib/api/institutions'
 import {
   activateLaboratory,
@@ -77,6 +80,39 @@ export const LaboratoryList: React.FC = () => {
     queryFn: () => getInstitution(institutionId ?? ''),
     enabled: !!institutionId,
   })
+
+  const { data: periodsPage } = useQuery({
+    queryKey: ['academic-periods', 'latest-for-labs'],
+    queryFn: () => listAcademicPeriods(0, 1),
+  })
+
+  const latestPeriodId = periodsPage?.content[0]?.id ?? null
+
+  const { data: readiness } = useQuery({
+    queryKey: ['emissions-readiness', latestPeriodId],
+    queryFn: () => getReadiness(latestPeriodId as string),
+    enabled: !!latestPeriodId,
+  })
+
+  const { data: emissionResult } = useQuery({
+    queryKey: ['emissions', latestPeriodId],
+    queryFn: () => getEmissions(latestPeriodId as string),
+    enabled: !!latestPeriodId && readiness?.ready === true,
+  })
+
+  const emissionByLab = useMemo(() => {
+    if (!emissionResult) return new Map<string, { emissionKg: number; pct: number }>()
+    const total = emissionResult.totalEmissionKg
+    return new Map(
+      emissionResult.byLaboratory.map((lab) => [
+        lab.laboratoryId,
+        {
+          emissionKg: lab.emissionKg,
+          pct: total > 0 ? (lab.emissionKg / total) * 100 : 0,
+        },
+      ]),
+    )
+  }, [emissionResult])
 
   const {
     data: laboratoriesData,
@@ -160,8 +196,12 @@ export const LaboratoryList: React.FC = () => {
           icon={<Monitor className="size-[18px] text-primary-foreground" />}
         />
         <SummaryCard
-          value="-"
-          label="Emissão Mensal Total"
+          value={
+            emissionResult
+              ? `${Math.round(emissionResult.totalEmissionKg).toLocaleString('pt-BR')} kg`
+              : '-'
+          }
+          label="Emissão Total do Período"
           icon={<Leaf className="size-[18px] text-primary-foreground" />}
         />
       </div>
@@ -201,6 +241,7 @@ export const LaboratoryList: React.FC = () => {
               key={laboratory.id}
               laboratory={laboratory}
               statusLabel={statusLabel(laboratory)}
+              emission={emissionByLab.get(laboratory.id)}
               onEdit={(lab) => form.openDialog(lab)}
               onActivate={(lab) => activateMutation.mutate(lab)}
               onDeactivate={(lab) => deactivateDialog.openDialog(lab)}
