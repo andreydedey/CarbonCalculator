@@ -37,7 +37,7 @@ public class TenantFilter extends OncePerRequestFilter {
 
     public static final String TENANT_HEADER = "X-Institution-Id";
 
-    private static final List<String> EXCLUDED_PATH_PREFIXES = List.of("/institutions", "/auth");
+    private static final List<String> EXCLUDED_PATH_PREFIXES = List.of("/institutions", "/auth", "/emission-factors");
 
     private final JdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;

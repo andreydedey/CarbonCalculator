@@ -31,6 +31,7 @@ public class GlobalExceptionHandler {
             LastManagerException.class,
             HolidayOutOfRangeException.class,
             ShiftValidationException.class,
+            InvalidEmissionFactorException.class,
             IllegalArgumentException.class
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException ex, HttpServletRequest request) {
@@ -63,7 +64,8 @@ public class GlobalExceptionHandler {
             ConfigurationNotFoundException.class,
             MemberNotFoundException.class,
             InstitutionNotFoundException.class,
-            PeriodNotFoundException.class
+            PeriodNotFoundException.class,
+            EmissionFactorNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request);
@@ -81,7 +83,8 @@ public class GlobalExceptionHandler {
             ConfigurationHasDependentsException.class,
             DuplicateConfigurationException.class,
             DuplicateLaboratoryEquipmentException.class,
-            PeriodOverlapException.class
+            PeriodOverlapException.class,
+            DuplicateEmissionFactorException.class
     })
     public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex, HttpServletRequest request) {
         log.warn("Conflict on {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
