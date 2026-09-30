@@ -1,8 +1,8 @@
 {
   "feature": "calculo-de-emissoes",
-  "timestamp": "2026-09-30T13:16:52.711Z",
-  "gitRev": "a7ef52e",
-  "command": "cd server && DOCKER_HOST=unix:///Users/andreydedey/.colima/default/docker.sock TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock JAVA_HOME=/opt/homebrew/Cellar/openjdk@25/25.0.4/libexec/openjdk.jdk/Contents/Home ./mvnw test -Dtest='EmissionFactorIntegrationTest,EmissionCalculationIntegrationTest,InstitutionServiceTest' -Dsurefire.useFile=false",
+  "timestamp": "2026-09-30T13:39:26.692Z",
+  "gitRev": "34a80f8",
+  "command": "node --test \"client/src/lib/api/emissions.test.ts\" && cd server && DOCKER_HOST=unix:///Users/andreydedey/.colima/default/docker.sock TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock JAVA_HOME=/opt/homebrew/Cellar/openjdk@25/25.0.4/libexec/openjdk.jdk/Contents/Home ./mvnw test -Dtest='EmissionFactorIntegrationTest,EmissionCalculationIntegrationTest,InstitutionServiceTest' -Dsurefire.useFile=false",
   "reporter": "exitcode",
   "exitCode": 0,
   "testsParsed": 0,
@@ -108,6 +108,31 @@
       "method": "exitcode"
     },
     "AC-092": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-093": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-094": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-095": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-096": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-097": {
       "status": "pass",
       "testName": null,
       "method": "exitcode"
