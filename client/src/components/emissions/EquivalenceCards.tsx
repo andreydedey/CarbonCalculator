@@ -1,42 +1,64 @@
-import { Car, TreeDeciduous } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Car, Lightbulb, TreePine } from 'lucide-react'
+import type { ReactNode } from 'react'
 
 interface EquivalenceCardsProps {
   carKm: number
   treesNeeded: number
+  totalEnergyKwh: number
 }
 
-export function EquivalenceCards({ carKm, treesNeeded }: EquivalenceCardsProps) {
+function EquivalenceCard({
+  icon,
+  value,
+  description,
+  subtitle,
+}: {
+  icon: ReactNode
+  value: string
+  description: string
+  subtitle: string
+}) {
   return (
-    <div className="grid grid-cols-2 gap-4">
-      <Card size="sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <Car className="size-4 text-muted-foreground" />
-            Equivalência em km de carro
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-2xl font-bold">{carKm.toLocaleString('pt-BR')} km</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Distância equivalente percorrida por um carro comum
-          </p>
-        </CardContent>
-      </Card>
-      <Card size="sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <TreeDeciduous className="size-4 text-muted-foreground" />
-            Árvores para absorver
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-2xl font-bold">{treesNeeded.toFixed(1)}</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Árvores urbanas necessárias por 1 ano para absorver essa emissão
-          </p>
-        </CardContent>
-      </Card>
+    <div className="flex-1 rounded-lg border border-border bg-card p-4 flex items-center gap-3.5">
+      <div className="flex size-11 shrink-0 items-center justify-center rounded-[10px] bg-accent">
+        {icon}
+      </div>
+      <div className="flex flex-col gap-0.5">
+        <span className="text-lg font-bold">{value}</span>
+        <span className="text-xs text-muted-foreground">{description}</span>
+        <span className="text-[11px] text-muted-foreground italic">{subtitle}</span>
+      </div>
+    </div>
+  )
+}
+
+function formatNumber(n: number): string {
+  return Math.round(n).toLocaleString('pt-BR')
+}
+
+export function EquivalenceCards({ carKm, treesNeeded, totalEnergyKwh }: EquivalenceCardsProps) {
+  const ledHours = Math.round(totalEnergyKwh / 0.06)
+
+  return (
+    <div className="flex gap-4">
+      <EquivalenceCard
+        icon={<Car className="size-[22px] text-primary" />}
+        value={`${formatNumber(carKm)} km`}
+        description="de carro a gasolina"
+        subtitle="distância equivalente em emissões"
+      />
+      <EquivalenceCard
+        icon={<TreePine className="size-[22px] text-primary" />}
+        value={`${Math.ceil(treesNeeded)} árvores`}
+        description="para compensar em 1 ano"
+        subtitle="plantio necessário para neutralizar"
+      />
+      <EquivalenceCard
+        icon={<Lightbulb className="size-[22px] text-primary" />}
+        value={`${formatNumber(ledHours)} h`}
+        description="de lâmpada LED 60W"
+        subtitle="equivalente em consumo energético"
+      />
     </div>
   )
 }

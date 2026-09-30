@@ -464,4 +464,16 @@ INSERT INTO emission_factor (year, month, value, source) VALUES
   (2025, 9, 0.0490, 'MCTI — Fator médio SIN, set/2025'),
   (2025, 10, 0.0440, 'MCTI — Fator médio SIN, out/2025'),
   (2025, 11, 0.0410, 'MCTI — Fator médio SIN, nov/2025'),
-  (2025, 12, 0.0390, 'MCTI — Fator médio SIN, dez/2025');
+  (2025, 12, 0.0390, 'MCTI — Fator médio SIN, dez/2025'),
+  (2026, 1, 0.0485, 'MCTI — Fator médio SIN, jan/2026'),
+  (2026, 2, 0.0598, 'MCTI — Fator médio SIN, fev/2026'),
+  (2026, 3, 0.0412, 'MCTI — Fator médio SIN, mar/2026'),
+  (2026, 4, 0.0438, 'MCTI — Fator médio SIN, abr/2026'),
+  (2026, 5, 0.0465, 'MCTI — Fator médio SIN, mai/2026'),
+  (2026, 6, 0.0495, 'MCTI — Fator médio SIN, jun/2026'),
+  (2026, 7, 0.0518, 'MCTI — Fator médio SIN, jul/2026'),
+  (2026, 8, 0.0542, 'MCTI — Fator médio SIN, ago/2026'),
+  (2026, 9, 0.0478, 'MCTI — Fator médio SIN, set/2026'),
+  (2026, 10, 0.0425, 'MCTI — Fator médio SIN, out/2026'),
+  (2026, 11, 0.0398, 'MCTI — Fator médio SIN, nov/2026'),
+  (2026, 12, 0.0375, 'MCTI — Fator médio SIN, dez/2026');
