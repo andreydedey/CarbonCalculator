@@ -38,7 +38,7 @@ export const AcademicPeriodCard: React.FC<AcademicPeriodCardProps> = ({
 
   return (
     <Card
-      className={`cursor-pointer transition-colors ${selected ? 'ring-2 ring-primary' : 'hover:bg-accent/50'}`}
+      className={`w-80 shrink-0 grow cursor-pointer transition-colors ${selected ? 'ring-2 ring-primary' : 'hover:bg-accent/50'}`}
       onClick={() => onSelect(period)}
     >
       <CardContent className="flex flex-col gap-4 p-5">

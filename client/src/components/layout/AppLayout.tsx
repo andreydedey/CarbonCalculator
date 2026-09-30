@@ -88,7 +88,7 @@ export const AppLayout: React.FC = () => {
     <TooltipProvider>
       <SidebarProvider>
         <AppSidebar />
-        <SidebarInset>
+        <SidebarInset className="min-w-0">
           <header className="flex items-center gap-2 border-b px-4 py-3">
             <SidebarTrigger className="-ml-1" />
             <div className="ml-auto flex items-center gap-3">

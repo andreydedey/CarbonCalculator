@@ -128,7 +128,7 @@ export const AcademicPeriodsPage: React.FC = () => {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="flex gap-4 overflow-x-auto px-1 py-2">
             {periods.map((period) => (
               <AcademicPeriodCard
                 key={period.id}
