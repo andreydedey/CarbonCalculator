@@ -4,7 +4,8 @@
 -- ============================================================
 
 -- Reset everything (order respects FK constraints)
-TRUNCATE laboratory_schedule, academic_period_shift, academic_period_holiday, academic_period,
+TRUNCATE emission_factor,
+         laboratory_schedule, academic_period_shift, academic_period_holiday, academic_period,
          laboratory_equipment, configuration, monitor, equipment_model,
          laboratory, user_institution, app_user, institution
 CASCADE;
@@ -446,3 +447,21 @@ BEGIN
     );
   END IF;
 END $$;
+
+-- =================== EMISSION FACTORS (SIN — MCTI) ===================
+-- Monthly average CO₂ emission factors for the Brazilian National Interconnected System (SIN)
+-- Source: MCTI — Fator médio de emissão de CO₂ pela geração de energia elétrica no SIN
+
+INSERT INTO emission_factor (year, month, value, source) VALUES
+  (2025, 1, 0.0501, 'MCTI — Fator médio SIN, jan/2025'),
+  (2025, 2, 0.0623, 'MCTI — Fator médio SIN, fev/2025'),
+  (2025, 3, 0.0425, 'MCTI — Fator médio SIN, mar/2025'),
+  (2025, 4, 0.0450, 'MCTI — Fator médio SIN, abr/2025'),
+  (2025, 5, 0.0480, 'MCTI — Fator médio SIN, mai/2025'),
+  (2025, 6, 0.0510, 'MCTI — Fator médio SIN, jun/2025'),
+  (2025, 7, 0.0530, 'MCTI — Fator médio SIN, jul/2025'),
+  (2025, 8, 0.0560, 'MCTI — Fator médio SIN, ago/2025'),
+  (2025, 9, 0.0490, 'MCTI — Fator médio SIN, set/2025'),
+  (2025, 10, 0.0440, 'MCTI — Fator médio SIN, out/2025'),
+  (2025, 11, 0.0410, 'MCTI — Fator médio SIN, nov/2025'),
+  (2025, 12, 0.0390, 'MCTI — Fator médio SIN, dez/2025');
