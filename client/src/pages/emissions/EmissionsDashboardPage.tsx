@@ -1,10 +1,12 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Calculator, CircleCheck, Loader2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { Calculator, CircleCheck } from 'lucide-react'
+import { useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { EquivalenceCards } from '@/components/emissions/EquivalenceCards'
 import { ExportButton } from '@/components/emissions/ExportButton'
 import { ReadinessCheck } from '@/components/emissions/ReadinessCheck'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Select,
   SelectContent,
@@ -12,12 +14,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { listAcademicPeriods } from '@/lib/api/academic-periods'
 import { type EmissionResult, getEmissions, getReadiness } from '@/lib/api/emissions'
 
 function MethodologyCard() {
   return (
-    <div className="rounded-[10px] border border-border bg-card p-6 flex flex-col gap-5">
+    <Card className="p-6 gap-5">
       <div className="flex items-center justify-between border-b border-border pb-4">
         <div className="flex flex-col gap-1">
           <h2 className="text-base font-semibold">Metodologia de Cálculo</h2>
@@ -30,7 +41,7 @@ function MethodologyCard() {
           <span className="text-xs font-medium text-primary">MCTI/SIRENE 2024</span>
         </div>
       </div>
-      <div className="rounded-lg bg-muted p-5 flex flex-col gap-3">
+      <CardContent className="rounded-lg bg-muted p-5 flex flex-col gap-3">
         <span className="text-xs font-medium text-muted-foreground">Fórmula aplicada</span>
         <span className="font-mono text-base font-semibold">
           E = Σ (P_equip × h_uso × d_letivos) × FE_sin
@@ -49,8 +60,8 @@ function MethodologyCard() {
             </div>
           ))}
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -66,13 +77,11 @@ function MetricCard({
   highlighted?: boolean
 }) {
   return (
-    <div
-      className={`flex-1 rounded-[10px] border border-border p-5 flex flex-col gap-2 ${highlighted ? 'bg-accent' : 'bg-card'}`}
-    >
+    <Card className={`flex-1 p-5 gap-2 ${highlighted ? 'bg-accent' : ''}`}>
       <span className="text-xs font-medium tracking-wider text-muted-foreground">{label}</span>
       <span className="font-mono text-[22px] font-semibold">{value}</span>
       <span className="text-[11px] text-muted-foreground">{subtitle}</span>
-    </div>
+    </Card>
   )
 }
 
@@ -142,75 +151,86 @@ function LabDetailTable({ result }: { result: EmissionResult }) {
     emission: result.totalEmissionKg,
   }
 
-  const colWidths = 'grid-cols-[160px_160px_160px_130px_160px_170px_1fr]'
-
   return (
-    <div className="rounded-[10px] border border-border bg-card overflow-hidden">
+    <Card className="overflow-hidden">
       <div className="flex flex-col gap-1 px-6 py-5 border-b border-border">
         <h2 className="text-base font-semibold">Detalhamento por Laboratório</h2>
         <p className="text-[13px] text-muted-foreground">
           Decomposição do cálculo de emissões por laboratório e tipo de equipamento
         </p>
       </div>
-
-      {/* Header */}
-      <div className={`grid ${colWidths} items-center h-11 bg-muted px-6 border-b border-border`}>
-        <span className="text-xs font-medium tracking-wider text-muted-foreground">
-          LABORATÓRIO
-        </span>
-        <span className="text-xs font-medium tracking-wider text-muted-foreground">
-          EQUIPAMENTOS
-        </span>
-        <span className="text-xs font-medium tracking-wider text-muted-foreground">
-          POTÊNCIA TOTAL
-        </span>
-        <span className="text-xs font-medium tracking-wider text-muted-foreground">HORAS/DIA</span>
-        <span className="text-xs font-medium tracking-wider text-muted-foreground">
-          CONSUMO (KWH)
-        </span>
-        <span className="text-xs font-medium tracking-wider text-muted-foreground">
-          EMISSÃO (KG CO₂)
-        </span>
-        <span className="text-xs font-medium tracking-wider text-muted-foreground text-right">
-          % DO TOTAL
-        </span>
-      </div>
-
-      {/* Rows */}
-      {labRows.map((row, i) => (
-        <div
-          key={row.lab.laboratoryId}
-          className={`grid ${colWidths} items-center h-[52px] px-6 border-b border-border ${i % 2 === 1 ? 'bg-[#fbfcf9]' : 'bg-card'}`}
-        >
-          <span className="text-[13px] font-semibold">{row.lab.laboratoryName}</span>
-          <span className="font-mono text-[13px]">{row.lab.stationCount}</span>
-          <span className="font-mono text-xs text-muted-foreground">
-            {formatNumber(row.totalWatts)} W
-          </span>
-          <span className="font-mono text-[13px]">
-            {row.hoursPerDay != null ? row.hoursPerDay.toFixed(1).replace('.', ',') : '—'}
-          </span>
-          <span className="font-mono text-[13px]">{formatNumber(row.lab.energyKwh)}</span>
-          <span className="font-mono text-[13px] font-semibold">
-            {formatNumber(row.lab.emissionKg)}
-          </span>
-          <span className="text-[13px] font-semibold text-primary text-right">
-            {row.pct.toFixed(1).replace('.', ',')}%
-          </span>
-        </div>
-      ))}
-
-      {/* Footer */}
-      <div className={`grid ${colWidths} items-center h-12 bg-muted px-6`}>
-        <span className="text-[13px] font-bold">Total</span>
-        <span className="font-mono text-[13px] font-semibold">{totals.equips}</span>
-        <span className="font-mono text-[13px] font-semibold">{formatNumber(totals.watts)} W</span>
-        <span className="text-[13px] text-muted">—</span>
-        <span className="font-mono text-[13px] font-semibold">{formatNumber(totals.kwh)}</span>
-        <span className="font-mono text-[13px] font-bold">{formatNumber(totals.emission)}</span>
-        <span className="text-[13px] font-bold text-primary text-right">100%</span>
-      </div>
-    </div>
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted hover:bg-muted">
+            <TableHead className="px-6 text-xs tracking-wider text-muted-foreground">
+              LABORATÓRIO
+            </TableHead>
+            <TableHead className="text-xs tracking-wider text-muted-foreground">
+              EQUIPAMENTOS
+            </TableHead>
+            <TableHead className="text-xs tracking-wider text-muted-foreground">
+              POTÊNCIA TOTAL
+            </TableHead>
+            <TableHead className="text-xs tracking-wider text-muted-foreground">
+              HORAS/DIA
+            </TableHead>
+            <TableHead className="text-xs tracking-wider text-muted-foreground">
+              CONSUMO (KWH)
+            </TableHead>
+            <TableHead className="text-xs tracking-wider text-muted-foreground">
+              EMISSÃO (KG CO₂)
+            </TableHead>
+            <TableHead className="text-xs tracking-wider text-muted-foreground text-right pr-6">
+              % DO TOTAL
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {labRows.map((row, i) => (
+            <TableRow key={row.lab.laboratoryId} className={i % 2 === 1 ? 'bg-[#fbfcf9]' : ''}>
+              <TableCell className="px-6 text-[13px] font-semibold">
+                {row.lab.laboratoryName}
+              </TableCell>
+              <TableCell className="font-mono text-[13px]">{row.lab.stationCount}</TableCell>
+              <TableCell className="font-mono text-xs text-muted-foreground">
+                {formatNumber(row.totalWatts)} W
+              </TableCell>
+              <TableCell className="font-mono text-[13px]">
+                {row.hoursPerDay != null ? row.hoursPerDay.toFixed(1).replace('.', ',') : '—'}
+              </TableCell>
+              <TableCell className="font-mono text-[13px]">
+                {formatNumber(row.lab.energyKwh)}
+              </TableCell>
+              <TableCell className="font-mono text-[13px] font-semibold">
+                {formatNumber(row.lab.emissionKg)}
+              </TableCell>
+              <TableCell className="text-[13px] font-semibold text-primary text-right pr-6">
+                {row.pct.toFixed(1).replace('.', ',')}%
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+        <TableFooter className="bg-muted">
+          <TableRow className="hover:bg-muted">
+            <TableCell className="px-6 text-[13px] font-bold">Total</TableCell>
+            <TableCell className="font-mono text-[13px] font-semibold">{totals.equips}</TableCell>
+            <TableCell className="font-mono text-[13px] font-semibold">
+              {formatNumber(totals.watts)} W
+            </TableCell>
+            <TableCell className="text-[13px] text-muted-foreground">—</TableCell>
+            <TableCell className="font-mono text-[13px] font-semibold">
+              {formatNumber(totals.kwh)}
+            </TableCell>
+            <TableCell className="font-mono text-[13px] font-bold">
+              {formatNumber(totals.emission)}
+            </TableCell>
+            <TableCell className="text-[13px] font-bold text-primary text-right pr-6">
+              100%
+            </TableCell>
+          </TableRow>
+        </TableFooter>
+      </Table>
+    </Card>
   )
 }
 
@@ -219,9 +239,8 @@ function formatNumber(n: number): string {
 }
 
 export function EmissionsDashboardPage() {
-  const queryClient = useQueryClient()
-  const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null)
-  const [recalculating, setRecalculating] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const periodIdParam = searchParams.get('periodId')
 
   const { data: periodsPage } = useQuery({
     queryKey: ['academic-periods', 'all-for-emissions'],
@@ -231,9 +250,9 @@ export function EmissionsDashboardPage() {
   const periods = periodsPage?.content ?? []
 
   const resolvedPeriodId = useMemo(() => {
-    if (selectedPeriodId && periods.some((p) => p.id === selectedPeriodId)) return selectedPeriodId
+    if (periodIdParam && periods.some((p) => p.id === periodIdParam)) return periodIdParam
     return periods[0]?.id ?? null
-  }, [periods, selectedPeriodId])
+  }, [periods, periodIdParam])
 
   const { data: readiness, isLoading: readinessLoading } = useQuery({
     queryKey: ['emissions-readiness', resolvedPeriodId],
@@ -241,7 +260,11 @@ export function EmissionsDashboardPage() {
     enabled: !!resolvedPeriodId,
   })
 
-  const { data: result, isLoading: resultLoading } = useQuery({
+  const {
+    data: result,
+    isLoading: resultLoading,
+    refetch: refetchEmissions,
+  } = useQuery({
     queryKey: ['emissions', resolvedPeriodId],
     queryFn: () => getEmissions(resolvedPeriodId as string),
     enabled: !!resolvedPeriodId && readiness?.ready === true,
@@ -251,11 +274,8 @@ export function EmissionsDashboardPage() {
 
   const totalSchoolDays = result?.byMonth.reduce((s, m) => s + m.schoolDays, 0) ?? 0
 
-  async function handleRecalculate() {
-    if (!resolvedPeriodId) return
-    setRecalculating(true)
-    await queryClient.invalidateQueries({ queryKey: ['emissions', resolvedPeriodId] })
-    setRecalculating(false)
+  function handlePeriodChange(id: string) {
+    setSearchParams({ periodId: id })
   }
 
   return (
@@ -270,7 +290,7 @@ export function EmissionsDashboardPage() {
         </div>
         <div className="flex items-center gap-2.5">
           {periods.length > 0 && (
-            <Select value={resolvedPeriodId ?? undefined} onValueChange={setSelectedPeriodId}>
+            <Select value={resolvedPeriodId ?? undefined} onValueChange={handlePeriodChange}>
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Selecione um período" />
               </SelectTrigger>
@@ -286,12 +306,8 @@ export function EmissionsDashboardPage() {
           {result && selectedPeriod && (
             <ExportButton periodId={selectedPeriod.id} periodName={selectedPeriod.name} />
           )}
-          <Button onClick={handleRecalculate} disabled={!resolvedPeriodId || recalculating}>
-            {recalculating ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Calculator className="size-4" />
-            )}
+          <Button onClick={() => refetchEmissions()} disabled={!resolvedPeriodId}>
+            <Calculator className="size-4" />
             Recalcular
           </Button>
         </div>

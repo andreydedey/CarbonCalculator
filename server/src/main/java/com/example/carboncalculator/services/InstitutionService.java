@@ -71,7 +71,10 @@ public class InstitutionService {
 
         Institution institution = institutionRepository.save(InstitutionMapper.toEntity(request));
 
-        // Set tenant context so the RLS policy allows inserting into the laboratory table
+        // The laboratory table is protected by a Row-Level Security (RLS) policy that
+        // only allows INSERTs when `app.current_institution` matches the lab's institution_id.
+        // Since this is a brand-new institution (just created above), no tenant context exists
+        // yet for it, so we set it explicitly here to satisfy the RLS check.
         jdbcTemplate.queryForObject(
                 "SELECT set_config('app.current_institution', ?, true)",
                 String.class, institution.getId().toString());

@@ -37,6 +37,9 @@ public class TenantFilter extends OncePerRequestFilter {
 
     public static final String TENANT_HEADER = "X-Institution-Id";
 
+    // Paths that bypass tenant filtering — these endpoints are global resources
+    // that don't belong to a specific institution (e.g. auth, institution listing,
+    // emission factors shared across all tenants).
     private static final List<String> EXCLUDED_PATH_PREFIXES = List.of("/institutions", "/auth", "/emission-factors");
 
     private final JdbcTemplate jdbcTemplate;

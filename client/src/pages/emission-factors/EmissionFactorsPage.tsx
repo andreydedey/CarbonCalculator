@@ -1,8 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { Check, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,6 +14,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { isApiError } from '@/lib/api/client'
 import {
   type CreateEmissionFactorPayload,
@@ -22,26 +31,11 @@ import {
   listEmissionFactors,
   updateEmissionFactor,
 } from '@/lib/api/emission-factors'
+import { MONTH_NAMES } from '@/lib/constants'
 import {
   type EmissionFactorFormValues,
   emissionFactorFormSchema,
 } from '@/lib/schemas/emissionFactorSchema'
-
-const MONTH_NAMES = [
-  '',
-  'Janeiro',
-  'Fevereiro',
-  'Março',
-  'Abril',
-  'Maio',
-  'Junho',
-  'Julho',
-  'Agosto',
-  'Setembro',
-  'Outubro',
-  'Novembro',
-  'Dezembro',
-]
 
 const CURRENT_YEAR = new Date().getFullYear()
 const YEAR_OPTIONS = Array.from({ length: 10 }, (_, i) => CURRENT_YEAR - 5 + i)
@@ -49,11 +43,16 @@ const YEAR_OPTIONS = Array.from({ length: 10 }, (_, i) => CURRENT_YEAR - 5 + i)
 type EditingState = null | { mode: 'add' } | { mode: 'edit'; factor: EmissionFactor }
 
 export function EmissionFactorsPage() {
-  const queryClient = useQueryClient()
-  const [yearFilter, setYearFilter] = useState<number | undefined>(CURRENT_YEAR)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const yearParam = searchParams.get('year')
+  const yearFilter = yearParam === 'all' ? undefined : yearParam ? Number(yearParam) : CURRENT_YEAR
   const [editing, setEditing] = useState<EditingState>(null)
 
-  const { data: page, isLoading } = useQuery({
+  const {
+    data: page,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ['emission-factors', yearFilter],
     queryFn: () => listEmissionFactors({ year: yearFilter, size: 100 }),
   })
@@ -80,7 +79,7 @@ export function EmissionFactorsPage() {
     onSuccess: () => {
       const wasEdit = editing?.mode === 'edit'
       closeForm()
-      queryClient.invalidateQueries({ queryKey: ['emission-factors'] })
+      refetch()
       toast.success(wasEdit ? 'Fator atualizado.' : 'Fator cadastrado.')
     },
     onError: (error) => {
@@ -91,13 +90,17 @@ export function EmissionFactorsPage() {
   const deleteMutation = useMutation({
     mutationFn: deleteEmissionFactor,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['emission-factors'] })
+      refetch()
       toast.success('Fator removido.')
     },
     onError: (error) => {
       toast.error(isApiError(error) ? error.message : 'Não foi possível remover.')
     },
   })
+
+  function handleYearChange(v: string) {
+    setSearchParams(v === 'all' ? { year: 'all' } : { year: v })
+  }
 
   function openAdd() {
     reset({ year: yearFilter ?? CURRENT_YEAR, month: 1, value: 0, source: '' })
@@ -131,10 +134,7 @@ export function EmissionFactorsPage() {
           <h1 className="font-heading text-2xl font-bold">Fatores de Emissão</h1>
         </div>
         <div className="flex items-center gap-3">
-          <Select
-            value={yearFilter?.toString() ?? 'all'}
-            onValueChange={(v) => setYearFilter(v === 'all' ? undefined : Number(v))}
-          >
+          <Select value={yearFilter?.toString() ?? 'all'} onValueChange={handleYearChange}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Ano" />
             </SelectTrigger>
@@ -235,53 +235,51 @@ export function EmissionFactorsPage() {
           </div>
         </div>
       ) : (
-        <div className="rounded-lg border overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="px-4 py-2 text-left font-medium">Ano</th>
-                <th className="px-4 py-2 text-left font-medium">Mês</th>
-                <th className="px-4 py-2 text-right font-medium">Valor (kgCO₂/kWh)</th>
-                <th className="px-4 py-2 text-left font-medium">Fonte</th>
-                <th className="px-4 py-2 text-right font-medium">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {factors.map((f) => (
-                <tr key={f.id} className="border-b last:border-b-0">
-                  <td className="px-4 py-2 font-mono text-xs">{f.year}</td>
-                  <td className="px-4 py-2">{MONTH_NAMES[f.month]}</td>
-                  <td className="px-4 py-2 text-right font-mono text-xs">{f.value}</td>
-                  <td className="px-4 py-2 text-xs text-muted-foreground max-w-xs truncate">
-                    {f.source}
-                  </td>
-                  <td className="px-4 py-2 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-7"
-                        onClick={() => openEdit(f)}
-                        disabled={editing !== null}
-                      >
-                        <Pencil className="size-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-7 text-destructive"
-                        onClick={() => deleteMutation.mutate(f.id)}
-                        disabled={editing !== null}
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="px-4">Ano</TableHead>
+              <TableHead className="px-4">Mês</TableHead>
+              <TableHead className="px-4 text-right">Valor (kgCO₂/kWh)</TableHead>
+              <TableHead className="px-4">Fonte</TableHead>
+              <TableHead className="px-4 text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {factors.map((f) => (
+              <TableRow key={f.id}>
+                <TableCell className="px-4 font-mono text-xs">{f.year}</TableCell>
+                <TableCell className="px-4">{MONTH_NAMES[f.month]}</TableCell>
+                <TableCell className="px-4 text-right font-mono text-xs">{f.value}</TableCell>
+                <TableCell className="px-4 text-xs text-muted-foreground max-w-xs truncate">
+                  {f.source}
+                </TableCell>
+                <TableCell className="px-4 text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-7"
+                      onClick={() => openEdit(f)}
+                      disabled={editing !== null}
+                    >
+                      <Pencil className="size-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 text-destructive"
+                      onClick={() => deleteMutation.mutate(f.id)}
+                      disabled={editing !== null}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       )}
     </div>
   )

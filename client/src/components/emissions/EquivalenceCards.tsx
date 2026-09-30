@@ -1,5 +1,6 @@
 import { Car, Lightbulb, TreePine } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { Card } from '@/components/ui/card'
 
 interface EquivalenceCardsProps {
   carKm: number
@@ -19,7 +20,7 @@ function EquivalenceCard({
   subtitle: string
 }) {
   return (
-    <div className="flex-1 rounded-lg border border-border bg-card p-4 flex items-center gap-3.5">
+    <Card className="flex-1 flex-row p-4 items-center gap-3.5">
       <div className="flex size-11 shrink-0 items-center justify-center rounded-[10px] bg-accent">
         {icon}
       </div>
@@ -28,7 +29,7 @@ function EquivalenceCard({
         <span className="text-xs text-muted-foreground">{description}</span>
         <span className="text-[11px] text-muted-foreground italic">{subtitle}</span>
       </div>
-    </div>
+    </Card>
   )
 }
 
