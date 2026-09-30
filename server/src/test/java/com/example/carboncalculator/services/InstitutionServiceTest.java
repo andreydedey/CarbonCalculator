@@ -23,16 +23,19 @@ import com.example.carboncalculator.exceptions.InvalidStateException;
 import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+
 class InstitutionServiceTest {
 
     private final InstitutionRepository institutionRepository = mock(InstitutionRepository.class);
     private final LaboratoryRepository laboratoryRepository = mock(LaboratoryRepository.class);
+    private final JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
 
     private InstitutionService service;
 
     @BeforeEach
     void setUp() {
-        service = new InstitutionService(institutionRepository, laboratoryRepository);
+        service = new InstitutionService(institutionRepository, laboratoryRepository, jdbcTemplate);
     }
 
     private CreateInstitutionRequest validRequest() {
@@ -53,6 +56,7 @@ class InstitutionServiceTest {
                 .active(true)
                 .build();
         when(institutionRepository.save(any(Institution.class))).thenReturn(savedInstitution);
+        when(jdbcTemplate.queryForObject(any(String.class), any(Class.class), any(String.class))).thenReturn("");
         when(laboratoryRepository.save(any(Laboratory.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         InstitutionDTO response = service.create(validRequest());

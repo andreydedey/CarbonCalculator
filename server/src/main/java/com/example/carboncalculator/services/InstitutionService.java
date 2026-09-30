@@ -28,6 +28,8 @@ import com.example.carboncalculator.specifications.InstitutionSpecification;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+
 @Service
 @RequiredArgsConstructor
 public class InstitutionService {
@@ -41,6 +43,7 @@ public class InstitutionService {
 
     private final InstitutionRepository institutionRepository;
     private final LaboratoryRepository laboratoryRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     @Transactional(readOnly = true)
     public Page<InstitutionDTO> listForUser(AppUser user, String search, Pageable pageable) {
@@ -67,6 +70,11 @@ public class InstitutionService {
         validateAcronymNotDuplicate(request.acronym());
 
         Institution institution = institutionRepository.save(InstitutionMapper.toEntity(request));
+
+        // Set tenant context so the RLS policy allows inserting into the laboratory table
+        jdbcTemplate.queryForObject(
+                "SELECT set_config('app.current_institution', ?, true)",
+                String.class, institution.getId().toString());
 
         Laboratory laboratory = Laboratory.builder()
                 .institution(institution)
