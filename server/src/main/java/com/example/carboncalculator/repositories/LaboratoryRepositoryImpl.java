@@ -53,8 +53,8 @@ public class LaboratoryRepositoryImpl implements LaboratoryRepositoryCustom {
                 root.get("name"),
                 root.get("description"),
                 root.get("active"),
-                configCountSq.getSelection(),
-                totalStationsSq.getSelection(),
+                configCountSq,
+                totalStationsSq,
                 root.get("createdAt")));
 
         Predicate predicate = spec.toPredicate(root, cq, cb);

@@ -30,6 +30,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final JwtService jwtService;
+    private final org.springframework.core.env.Environment environment;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
@@ -66,9 +67,10 @@ public class AuthController {
 
     private ResponseCookie buildRefreshCookie(AppUser user) {
         String refreshToken = jwtService.generateRefreshToken(user);
+        boolean isProd = java.util.Arrays.asList(environment.getActiveProfiles()).contains("prod");
         return ResponseCookie.from("refresh_token", refreshToken)
                 .httpOnly(true)
-                .secure(true)
+                .secure(isProd)
                 .path("/api/v1/auth/refresh")
                 .maxAge(jwtService.getRefreshTokenValidityMs() / 1000)
                 .sameSite("Strict")

@@ -4,8 +4,8 @@ spring:
 
   datasource:
     url: ${DATABASE_URL}
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
+    username: ${APP_DATABASE_USERNAME:app}
+    password: ${APP_DATABASE_PASSWORD:app}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -19,6 +19,8 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    user: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
 
 app:
   jwt:

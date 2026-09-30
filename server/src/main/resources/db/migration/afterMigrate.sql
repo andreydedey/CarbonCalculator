@@ -4,7 +4,8 @@
 -- ============================================================
 
 -- Reset everything (order respects FK constraints)
-TRUNCATE laboratory_equipment, configuration, monitor, equipment_model,
+TRUNCATE laboratory_schedule, academic_period_shift, academic_period_holiday, academic_period,
+         laboratory_equipment, configuration, monitor, equipment_model,
          laboratory, user_institution, app_user, institution
 CASCADE;
 
@@ -158,6 +159,113 @@ BEGIN
      'ffffffff-0001-0001-0001-000000000001', 5)
   ;
 
+  -- Academic Period: 2025.1
+  INSERT INTO academic_period (id, institution_id, name, start_date, end_date)
+  VALUES
+    ('aaaa0001-0001-0001-0001-000000000001',
+     '11111111-1111-1111-1111-111111111111',
+     '2025.1', '2025-03-10', '2025-07-18')
+  ;
+
+  -- Shifts for 2025.1: Manhã 5×50+10, Tarde 5×50+10, Noite 4×50+10 (disabled)
+  INSERT INTO academic_period_shift (id, academic_period_id, shift_type, start_time, end_time, classes_per_day, class_duration_minutes, break_duration_minutes, active_days, enabled)
+  VALUES
+    ('55550001-0001-0001-0001-000000000001',
+     'aaaa0001-0001-0001-0001-000000000001',
+     'MORNING', '07:30', '11:50', 5, 50, 10, '{1,2,3,4,5}', true),
+    ('55550001-0001-0001-0001-000000000002',
+     'aaaa0001-0001-0001-0001-000000000001',
+     'AFTERNOON', '13:30', '17:50', 5, 50, 10, '{1,2,3,4,5}', true),
+    ('55550001-0001-0001-0001-000000000003',
+     'aaaa0001-0001-0001-0001-000000000001',
+     'EVENING', '18:50', '22:20', 4, 50, 10, '{1,2,3,4,5}', false)
+  ;
+
+  -- Holidays for 2025.1 (with type)
+  INSERT INTO academic_period_holiday (id, academic_period_id, date, description, type)
+  VALUES
+    ('bbbb0001-0001-0001-0001-000000000001',
+     'aaaa0001-0001-0001-0001-000000000001',
+     '2025-04-18', 'Sexta-feira Santa', 'NATIONAL'),
+    ('bbbb0001-0001-0001-0001-000000000002',
+     'aaaa0001-0001-0001-0001-000000000001',
+     '2025-04-21', 'Tiradentes', 'NATIONAL'),
+    ('bbbb0001-0001-0001-0001-000000000003',
+     'aaaa0001-0001-0001-0001-000000000001',
+     '2025-05-01', 'Dia do Trabalho', 'NATIONAL'),
+    ('bbbb0001-0001-0001-0001-000000000004',
+     'aaaa0001-0001-0001-0001-000000000001',
+     '2025-06-19', 'Corpus Christi', 'NATIONAL'),
+    ('bbbb0001-0001-0001-0001-000000000005',
+     'aaaa0001-0001-0001-0001-000000000001',
+     '2025-03-03', 'Carnaval', 'RECESS'),
+    ('bbbb0001-0001-0001-0001-000000000006',
+     'aaaa0001-0001-0001-0001-000000000001',
+     '2025-03-04', 'Carnaval', 'RECESS'),
+    ('bbbb0001-0001-0001-0001-000000000007',
+     'aaaa0001-0001-0001-0001-000000000001',
+     '2025-03-05', 'Quarta de Cinzas', 'RECESS')
+  ;
+
+  -- Schedule: LABCOMP-01 — Tarde seg-sex, slots 1-5 (todas as aulas)
+  INSERT INTO laboratory_schedule (id, shift_id, laboratory_id, day_of_week, occupied_slots)
+  VALUES
+    ('cccc0001-0001-0001-0001-000000000001',
+     '55550001-0001-0001-0001-000000000002',
+     'cccccccc-0001-0001-0001-000000000001', 1, '{1,2,3,4,5}'),
+    ('cccc0001-0001-0001-0001-000000000002',
+     '55550001-0001-0001-0001-000000000002',
+     'cccccccc-0001-0001-0001-000000000001', 2, '{1,2,3,4,5}'),
+    ('cccc0001-0001-0001-0001-000000000003',
+     '55550001-0001-0001-0001-000000000002',
+     'cccccccc-0001-0001-0001-000000000001', 3, '{1,2,3,4,5}'),
+    ('cccc0001-0001-0001-0001-000000000004',
+     '55550001-0001-0001-0001-000000000002',
+     'cccccccc-0001-0001-0001-000000000001', 4, '{1,2,3,4,5}'),
+    ('cccc0001-0001-0001-0001-000000000005',
+     '55550001-0001-0001-0001-000000000002',
+     'cccccccc-0001-0001-0001-000000000001', 5, '{1,2,3,4,5}')
+  ;
+
+  -- Schedule: LABCOMP-02 — Manhã slots 1-5 + Tarde slots 1-3, seg-sex
+  INSERT INTO laboratory_schedule (id, shift_id, laboratory_id, day_of_week, occupied_slots)
+  VALUES
+    -- Manhã seg-sex (5 slots)
+    ('cccc0001-0001-0001-0001-000000000011',
+     '55550001-0001-0001-0001-000000000001',
+     'cccccccc-0001-0001-0001-000000000002', 1, '{1,2,3,4,5}'),
+    ('cccc0001-0001-0001-0001-000000000012',
+     '55550001-0001-0001-0001-000000000001',
+     'cccccccc-0001-0001-0001-000000000002', 2, '{1,2,3,4,5}'),
+    ('cccc0001-0001-0001-0001-000000000013',
+     '55550001-0001-0001-0001-000000000001',
+     'cccccccc-0001-0001-0001-000000000002', 3, '{1,2,3,4,5}'),
+    ('cccc0001-0001-0001-0001-000000000014',
+     '55550001-0001-0001-0001-000000000001',
+     'cccccccc-0001-0001-0001-000000000002', 4, '{1,2,3,4,5}'),
+    ('cccc0001-0001-0001-0001-000000000015',
+     '55550001-0001-0001-0001-000000000001',
+     'cccccccc-0001-0001-0001-000000000002', 5, '{1,2,3,4,5}'),
+    -- Tarde seg-sex (3 de 5 slots)
+    ('cccc0001-0001-0001-0001-000000000016',
+     '55550001-0001-0001-0001-000000000002',
+     'cccccccc-0001-0001-0001-000000000002', 1, '{1,2,3}'),
+    ('cccc0001-0001-0001-0001-000000000017',
+     '55550001-0001-0001-0001-000000000002',
+     'cccccccc-0001-0001-0001-000000000002', 2, '{1,2,3}'),
+    ('cccc0001-0001-0001-0001-000000000018',
+     '55550001-0001-0001-0001-000000000002',
+     'cccccccc-0001-0001-0001-000000000002', 3, '{1,2,3}'),
+    ('cccc0001-0001-0001-0001-000000000019',
+     '55550001-0001-0001-0001-000000000002',
+     'cccccccc-0001-0001-0001-000000000002', 4, '{1,2,3}'),
+    ('cccc0001-0001-0001-0001-000000000020',
+     '55550001-0001-0001-0001-000000000002',
+     'cccccccc-0001-0001-0001-000000000002', 5, '{1,2,3}')
+  ;
+
+  -- LABIA: no schedule (AC-064 — zero hours)
+
 END $$;
 
 -- ====================== UNICAMP =========================
@@ -235,4 +343,106 @@ BEGIN
      'ffffffff-0002-0002-0002-000000000002', 5)
   ;
 
+  -- Academic Period: 2025.1
+  INSERT INTO academic_period (id, institution_id, name, start_date, end_date)
+  VALUES
+    ('aaaa0002-0002-0002-0002-000000000001',
+     '22222222-2222-2222-2222-222222222222',
+     '2025.1', '2025-03-10', '2025-07-11')
+  ;
+
+  -- Shifts for 2025.1: Manhã 5×50+10, Tarde 4×50+10
+  INSERT INTO academic_period_shift (id, academic_period_id, shift_type, start_time, end_time, classes_per_day, class_duration_minutes, break_duration_minutes, active_days, enabled)
+  VALUES
+    ('55550002-0002-0002-0002-000000000001',
+     'aaaa0002-0002-0002-0002-000000000001',
+     'MORNING', '08:00', '12:20', 5, 50, 10, '{1,2,3,4,5}', true),
+    ('55550002-0002-0002-0002-000000000002',
+     'aaaa0002-0002-0002-0002-000000000001',
+     'AFTERNOON', '14:00', '17:30', 4, 50, 10, '{1,2,3,4,5}', true)
+  ;
+
+  -- Holidays for 2025.1 (with type)
+  INSERT INTO academic_period_holiday (id, academic_period_id, date, description, type)
+  VALUES
+    ('bbbb0002-0002-0002-0002-000000000001',
+     'aaaa0002-0002-0002-0002-000000000001',
+     '2025-04-18', 'Sexta-feira Santa', 'NATIONAL'),
+    ('bbbb0002-0002-0002-0002-000000000002',
+     'aaaa0002-0002-0002-0002-000000000001',
+     '2025-04-21', 'Tiradentes', 'NATIONAL'),
+    ('bbbb0002-0002-0002-0002-000000000003',
+     'aaaa0002-0002-0002-0002-000000000001',
+     '2025-05-01', 'Dia do Trabalho', 'NATIONAL'),
+    ('bbbb0002-0002-0002-0002-000000000004',
+     'aaaa0002-0002-0002-0002-000000000001',
+     '2025-06-19', 'Corpus Christi', 'NATIONAL')
+  ;
+
+  -- Schedule: LCC-A — Manhã slots 1-5 + Tarde slots 1-4, seg-sex
+  INSERT INTO laboratory_schedule (id, shift_id, laboratory_id, day_of_week, occupied_slots)
+  VALUES
+    ('cccc0002-0002-0002-0002-000000000001',
+     '55550002-0002-0002-0002-000000000001',
+     'cccccccc-0002-0002-0002-000000000001', 1, '{1,2,3,4,5}'),
+    ('cccc0002-0002-0002-0002-000000000002',
+     '55550002-0002-0002-0002-000000000001',
+     'cccccccc-0002-0002-0002-000000000001', 2, '{1,2,3,4,5}'),
+    ('cccc0002-0002-0002-0002-000000000003',
+     '55550002-0002-0002-0002-000000000001',
+     'cccccccc-0002-0002-0002-000000000001', 3, '{1,2,3,4,5}'),
+    ('cccc0002-0002-0002-0002-000000000004',
+     '55550002-0002-0002-0002-000000000001',
+     'cccccccc-0002-0002-0002-000000000001', 4, '{1,2,3,4,5}'),
+    ('cccc0002-0002-0002-0002-000000000005',
+     '55550002-0002-0002-0002-000000000001',
+     'cccccccc-0002-0002-0002-000000000001', 5, '{1,2,3,4,5}'),
+    ('cccc0002-0002-0002-0002-000000000006',
+     '55550002-0002-0002-0002-000000000002',
+     'cccccccc-0002-0002-0002-000000000001', 1, '{1,2,3,4}'),
+    ('cccc0002-0002-0002-0002-000000000007',
+     '55550002-0002-0002-0002-000000000002',
+     'cccccccc-0002-0002-0002-000000000001', 2, '{1,2,3,4}'),
+    ('cccc0002-0002-0002-0002-000000000008',
+     '55550002-0002-0002-0002-000000000002',
+     'cccccccc-0002-0002-0002-000000000001', 3, '{1,2,3,4}'),
+    ('cccc0002-0002-0002-0002-000000000009',
+     '55550002-0002-0002-0002-000000000002',
+     'cccccccc-0002-0002-0002-000000000001', 4, '{1,2,3,4}'),
+    ('cccc0002-0002-0002-0002-000000000010',
+     '55550002-0002-0002-0002-000000000002',
+     'cccccccc-0002-0002-0002-000000000001', 5, '{1,2,3,4}')
+  ;
+
+  -- Schedule: LCC-B — Tarde seg-qua-sex, slots 1-4
+  INSERT INTO laboratory_schedule (id, shift_id, laboratory_id, day_of_week, occupied_slots)
+  VALUES
+    ('cccc0002-0002-0002-0002-000000000011',
+     '55550002-0002-0002-0002-000000000002',
+     'cccccccc-0002-0002-0002-000000000002', 1, '{1,2,3,4}'),
+    ('cccc0002-0002-0002-0002-000000000012',
+     '55550002-0002-0002-0002-000000000002',
+     'cccccccc-0002-0002-0002-000000000002', 3, '{1,2,3,4}'),
+    ('cccc0002-0002-0002-0002-000000000013',
+     '55550002-0002-0002-0002-000000000002',
+     'cccccccc-0002-0002-0002-000000000002', 5, '{1,2,3,4}')
+  ;
+
+END $$;
+
+-- ======================== GRANTS ========================
+-- The 'app' role (non-superuser) is used by the application so that
+-- RLS policies are enforced. Grant DML on all tables and usage on sequences.
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'app') THEN
+    EXECUTE (
+      SELECT string_agg('GRANT SELECT, INSERT, UPDATE, DELETE ON ' || quote_ident(tablename) || ' TO app;', E'\n')
+      FROM pg_tables WHERE schemaname = 'public'
+    );
+    EXECUTE (
+      SELECT coalesce(string_agg('GRANT USAGE, SELECT ON SEQUENCE ' || quote_ident(sequencename) || ' TO app;', E'\n'), '')
+      FROM pg_sequences WHERE schemaname = 'public'
+    );
+  END IF;
 END $$;
