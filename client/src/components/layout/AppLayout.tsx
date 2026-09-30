@@ -1,4 +1,4 @@
-import { Building2, Calendar, Cpu, FlaskConical, LogOut, Users } from 'lucide-react'
+import { Building2, Calendar, Cpu, FlaskConical, Leaf, LogOut, Percent, Users } from 'lucide-react'
 import type React from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -28,29 +28,50 @@ type NavItem = {
   adminOnly?: boolean
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { label: 'Instituições', href: '/institutions', icon: Building2 },
-  { label: 'Laboratórios', href: '/laboratories', icon: FlaskConical },
-  { label: 'Equipamentos', href: '/equipment-models', icon: Cpu },
-  { label: 'Calendário', href: '/academic-periods', icon: Calendar },
-  { label: 'Usuários', href: '/users', icon: Users, requiresRole: 'MANAGER' },
+type NavGroup = {
+  label: string
+  items: NavItem[]
+}
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    label: 'Cadastro',
+    items: [
+      { label: 'Instituições', href: '/institutions', icon: Building2 },
+      { label: 'Laboratórios', href: '/laboratories', icon: FlaskConical },
+      { label: 'Equipamentos', href: '/equipment-models', icon: Cpu },
+      { label: 'Calendário', href: '/academic-periods', icon: Calendar },
+    ],
+  },
+  {
+    label: 'Análise',
+    items: [{ label: 'Emissões', href: '/emissions', icon: Leaf }],
+  },
+  {
+    label: 'Configuração',
+    items: [
+      { label: 'Fatores de Emissão', href: '/emission-factors', icon: Percent, adminOnly: true },
+      { label: 'Usuários', href: '/users', icon: Users, requiresRole: 'MANAGER' },
+    ],
+  },
 ]
 
 const AppSidebar: React.FC = () => {
   const location = useLocation()
   const { user } = useAuth()
 
-  const visibleItems = NAV_ITEMS.filter((item) => {
-    if (item.adminOnly && !user?.admin) return false
-    if (item.requiresRole) {
-      const membership = user?.institutions?.find((m) => m.status === 'ACTIVE')
-      if (!membership && !user?.admin) return false
-      if (item.requiresRole === 'MANAGER' && !user?.admin && membership?.role !== 'MANAGER') {
-        return false
+  const filterItems = (items: NavItem[]) =>
+    items.filter((item) => {
+      if (item.adminOnly && !user?.admin) return false
+      if (item.requiresRole) {
+        const membership = user?.institutions?.find((m) => m.status === 'ACTIVE')
+        if (!membership && !user?.admin) return false
+        if (item.requiresRole === 'MANAGER' && !user?.admin && membership?.role !== 'MANAGER') {
+          return false
+        }
       }
-    }
-    return true
-  })
+      return true
+    })
 
   return (
     <Sidebar>
@@ -58,23 +79,29 @@ const AppSidebar: React.FC = () => {
         <span className="font-heading px-2 py-1 text-sm font-semibold">Carbon Calculator</span>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {visibleItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton asChild isActive={location.pathname.startsWith(item.href)}>
-                    <Link to={item.href}>
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {NAV_GROUPS.map((group) => {
+          const visibleItems = filterItems(group.items)
+          if (visibleItems.length === 0) return null
+          return (
+            <SidebarGroup key={group.label}>
+              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {visibleItems.map((item) => (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton asChild isActive={location.pathname.startsWith(item.href)}>
+                        <Link to={item.href}>
+                          <item.icon />
+                          <span>{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )
+        })}
       </SidebarContent>
       <SidebarFooter />
     </Sidebar>
