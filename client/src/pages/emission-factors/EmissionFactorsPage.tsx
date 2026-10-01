@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Info, Leaf, Pencil, Plus, Trash2 } from 'lucide-react'
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -24,6 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useDialog } from '@/hooks/use-dialog'
 import { isApiError } from '@/lib/api/client'
 import {
   type CreateEmissionFactorPayload,
@@ -33,6 +33,7 @@ import {
   listEmissionFactors,
   updateEmissionFactor,
 } from '@/lib/api/emission-factors'
+import { MONTH_SHORT } from '@/lib/constants'
 import {
   type EmissionFactorFormValues,
   emissionFactorFormSchema,
@@ -45,39 +46,22 @@ import {
   type EmissionFactorRowStatus,
 } from '@/lib/utils/emission-factor-rows'
 
-// Short month names for "Mmm/AAAA" format
-const MONTH_SHORT = [
-  '',
-  'Jan',
-  'Fev',
-  'Mar',
-  'Abr',
-  'Mai',
-  'Jun',
-  'Jul',
-  'Ago',
-  'Set',
-  'Out',
-  'Nov',
-  'Dez',
-]
-
 const CURRENT_YEAR = new Date().getFullYear()
 const YEAR_OPTIONS = Array.from({ length: 10 }, (_, i) => CURRENT_YEAR - 5 + i)
 
-function formatCompetencia(referenceMonth: string): string {
+function formatPeriod(referenceMonth: string): string {
   const { year, month } = fromReferenceMonth(referenceMonth)
   return `${MONTH_SHORT[month]}/${year}`
 }
 
-function computeVariacao(rows: EmissionFactorRow[], referenceMonth: string): string {
+function computeVariation(rows: EmissionFactorRow[], referenceMonth: string): string {
   const existingRows = rows
     .filter((r) => r.factor !== null)
     .sort((a, b) => (a.referenceMonth < b.referenceMonth ? -1 : 1))
   const idx = existingRows.findIndex((r) => r.referenceMonth === referenceMonth)
   if (idx <= 0) return '—'
-  const curr = existingRows[idx].factor!.value
-  const prev = existingRows[idx - 1].factor!.value
+  const curr = existingRows[idx].factor?.value
+  const prev = existingRows[idx - 1].factor?.value
   const pct = ((curr - prev) / prev) * 100
   const sign = pct < 0 ? '↓' : '↑'
   const color = pct < 0 ? 'text-[#24744D]' : 'text-[#DC2626]'
@@ -106,13 +90,16 @@ function StatusBadge({ status }: { status: EmissionFactorRowStatus }) {
   )
 }
 
-type ModalState = null | { mode: 'add' } | { mode: 'edit'; factor: EmissionFactor }
-
 export function EmissionFactorsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const yearParam = searchParams.get('year')
   const yearFilter = yearParam === 'all' ? undefined : yearParam ? Number(yearParam) : CURRENT_YEAR
-  const [modal, setModal] = useState<ModalState>(null)
+  const {
+    open: modalOpen,
+    data: editingFactor,
+    openDialog,
+    closeDialog,
+  } = useDialog<EmissionFactor>()
 
   const {
     data: page,
@@ -141,12 +128,12 @@ export function EmissionFactorsPage() {
 
   const saveMutation = useMutation({
     mutationFn: (payload: CreateEmissionFactorPayload) =>
-      modal?.mode === 'edit'
-        ? updateEmissionFactor(modal.factor.id, payload)
+      editingFactor !== null
+        ? updateEmissionFactor(editingFactor.id, payload)
         : createEmissionFactor(payload),
     onSuccess: () => {
-      const wasEdit = modal?.mode === 'edit'
-      closeModal()
+      const wasEdit = editingFactor !== null
+      handleClose()
       refetch()
       toast.success(wasEdit ? 'Fator atualizado.' : 'Fator cadastrado.')
     },
@@ -173,27 +160,27 @@ export function EmissionFactorsPage() {
   function openAdd() {
     reset({ year: yearFilter ?? CURRENT_YEAR, month: 1, value: 0, source: '' })
     saveMutation.reset()
-    setModal({ mode: 'add' })
+    openDialog(null)
   }
 
   function openEdit(factor: EmissionFactor) {
     const { year, month } = fromReferenceMonth(factor.referenceMonth)
     reset({ year, month, value: factor.value, source: factor.source })
     saveMutation.reset()
-    setModal({ mode: 'edit', factor })
+    openDialog(factor)
   }
 
   function openAddForMonth(referenceMonth: string) {
     const { year, month } = fromReferenceMonth(referenceMonth)
     reset({ year, month, value: 0, source: '' })
     saveMutation.reset()
-    setModal({ mode: 'add' })
+    openDialog(null)
   }
 
-  function closeModal() {
+  function handleClose() {
     reset()
     saveMutation.reset()
-    setModal(null)
+    closeDialog()
   }
 
   function onSubmit(values: EmissionFactorFormValues) {
@@ -253,15 +240,15 @@ export function EmissionFactorsPage() {
 
       {/* Add / edit modal */}
       <Dialog
-        open={modal !== null}
+        open={modalOpen}
         onOpenChange={(open) => {
-          if (!open) closeModal()
+          if (!open) handleClose()
         }}
       >
         <DialogContent className="sm:max-w-[440px]">
           <DialogHeader>
             <DialogTitle>
-              {modal?.mode === 'edit' ? 'Editar fator de emissão' : 'Novo fator de emissão'}
+              {editingFactor !== null ? 'Editar fator de emissão' : 'Novo fator de emissão'}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 pt-2">
@@ -324,13 +311,13 @@ export function EmissionFactorsPage() {
               )}
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={closeModal}>
+              <Button type="button" variant="outline" onClick={handleClose}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={saveMutation.isPending}>
                 {saveMutation.isPending
                   ? 'Salvando…'
-                  : modal?.mode === 'edit'
+                  : editingFactor !== null
                     ? 'Salvar'
                     : 'Cadastrar'}
               </Button>
@@ -339,7 +326,7 @@ export function EmissionFactorsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Hero card — fator em uso */}
+      {/* Hero card — active factor */}
       {activeRow?.factor && (
         <div className="flex items-center gap-6 rounded-[10px] border border-[#C3E1D0] bg-[#DEECE2] p-6">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#24744D]">
@@ -357,7 +344,7 @@ export function EmissionFactorsPage() {
               <span className="text-base font-normal text-[#6D786D]">kgCO₂/kWh</span>
             </p>
             <p className="text-[13px] text-[#24744D]">
-              Competência {formatCompetencia(activeRow.referenceMonth)} · Aplicado aos cálculos do
+              Competência {formatPeriod(activeRow.referenceMonth)} · Aplicado aos cálculos do
               período vigente
             </p>
           </div>
@@ -375,14 +362,14 @@ export function EmissionFactorsPage() {
             <div className="flex items-center gap-2">
               <span className="text-[12px] text-[#6D786D]">Competência:</span>
               <span className="text-[12px] font-semibold text-[#192219]">
-                {formatCompetencia(activeRow.referenceMonth)}
+                {formatPeriod(activeRow.referenceMonth)}
               </span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Fonte oficial card */}
+      {/* Official source card */}
       <div className="flex items-center gap-3 rounded-lg border border-[#C3E1D0] bg-[#DEECE2] px-5 py-4">
         <Info className="size-[18px] shrink-0 text-[#24744D]" />
         <div className="flex flex-col gap-0.5">
@@ -443,8 +430,10 @@ export function EmissionFactorsPage() {
             <TableBody>
               {rows.map((row, idx) => {
                 const isActive = row.status === 'em-uso'
-                const variacao = row.factor ? computeVariacao(rows, row.referenceMonth) : null
-                const [varText, varColor] = variacao ? variacao.split('|') : ['—', 'text-[#6D786D]']
+                const variation = row.factor ? computeVariation(rows, row.referenceMonth) : null
+                const [varText, varColor] = variation
+                  ? variation.split('|')
+                  : ['—', 'text-[#6D786D]']
                 const isEven = idx % 2 === 0
 
                 return (
@@ -461,7 +450,7 @@ export function EmissionFactorsPage() {
                     <TableCell
                       className={`px-6 py-0 h-[52px] text-[13px] ${isActive ? 'font-bold text-[#192219]' : 'font-medium text-[#192219]'}`}
                     >
-                      {formatCompetencia(row.referenceMonth)}
+                      {formatPeriod(row.referenceMonth)}
                     </TableCell>
                     <TableCell className="px-4 py-0 h-[52px]">
                       {row.factor ? (
@@ -499,7 +488,7 @@ export function EmissionFactorsPage() {
                               size="icon"
                               className="size-7 text-[#6D786D] hover:text-[#192219]"
                               onClick={() => openEdit(row.factor!)}
-                              disabled={modal !== null}
+                              disabled={modalOpen}
                             >
                               <Pencil className="size-3.5" />
                             </Button>
@@ -507,8 +496,8 @@ export function EmissionFactorsPage() {
                               variant="ghost"
                               size="icon"
                               className="size-7 text-destructive"
-                              onClick={() => deleteMutation.mutate(row.factor!.id)}
-                              disabled={modal !== null}
+                              onClick={() => deleteMutation.mutate(row.factor?.id)}
+                              disabled={modalOpen}
                             >
                               <Trash2 className="size-3.5" />
                             </Button>
@@ -519,7 +508,7 @@ export function EmissionFactorsPage() {
                             size="sm"
                             className="h-7 text-xs border-[#C3E1D0] text-[#24744D] hover:bg-[#DEECE2]"
                             onClick={() => openAddForMonth(row.referenceMonth)}
-                            disabled={modal !== null}
+                            disabled={modalOpen}
                           >
                             Cadastrar
                           </Button>
