@@ -268,7 +268,21 @@ export function EmissionFactorsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
                 <Label>Ano</Label>
-                <Input type="number" placeholder="2025" {...register('year')} />
+                <Select
+                  value={watch('year')?.toString()}
+                  onValueChange={(v) => setValue('year', Number(v), { shouldValidate: true })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Ano" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {YEAR_OPTIONS.map((y) => (
+                      <SelectItem key={y} value={y.toString()}>
+                        {y}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {errors.year && (
                   <span className="text-xs text-destructive">{errors.year.message}</span>
                 )}
