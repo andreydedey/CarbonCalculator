@@ -1,7 +1,7 @@
 # Spec: Fatores de Emissão
 
 > feature: fatores-de-emissao
-> status: fechada
+> status: auditada
 
 ## Contexto
 
