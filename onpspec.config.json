@@ -1,5 +1,5 @@
 {
-  "testCommand": "node --test --test-reporter=tap \"client/src/**/*.test.ts\"",
+  "testCommand": "bash .spec/scripts/run-all-tests.sh",
   "reporter": "tap",
   "testGlobs": [
     "client/src/**/*.test.*",
