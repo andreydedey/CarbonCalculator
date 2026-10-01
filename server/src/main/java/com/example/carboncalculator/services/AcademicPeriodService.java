@@ -175,13 +175,16 @@ public class AcademicPeriodService {
                     .build();
             newPeriod.getShifts().add(newShift);
 
-            // Must flush to get the new shift's ID before copying schedules
-            periodRepository.saveAndFlush(newPeriod);
+            // Flush to persist the new shift via cascade; re-assign to get managed references
+            newPeriod = periodRepository.saveAndFlush(newPeriod);
+            AcademicPeriodShift savedShift = newPeriod.getShifts().stream()
+                    .filter(s -> s.getShiftType() == sourceShift.getShiftType())
+                    .findFirst().orElseThrow();
 
             List<LaboratorySchedule> sourceSchedules = scheduleRepository.findByShiftId(sourceShift.getId());
             for (LaboratorySchedule s : sourceSchedules) {
                 LaboratorySchedule copy = LaboratorySchedule.builder()
-                        .shift(newShift)
+                        .shift(savedShift)
                         .laboratory(s.getLaboratory())
                         .dayOfWeek(s.getDayOfWeek())
                         .occupiedSlots(s.getOccupiedSlots().clone())
