@@ -49,7 +49,7 @@
 
 ## T-049 — EmissionsDashboard (página principal de emissões) [concluida]
 - Refs: US-029, AC-093, AC-094, AC-095, AC-096, AC-097
-- Arquivos: client/src/pages/emissions/EmissionsDashboardPage.tsx, client/src/components/emissions/EmissionsByMonth.tsx, client/src/components/emissions/EmissionsByLab.tsx, client/src/components/emissions/BreakdownCards.tsx, client/src/components/emissions/EquivalenceCards.tsx, client/src/components/emissions/TransparencyPanel.tsx, client/src/components/emissions/ReadinessCheck.tsx, client/src/components/emissions/ExportButton.tsx
+- Arquivos: client/src/pages/emissions/EmissionsDashboardPage.tsx, client/src/components/emissions/EquivalenceCards.tsx, client/src/components/emissions/ReadinessCheck.tsx, client/src/components/emissions/ExportButton.tsx
 - Esforço: alto
 - Notas: Depende de T-046 e T-047. Instalar recharts com bun. Select de período. Cards de totais. Gráficos Recharts. Painel de transparência colapsável.
 

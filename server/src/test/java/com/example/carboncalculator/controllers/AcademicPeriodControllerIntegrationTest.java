@@ -14,10 +14,12 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -30,14 +32,15 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import com.example.carboncalculator.dto.AuthResponse;
 import com.example.carboncalculator.dto.AcademicPeriodDTO;
 import com.example.carboncalculator.dto.CopyPeriodRequest;
 import com.example.carboncalculator.dto.CreateAcademicPeriodRequest;
 import com.example.carboncalculator.dto.CreateInstitutionRequest;
 import com.example.carboncalculator.dto.CreateLaboratoryRequest;
 import com.example.carboncalculator.dto.HolidayDTO;
-import com.example.carboncalculator.dto.InstitutionDTO;
 import com.example.carboncalculator.dto.LaboratoryDTO;
+import com.example.carboncalculator.dto.LoginRequest;
 import com.example.carboncalculator.dto.PeriodSummaryDTO;
 import com.example.carboncalculator.dto.ReplaceHolidaysRequest;
 import com.example.carboncalculator.dto.ReplaceScheduleRequest;
@@ -54,11 +57,12 @@ import com.example.carboncalculator.entities.ShiftType;
  */
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureTestRestTemplate
 class AcademicPeriodControllerIntegrationTest {
 
     private static final String TENANT_HEADER = "X-Institution-Id";
-    private static final String APP_ROLE = "carboncalculator_app";
-    private static final String APP_PASSWORD = "app_password";
+    private static final String APP_ROLE = "app";
+    private static final String APP_PASSWORD = "app";
 
     @Container
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");
@@ -69,6 +73,11 @@ class AcademicPeriodControllerIntegrationTest {
         registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
         registry.add("spring.datasource.username", () -> APP_ROLE);
         registry.add("spring.datasource.password", () -> APP_PASSWORD);
+        // Flyway uses superuser credentials to run migrations (CREATE TABLE, RLS policies)
+        registry.add("spring.flyway.url", POSTGRES::getJdbcUrl);
+        registry.add("spring.flyway.user", POSTGRES::getUsername);
+        registry.add("spring.flyway.password", POSTGRES::getPassword);
+        registry.add("app.jwt.secret", () -> "dGVzdC1zZWNyZXQta2V5LWZvci1qd3Qtc2lnbmluZy1hdC1sZWFzdC0zMi1jaGFycw==");
     }
 
     private static void createRestrictedApplicationRole() {
@@ -85,28 +94,55 @@ class AcademicPeriodControllerIntegrationTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
+    private String adminToken;
+
+    @BeforeEach
+    void setUp() {
+        if (adminToken == null) {
+            LoginRequest login = new LoginRequest("admin@admin.com", "password");
+            ResponseEntity<AuthResponse> authResp = restTemplate.postForEntity(
+                    "/auth/login", login, AuthResponse.class);
+            assertEquals(HttpStatus.OK, authResp.getStatusCode());
+            adminToken = authResp.getBody().accessToken();
+        }
+    }
+
     // --- Helpers ---
 
     private UUID createInstitutionAndReturnId(String acronymPrefix) {
+        String acronym = acronymPrefix.substring(0, Math.min(acronymPrefix.length(), 4))
+                + (System.nanoTime() % 1000000);
         CreateInstitutionRequest request = new CreateInstitutionRequest(
-                "Instituição " + acronymPrefix, acronymPrefix + "-" + System.nanoTime(), "Cidade", "PA");
-        ResponseEntity<InstitutionDTO> response = restTemplate.postForEntity(
-                "/institutions", request, InstitutionDTO.class);
-        assertNotNull(response.getBody());
-        return response.getBody().id();
+                "Instituição " + acronymPrefix, acronym, "Cidade", "PA");
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/institutions", HttpMethod.POST,
+                new HttpEntity<>(request, authHeaders()),
+                String.class);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        // Extract id from JSON response to avoid InstitutionDTO primitive field issues
+        String body = response.getBody();
+        int idx = body.indexOf("\"id\":\"") + 6;
+        return UUID.fromString(body.substring(idx, body.indexOf("\"", idx)));
+    }
+
+    private HttpHeaders authHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(adminToken);
+        return headers;
     }
 
     private HttpHeaders headersFor(UUID institutionId) {
         HttpHeaders headers = new HttpHeaders();
         headers.set(TENANT_HEADER, institutionId.toString());
         headers.set("Content-Type", "application/json");
+        headers.setBearerAuth(adminToken);
         return headers;
     }
 
     private AcademicPeriodDTO createPeriod(UUID institutionId, String name, LocalDate start, LocalDate end) {
         CreateAcademicPeriodRequest request = new CreateAcademicPeriodRequest(name, start, end);
-        ResponseEntity<AcademicPeriodDTO> response = restTemplate.postForEntity(
-                "/academic-periods",
+        ResponseEntity<AcademicPeriodDTO> response = restTemplate.exchange(
+                "/academic-periods", HttpMethod.POST,
                 new HttpEntity<>(request, headersFor(institutionId)),
                 AcademicPeriodDTO.class);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
@@ -114,10 +150,11 @@ class AcademicPeriodControllerIntegrationTest {
     }
 
     private UUID createLab(UUID institutionId, String name) {
-        ResponseEntity<LaboratoryDTO> response = restTemplate.postForEntity(
-                "/laboratories",
+        ResponseEntity<LaboratoryDTO> response = restTemplate.exchange(
+                "/laboratories", HttpMethod.POST,
                 new HttpEntity<>(new CreateLaboratoryRequest(name, null), headersFor(institutionId)),
                 LaboratoryDTO.class);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
         return response.getBody().id();
     }
 
@@ -174,8 +211,8 @@ class AcademicPeriodControllerIntegrationTest {
 
         CreateAcademicPeriodRequest request = new CreateAcademicPeriodRequest(
                 "2025.1", LocalDate.of(2025, 7, 18), LocalDate.of(2025, 3, 10));
-        ResponseEntity<Object> response = restTemplate.postForEntity(
-                "/academic-periods",
+        ResponseEntity<Object> response = restTemplate.exchange(
+                "/academic-periods", HttpMethod.POST,
                 new HttpEntity<>(request, headersFor(instId)),
                 Object.class);
 
@@ -190,8 +227,8 @@ class AcademicPeriodControllerIntegrationTest {
 
         CreateAcademicPeriodRequest request = new CreateAcademicPeriodRequest(
                 "2024.2", LocalDate.of(2024, 6, 1), LocalDate.of(2024, 12, 15));
-        ResponseEntity<Object> response = restTemplate.postForEntity(
-                "/academic-periods",
+        ResponseEntity<Object> response = restTemplate.exchange(
+                "/academic-periods", HttpMethod.POST,
                 new HttpEntity<>(request, headersFor(instId)),
                 Object.class);
 

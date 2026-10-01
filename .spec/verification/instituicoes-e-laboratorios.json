@@ -1,25 +1,25 @@
 {
   "feature": "instituicoes-e-laboratorios",
-  "timestamp": "2026-09-19T01:40:49.281Z",
-  "gitRev": "e13bda2",
-  "command": "node --test --test-reporter=tap \"client/src/**/*.test.ts\"",
+  "timestamp": "2026-10-01T13:04:11.512Z",
+  "gitRev": "97ba6ed",
+  "command": "bash .spec/scripts/run-all-tests.sh",
   "reporter": "tap",
   "exitCode": 0,
-  "testsParsed": 50,
+  "testsParsed": 88,
   "results": {
     "AC-001": {
       "status": "pass",
-      "testName": "@spec:AC-001 Instituição criada com dados válidos — nome, sigla, cidade, UF e laboratório válidos não geram erros",
+      "testName": "@spec:AC-001 deveCriarInstituicaoELaboratorioVinculadoNumaUnicaOperacao",
       "method": "tap"
     },
     "AC-002": {
       "status": "pass",
-      "testName": "@spec:AC-002 Sigla duplicada é rejeitada — errorForStatus traduz 409 em ConflictError",
+      "testName": "@spec:AC-002",
       "method": "tap"
     },
     "AC-003": {
       "status": "pass",
-      "testName": "@spec:AC-003 UF inválida é rejeitada — errorForStatus traduz 400 em ValidationError",
+      "testName": "@spec:AC-003",
       "method": "tap"
     },
     "AC-004": {
@@ -34,42 +34,42 @@
     },
     "AC-006": {
       "status": "pass",
-      "testName": "@spec:AC-006 lista mostra apenas laboratórios ativos por padrão — sem toggle, nenhum parâmetro de inclusão é enviado",
+      "testName": "@spec:AC-006",
       "method": "tap"
     },
     "AC-007": {
       "status": "pass",
-      "testName": "@spec:AC-007 laboratórios inativos podem ser incluídos na listagem — com toggle ligado, includeInactive é enviado",
+      "testName": "@spec:AC-007",
       "method": "tap"
     },
     "AC-008": {
       "status": "pass",
-      "testName": "@spec:AC-008 isolamento por RLS entre instituições — trocar de instituição nunca mistura os dois ids",
+      "testName": "@spec:AC-008 deveAplicarInstitutionIdDoHeaderNaSessaoDoBancoEPropagarNoContexto",
       "method": "tap"
     },
     "AC-009": {
       "status": "pass",
-      "testName": "@spec:AC-009 requisição sem identificação de instituição é recusada — nenhum id salvo é lido como null",
+      "testName": "@spec:AC-009",
       "method": "tap"
     },
     "AC-010": {
       "status": "pass",
-      "testName": "@spec:AC-010 acesso direto a laboratório de outra instituição é negado — errorForStatus traduz 404 em NotFoundError",
+      "testName": "@spec:AC-010 naoDeveVazarInstitutionIdEntreThreadsDiferentes",
       "method": "tap"
     },
     "AC-011": {
       "status": "pass",
-      "testName": "@spec:AC-011 desativação preserva o laboratório — mensagem cita o nome do laboratório",
+      "testName": "@spec:AC-011 deveDesativarLaboratorioPreservandoSeusDados",
       "method": "tap"
     },
     "AC-012": {
       "status": "pass",
-      "testName": "@spec:AC-012 exclusão bloqueada quando há dependentes — deleteLaboratory rejeita com ConflictError ao receber 409",
+      "testName": "@spec:AC-012",
       "method": "tap"
     },
     "AC-013": {
       "status": "pass",
-      "testName": "@spec:AC-013 exclusão permitida quando não há dependentes — deleteLaboratory faz DELETE e resolve sem corpo",
+      "testName": "@spec:AC-013",
       "method": "tap"
     }
   },

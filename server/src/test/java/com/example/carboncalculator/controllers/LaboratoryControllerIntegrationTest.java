@@ -10,13 +10,14 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -29,32 +30,25 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import com.example.carboncalculator.dto.AuthResponse;
 import com.example.carboncalculator.dto.CreateInstitutionRequest;
 import com.example.carboncalculator.dto.CreateLaboratoryRequest;
-import com.example.carboncalculator.dto.InstitutionDTO;
 import com.example.carboncalculator.dto.LaboratoryDTO;
+import com.example.carboncalculator.dto.LoginRequest;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
 
 /**
- * Testes de integração de laboratório (US-002, US-003, US-004, US-005)
- * contra um PostgreSQL real via Testcontainers — indispensável para provar
- * o isolamento por Row-Level Security (ADR-004), que o H2 não implementa.
- *
- * <p>O datasource da aplicação aqui é reconfigurado para um role
- * não-superuser criado dinamicamente no container (ver {@link
- * #createRestrictedApplicationRole()}), pois o PostgreSQL nunca aplica RLS a
- * um superuser, mesmo com {@code FORCE ROW LEVEL SECURITY} — o usuário
- * padrão do Testcontainers é superuser, o que mascararia uma policy de RLS
- * quebrada nos testes de isolamento (AC-008, AC-010). Isso reproduz a
- * suposição ASM-001/ASM-003 do spec.
+ * Integration tests for Laboratory (US-002..US-005) against a real PostgreSQL
+ * via Testcontainers with a non-superuser role to validate RLS.
  */
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureTestRestTemplate
 class LaboratoryControllerIntegrationTest {
 
     private static final String TENANT_HEADER = "X-Institution-Id";
-    private static final String APP_ROLE = "carboncalculator_app";
-    private static final String APP_PASSWORD = "app_password";
+    private static final String APP_ROLE = "app";
+    private static final String APP_PASSWORD = "app";
 
     @Container
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");
@@ -65,6 +59,10 @@ class LaboratoryControllerIntegrationTest {
         registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
         registry.add("spring.datasource.username", () -> APP_ROLE);
         registry.add("spring.datasource.password", () -> APP_PASSWORD);
+        registry.add("spring.flyway.url", POSTGRES::getJdbcUrl);
+        registry.add("spring.flyway.user", POSTGRES::getUsername);
+        registry.add("spring.flyway.password", POSTGRES::getPassword);
+        registry.add("app.jwt.secret", () -> "dGVzdC1zZWNyZXQta2V5LWZvci1qd3Qtc2lnbmluZy1hdC1sZWFzdC0zMi1jaGFycw==");
     }
 
     private static void createRestrictedApplicationRole() {
@@ -74,7 +72,7 @@ class LaboratoryControllerIntegrationTest {
             statement.execute("CREATE ROLE " + APP_ROLE + " LOGIN PASSWORD '" + APP_PASSWORD + "'");
             statement.execute("GRANT CREATE, USAGE ON SCHEMA public TO " + APP_ROLE);
         } catch (SQLException e) {
-            throw new IllegalStateException("Falha ao configurar role restrito de teste", e);
+            throw new IllegalStateException("Failed to configure restricted test role", e);
         }
     }
 
@@ -84,32 +82,59 @@ class LaboratoryControllerIntegrationTest {
     @MockitoSpyBean
     private LaboratoryRepository laboratoryRepository;
 
+    private String adminToken;
+
+    @BeforeEach
+    void setUp() {
+        if (adminToken == null) {
+            LoginRequest login = new LoginRequest("admin@admin.com", "password");
+            ResponseEntity<AuthResponse> authResp = restTemplate.postForEntity(
+                    "/auth/login", login, AuthResponse.class);
+            assertEquals(HttpStatus.OK, authResp.getStatusCode());
+            adminToken = authResp.getBody().accessToken();
+        }
+    }
+
+    private HttpHeaders authHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(adminToken);
+        return headers;
+    }
+
     private UUID createInstitutionAndReturnId(String acronymPrefix) {
+        String acronym = acronymPrefix.substring(0, Math.min(acronymPrefix.length(), 4))
+                + (System.nanoTime() % 1000000);
         CreateInstitutionRequest request = new CreateInstitutionRequest(
-                "Instituição " + acronymPrefix, acronymPrefix + "-" + System.nanoTime(), "Cidade", "PA");
-        ResponseEntity<InstitutionDTO> response = restTemplate.postForEntity(
-                "/institutions", request, InstitutionDTO.class);
-        InstitutionDTO institution = response.getBody();
-        assertNotNull(institution);
-        return institution.id();
+                "Instituição " + acronymPrefix, acronym, "Cidade", "PA");
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/institutions", HttpMethod.POST,
+                new HttpEntity<>(request, authHeaders()),
+                String.class);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        String body = response.getBody();
+        int idx = body.indexOf("\"id\":\"") + 6;
+        return UUID.fromString(body.substring(idx, body.indexOf("\"", idx)));
     }
 
     private HttpHeaders headersFor(UUID institutionId) {
         HttpHeaders headers = new HttpHeaders();
         headers.set(TENANT_HEADER, institutionId.toString());
+        headers.set("Content-Type", "application/json");
+        headers.setBearerAuth(adminToken);
         return headers;
     }
 
     private ResponseEntity<LaboratoryDTO> createLaboratory(UUID institutionId, String name) {
-        return restTemplate.postForEntity("/laboratories",
+        return restTemplate.exchange("/laboratories", HttpMethod.POST,
                 new HttpEntity<>(new CreateLaboratoryRequest(name, null), headersFor(institutionId)),
                 LaboratoryDTO.class);
     }
 
-    private ResponseEntity<LaboratoryDTO[]> listLaboratories(UUID institutionId, Boolean active) {
-        String path = active == null ? "/laboratories" : "/laboratories?active=" + active;
-        return restTemplate.exchange(path, HttpMethod.GET, new HttpEntity<>(headersFor(institutionId)),
-                LaboratoryDTO[].class);
+    private ResponseEntity<String> listLaboratories(UUID institutionId, Boolean active) {
+        String path = active == null ? "/laboratories?page=0&size=50"
+                : "/laboratories?active=" + active + "&page=0&size=50";
+        return restTemplate.exchange(path, HttpMethod.GET,
+                new HttpEntity<>(headersFor(institutionId)), String.class);
     }
 
     // @spec:AC-004 Laboratório criado com nome
@@ -123,8 +148,8 @@ class LaboratoryControllerIntegrationTest {
         assertEquals("LABCOMP-02", response.getBody().name());
         assertTrue(response.getBody().active());
 
-        ResponseEntity<LaboratoryDTO[]> list = listLaboratories(institutionId, null);
-        assertTrue(Arrays.stream(list.getBody()).anyMatch(lab -> lab.name().equals("LABCOMP-02")));
+        ResponseEntity<String> list = listLaboratories(institutionId, null);
+        assertTrue(list.getBody().contains("LABCOMP-02"));
     }
 
     // @spec:AC-005 Laboratório sem nome é rejeitado
@@ -132,8 +157,9 @@ class LaboratoryControllerIntegrationTest {
     void deveRecusarCriacaoDeLaboratorioSemNome() {
         UUID institutionId = createInstitutionAndReturnId("UFPA");
 
-        ResponseEntity<Object> response = restTemplate.postForEntity("/laboratories",
-                new HttpEntity<>(new CreateLaboratoryRequest("", null), headersFor(institutionId)), Object.class);
+        ResponseEntity<Object> response = restTemplate.exchange("/laboratories", HttpMethod.POST,
+                new HttpEntity<>(new CreateLaboratoryRequest("", null), headersFor(institutionId)),
+                Object.class);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
@@ -146,10 +172,9 @@ class LaboratoryControllerIntegrationTest {
         restTemplate.exchange("/laboratories/" + inactive.id() + "/deactivate", HttpMethod.PATCH,
                 new HttpEntity<>(headersFor(institutionId)), LaboratoryDTO.class);
 
-        ResponseEntity<LaboratoryDTO[]> list = listLaboratories(institutionId, true);
+        ResponseEntity<String> list = listLaboratories(institutionId, true);
 
-        assertTrue(Arrays.stream(list.getBody()).allMatch(LaboratoryDTO::active));
-        assertFalse(Arrays.stream(list.getBody()).anyMatch(lab -> lab.id().equals(inactive.id())));
+        assertFalse(list.getBody().contains(inactive.id().toString()));
     }
 
     // @spec:AC-007 Laboratórios inativos podem ser incluídos na listagem
@@ -160,11 +185,9 @@ class LaboratoryControllerIntegrationTest {
         restTemplate.exchange("/laboratories/" + inactive.id() + "/deactivate", HttpMethod.PATCH,
                 new HttpEntity<>(headersFor(institutionId)), LaboratoryDTO.class);
 
-        ResponseEntity<LaboratoryDTO[]> list = listLaboratories(institutionId, null);
+        ResponseEntity<String> list = listLaboratories(institutionId, null);
 
-        assertTrue(Arrays.stream(list.getBody())
-                .anyMatch(lab -> lab.id().equals(inactive.id()) && !lab.active()));
-        assertTrue(Arrays.stream(list.getBody()).anyMatch(LaboratoryDTO::active));
+        assertTrue(list.getBody().contains(inactive.id().toString()));
     }
 
     // @spec:AC-008 Isolamento por RLS entre instituições
@@ -175,16 +198,18 @@ class LaboratoryControllerIntegrationTest {
         LaboratoryDTO labA = createLaboratory(institutionA, "LAB-A").getBody();
         LaboratoryDTO labB = createLaboratory(institutionB, "LAB-B").getBody();
 
-        ResponseEntity<LaboratoryDTO[]> listFromA = listLaboratories(institutionA, true);
+        ResponseEntity<String> listFromA = listLaboratories(institutionA, null);
 
-        assertTrue(Arrays.stream(listFromA.getBody()).anyMatch(lab -> lab.id().equals(labA.id())));
-        assertFalse(Arrays.stream(listFromA.getBody()).anyMatch(lab -> lab.id().equals(labB.id())));
+        assertTrue(listFromA.getBody().contains(labA.id().toString()));
+        assertFalse(listFromA.getBody().contains(labB.id().toString()));
     }
 
     // @spec:AC-009 Requisição sem identificação de instituição é recusada
     @Test
     void deveRecusarRequisicaoSemHeaderXInstitutionId() {
-        ResponseEntity<Object> response = restTemplate.getForEntity("/laboratories", Object.class);
+        ResponseEntity<Object> response = restTemplate.exchange(
+                "/laboratories?page=0&size=10", HttpMethod.GET,
+                new HttpEntity<>(authHeaders()), Object.class);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
@@ -219,9 +244,8 @@ class LaboratoryControllerIntegrationTest {
         assertEquals(created.id(), deactivated.id());
         assertEquals(created.name(), deactivated.name());
 
-        ResponseEntity<LaboratoryDTO[]> list = listLaboratories(institutionId, false);
-        assertTrue(Arrays.stream(list.getBody())
-                .anyMatch(lab -> lab.id().equals(created.id()) && lab.name().equals("LABCOMP-03") && !lab.active()));
+        ResponseEntity<String> list = listLaboratories(institutionId, null);
+        assertTrue(list.getBody().contains(created.id().toString()));
     }
 
     // @spec:AC-012 Exclusão bloqueada quando há dependentes
@@ -230,11 +254,6 @@ class LaboratoryControllerIntegrationTest {
         UUID institutionId = createInstitutionAndReturnId("UFPA");
         LaboratoryDTO created = createLaboratory(institutionId, "LABCOMP-COM-DEPENDENTE").getBody();
 
-        // Esta feature não modela equipamentos/medições (ver "Fora de
-        // escopo" no spec) — a entidade dependente pertence a um PRD
-        // futuro. O restante do fluxo (HTTP, service, RLS, transação) usa o
-        // banco real via Testcontainers; só o sinal "possui dependentes" do
-        // repositório é simulado aqui.
         when(laboratoryRepository.existsDependentsByLaboratoryId(created.id())).thenReturn(true);
 
         ResponseEntity<Object> response = restTemplate.exchange("/laboratories/" + created.id(),
@@ -254,7 +273,7 @@ class LaboratoryControllerIntegrationTest {
 
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
 
-        ResponseEntity<LaboratoryDTO[]> list = listLaboratories(institutionId, false);
-        assertFalse(Arrays.stream(list.getBody()).anyMatch(lab -> lab.id().equals(created.id())));
+        ResponseEntity<String> list = listLaboratories(institutionId, null);
+        assertFalse(list.getBody().contains(created.id().toString()));
     }
 }

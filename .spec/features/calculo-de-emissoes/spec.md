@@ -207,11 +207,11 @@ Como gestor de uma instituição, quero que o cálculo considere apenas os labor
 - **Quando** a instituição A solicita o cálculo
 - **Então** apenas os laboratórios da instituição A entram no resultado
 
-#### AC-101 — Fatores de emissão são globais
+#### AC-101 — Fatores de emissão são isolados por instituição
 
-- **Dado** que fatores de emissão foram cadastrados por um admin
-- **Quando** qualquer instituição solicita o cálculo
-- **Então** os mesmos fatores são usados (não há isolamento por instituição nos fatores)
+- **Dado** que fatores de emissão foram cadastrados para uma instituição
+- **Quando** outra instituição lista os fatores
+- **Então** ela não vê os fatores da primeira (isolamento via RLS por `institution_id`)
 
 ## Fora de escopo
 
