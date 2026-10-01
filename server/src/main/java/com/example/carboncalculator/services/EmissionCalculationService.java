@@ -402,7 +402,7 @@ public class EmissionCalculationService {
         List<EmissionFactor> factors = emissionFactorRepository.findAll();
         Map<String, EmissionFactor> map = new LinkedHashMap<>();
         for (EmissionFactor f : factors) {
-            String key = String.format("%04d-%02d", f.getYear(), f.getMonth());
+            String key = f.getReferenceMonth().format(MONTH_FMT);
             map.put(key, f);
         }
         return map;

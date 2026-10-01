@@ -1,5 +1,6 @@
 package com.example.carboncalculator.repositories;
 
+import java.time.YearMonth;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -10,9 +11,9 @@ import com.example.carboncalculator.entities.EmissionFactor;
 
 public interface EmissionFactorRepository extends JpaRepository<EmissionFactor, UUID> {
 
-    boolean existsByYearAndMonth(Short year, Short month);
+    boolean existsByReferenceMonth(YearMonth referenceMonth);
 
-    boolean existsByYearAndMonthAndIdNot(Short year, Short month, UUID id);
+    boolean existsByReferenceMonthAndIdNot(YearMonth referenceMonth, UUID id);
 
-    Page<EmissionFactor> findByYear(Short year, Pageable pageable);
+    Page<EmissionFactor> findByReferenceMonthBetween(YearMonth start, YearMonth end, Pageable pageable);
 }

@@ -10,6 +10,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.YearMonth;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,18 +32,21 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.example.carboncalculator.dto.AuthResponse;
 import com.example.carboncalculator.dto.CreateEmissionFactorRequest;
+import com.example.carboncalculator.dto.CreateInstitutionRequest;
 import com.example.carboncalculator.dto.EmissionFactorDTO;
+import com.example.carboncalculator.dto.InstitutionDTO;
 import com.example.carboncalculator.dto.LoginRequest;
 
 /**
  * Integration tests for Emission Factor CRUD (US-026).
- * Emission factors are global (no RLS), so no X-Institution-Id header needed.
+ * Emission factors are institution-scoped (RLS), requiring X-Institution-Id header.
  */
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
 class EmissionFactorIntegrationTest {
 
+    private static final String TENANT_HEADER = "X-Institution-Id";
     private static final String APP_ROLE = "app";
     private static final String APP_PASSWORD = "app";
 
@@ -75,15 +80,25 @@ class EmissionFactorIntegrationTest {
     private TestRestTemplate restTemplate;
 
     private String adminToken;
+    private UUID institutionId;
 
     @BeforeEach
-    void authenticate() {
+    void setUp() {
         if (adminToken != null) return;
         LoginRequest login = new LoginRequest("admin@admin.com", "password");
         ResponseEntity<AuthResponse> response = restTemplate.postForEntity(
                 "/auth/login", login, AuthResponse.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         adminToken = response.getBody().accessToken();
+
+        CreateInstitutionRequest instReq = new CreateInstitutionRequest(
+                "Instituição Teste EF", "EF-" + System.nanoTime(), "Cidade", "PA");
+        ResponseEntity<InstitutionDTO> instResp = restTemplate.exchange(
+                "/institutions", HttpMethod.POST,
+                new HttpEntity<>(instReq, authHeaders()),
+                InstitutionDTO.class);
+        assertEquals(HttpStatus.CREATED, instResp.getStatusCode());
+        institutionId = instResp.getBody().id();
     }
 
     private HttpHeaders authHeaders() {
@@ -92,12 +107,18 @@ class EmissionFactorIntegrationTest {
         return headers;
     }
 
-    private EmissionFactorDTO createFactor(short year, short month, String value, String source) {
+    private HttpHeaders tenantHeaders() {
+        HttpHeaders headers = authHeaders();
+        headers.set(TENANT_HEADER, institutionId.toString());
+        return headers;
+    }
+
+    private EmissionFactorDTO createFactor(YearMonth referenceMonth, String value, String source) {
         CreateEmissionFactorRequest request = new CreateEmissionFactorRequest(
-                year, month, new BigDecimal(value), source);
+                referenceMonth, new BigDecimal(value), source);
         ResponseEntity<EmissionFactorDTO> response = restTemplate.exchange(
                 "/emission-factors", HttpMethod.POST,
-                new HttpEntity<>(request, authHeaders()),
+                new HttpEntity<>(request, tenantHeaders()),
                 EmissionFactorDTO.class);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         return response.getBody();
@@ -106,19 +127,18 @@ class EmissionFactorIntegrationTest {
     // @spec:AC-072 Criar fator de emissão válido
     @Test
     void deveCriarFatorDeEmissaoValido() {
-        EmissionFactorDTO factor = createFactor((short) 2024, (short) 1, "0.0501", "MCTI — SIN jan/2024");
+        EmissionFactorDTO factor = createFactor(YearMonth.of(2024, 1), "0.0501", "MCTI — SIN jan/2024");
 
         assertNotNull(factor);
         assertNotNull(factor.id());
-        assertEquals(2024, factor.year());
-        assertEquals(1, factor.month());
+        assertEquals(YearMonth.of(2024, 1), factor.referenceMonth());
         assertEquals(new BigDecimal("0.0501"), factor.value());
         assertEquals("MCTI — SIN jan/2024", factor.source());
 
         // Verify it appears in listing
         ResponseEntity<String> list = restTemplate.exchange(
                 "/emission-factors?year=2024", HttpMethod.GET,
-                new HttpEntity<>(authHeaders()), String.class);
+                new HttpEntity<>(tenantHeaders()), String.class);
         assertEquals(HttpStatus.OK, list.getStatusCode());
         assertTrue(list.getBody().contains("0.0501"));
     }
@@ -126,11 +146,12 @@ class EmissionFactorIntegrationTest {
     // @spec:AC-073 Rejeitar fator duplicado (mesmo ano+mês)
     @Test
     void deveRejeitarFatorDuplicado() {
+        createFactor(YearMonth.of(2025, 3), "0.0888", "Primeiro");
         CreateEmissionFactorRequest duplicate = new CreateEmissionFactorRequest(
-                (short) 2025, (short) 3, new BigDecimal("0.0999"), "Teste duplicado");
+                YearMonth.of(2025, 3), new BigDecimal("0.0999"), "Teste duplicado");
         ResponseEntity<Object> response = restTemplate.exchange(
                 "/emission-factors", HttpMethod.POST,
-                new HttpEntity<>(duplicate, authHeaders()), Object.class);
+                new HttpEntity<>(duplicate, tenantHeaders()), Object.class);
 
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
     }
@@ -139,10 +160,10 @@ class EmissionFactorIntegrationTest {
     @Test
     void deveRejeitarFatorComValorInvalido() {
         CreateEmissionFactorRequest request = new CreateEmissionFactorRequest(
-                (short) 2023, (short) 6, new BigDecimal("-0.01"), "");
+                YearMonth.of(2023, 6), new BigDecimal("-0.01"), "");
         ResponseEntity<Object> response = restTemplate.exchange(
                 "/emission-factors", HttpMethod.POST,
-                new HttpEntity<>(request, authHeaders()), Object.class);
+                new HttpEntity<>(request, tenantHeaders()), Object.class);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
@@ -151,10 +172,10 @@ class EmissionFactorIntegrationTest {
     @Test
     void deveRejeitarFatorComFonteVazia() {
         CreateEmissionFactorRequest request = new CreateEmissionFactorRequest(
-                (short) 2023, (short) 7, new BigDecimal("0.05"), "");
+                YearMonth.of(2023, 7), new BigDecimal("0.05"), "");
         ResponseEntity<Object> response = restTemplate.exchange(
                 "/emission-factors", HttpMethod.POST,
-                new HttpEntity<>(request, authHeaders()), Object.class);
+                new HttpEntity<>(request, tenantHeaders()), Object.class);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
@@ -162,31 +183,32 @@ class EmissionFactorIntegrationTest {
     // @spec:AC-075 Listar fatores filtrados por ano
     @Test
     void deveListarFatoresFiltradosPorAno() {
-        createFactor((short) 2023, (short) 1, "0.0600", "MCTI — SIN jan/2023");
-
-        ResponseEntity<String> response = restTemplate.exchange(
-                "/emission-factors?year=2025&size=100", HttpMethod.GET,
-                new HttpEntity<>(authHeaders()), String.class);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(response.getBody().contains("\"totalElements\":12"));
+        createFactor(YearMonth.of(2023, 1), "0.0600", "MCTI — SIN jan/2023");
+        createFactor(YearMonth.of(2024, 6), "0.0550", "MCTI — SIN jun/2024");
 
         ResponseEntity<String> response2023 = restTemplate.exchange(
                 "/emission-factors?year=2023&size=100", HttpMethod.GET,
-                new HttpEntity<>(authHeaders()), String.class);
+                new HttpEntity<>(tenantHeaders()), String.class);
         assertEquals(HttpStatus.OK, response2023.getStatusCode());
         assertTrue(response2023.getBody().contains("0.0600"));
+
+        ResponseEntity<String> response2024 = restTemplate.exchange(
+                "/emission-factors?year=2024&size=100", HttpMethod.GET,
+                new HttpEntity<>(tenantHeaders()), String.class);
+        assertEquals(HttpStatus.OK, response2024.getStatusCode());
+        assertTrue(response2024.getBody().contains("0.0550"));
     }
 
     // @spec:AC-076 Atualizar fator existente
     @Test
     void deveAtualizarFatorExistente() {
-        EmissionFactorDTO created = createFactor((short) 2024, (short) 4, "0.0400", "Original");
+        EmissionFactorDTO created = createFactor(YearMonth.of(2024, 4), "0.0400", "Original");
 
         CreateEmissionFactorRequest updateRequest = new CreateEmissionFactorRequest(
-                (short) 2024, (short) 4, new BigDecimal("0.0555"), "Atualizado");
+                YearMonth.of(2024, 4), new BigDecimal("0.0555"), "Atualizado");
         ResponseEntity<EmissionFactorDTO> response = restTemplate.exchange(
                 "/emission-factors/" + created.id(), HttpMethod.PUT,
-                new HttpEntity<>(updateRequest, authHeaders()),
+                new HttpEntity<>(updateRequest, tenantHeaders()),
                 EmissionFactorDTO.class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -197,17 +219,17 @@ class EmissionFactorIntegrationTest {
     // @spec:AC-077 Excluir fator de emissão
     @Test
     void deveExcluirFatorDeEmissao() {
-        EmissionFactorDTO created = createFactor((short) 2024, (short) 5, "0.0700", "Para remover");
+        EmissionFactorDTO created = createFactor(YearMonth.of(2024, 5), "0.0700", "Para remover");
 
         ResponseEntity<Void> deleteResponse = restTemplate.exchange(
                 "/emission-factors/" + created.id(), HttpMethod.DELETE,
-                new HttpEntity<>(authHeaders()), Void.class);
+                new HttpEntity<>(tenantHeaders()), Void.class);
 
         assertEquals(HttpStatus.NO_CONTENT, deleteResponse.getStatusCode());
 
         ResponseEntity<String> list = restTemplate.exchange(
                 "/emission-factors?year=2024&size=100", HttpMethod.GET,
-                new HttpEntity<>(authHeaders()), String.class);
+                new HttpEntity<>(tenantHeaders()), String.class);
         assertFalse(list.getBody().contains(created.id().toString()));
     }
 
@@ -216,7 +238,7 @@ class EmissionFactorIntegrationTest {
     void devePermitirLeituraParaQualquerUsuarioAutenticado() {
         ResponseEntity<String> response = restTemplate.exchange(
                 "/emission-factors?year=2025&size=10", HttpMethod.GET,
-                new HttpEntity<>(authHeaders()), String.class);
+                new HttpEntity<>(tenantHeaders()), String.class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());

@@ -35,6 +35,8 @@ import { MONTH_NAMES } from '@/lib/constants'
 import {
   type EmissionFactorFormValues,
   emissionFactorFormSchema,
+  fromReferenceMonth,
+  toReferenceMonth,
 } from '@/lib/schemas/emissionFactorSchema'
 
 const CURRENT_YEAR = new Date().getFullYear()
@@ -109,7 +111,8 @@ export function EmissionFactorsPage() {
   }
 
   function openEdit(factor: EmissionFactor) {
-    reset({ year: factor.year, month: factor.month, value: factor.value, source: factor.source })
+    const { year, month } = fromReferenceMonth(factor.referenceMonth)
+    reset({ year, month, value: factor.value, source: factor.source })
     saveMutation.reset()
     setEditing({ mode: 'edit', factor })
   }
@@ -121,7 +124,11 @@ export function EmissionFactorsPage() {
   }
 
   function onSubmit(values: EmissionFactorFormValues) {
-    saveMutation.mutate(values)
+    saveMutation.mutate({
+      referenceMonth: toReferenceMonth(values.year, values.month),
+      value: values.value,
+      source: values.source,
+    })
   }
 
   return (
@@ -248,8 +255,12 @@ export function EmissionFactorsPage() {
           <TableBody>
             {factors.map((f) => (
               <TableRow key={f.id}>
-                <TableCell className="px-4 font-mono text-xs">{f.year}</TableCell>
-                <TableCell className="px-4">{MONTH_NAMES[f.month]}</TableCell>
+                <TableCell className="px-4 font-mono text-xs">
+                  {fromReferenceMonth(f.referenceMonth).year}
+                </TableCell>
+                <TableCell className="px-4">
+                  {MONTH_NAMES[fromReferenceMonth(f.referenceMonth).month]}
+                </TableCell>
                 <TableCell className="px-4 text-right font-mono text-xs">{f.value}</TableCell>
                 <TableCell className="px-4 text-xs text-muted-foreground max-w-xs truncate">
                   {f.source}

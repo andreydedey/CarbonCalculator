@@ -5,16 +5,14 @@ import type { PageResponse } from './types'
 
 export type EmissionFactor = {
   id: string
-  year: number
-  month: number
+  referenceMonth: string
   value: number
   source: string
   createdAt: string
 }
 
 export type CreateEmissionFactorPayload = {
-  year: number
-  month: number
+  referenceMonth: string
   value: number
   source: string
 }

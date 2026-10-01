@@ -8,3 +8,12 @@ export const emissionFactorFormSchema = z.object({
 })
 
 export type EmissionFactorFormValues = z.infer<typeof emissionFactorFormSchema>
+
+export function toReferenceMonth(year: number, month: number): string {
+  return `${year}-${String(month).padStart(2, '0')}`
+}
+
+export function fromReferenceMonth(ref: string): { year: number; month: number } {
+  const [y, m] = ref.split('-').map(Number)
+  return { year: y, month: m }
+}

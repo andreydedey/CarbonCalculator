@@ -41,8 +41,8 @@ public class EmissionFactorController {
 
     @GetMapping
     public PageResponse<EmissionFactorDTO> list(
-            @RequestParam(required = false) Short year,
-            @PageableDefault(sort = "year", direction = Sort.Direction.DESC) Pageable pageable) {
+            @RequestParam(required = false) Integer year,
+            @PageableDefault(sort = "referenceMonth", direction = Sort.Direction.DESC) Pageable pageable) {
         return PageResponse.from(emissionFactorService.list(year, pageable));
     }
 

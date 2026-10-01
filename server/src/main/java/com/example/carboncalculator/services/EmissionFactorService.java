@@ -1,6 +1,7 @@
 package com.example.carboncalculator.services;
 
 import java.math.BigDecimal;
+import java.time.YearMonth;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -10,13 +11,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.carboncalculator.config.TenantContext;
 import com.example.carboncalculator.dto.CreateEmissionFactorRequest;
 import com.example.carboncalculator.dto.EmissionFactorDTO;
 import com.example.carboncalculator.entities.EmissionFactor;
+import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.exceptions.DuplicateEmissionFactorException;
 import com.example.carboncalculator.exceptions.EmissionFactorNotFoundException;
 import com.example.carboncalculator.exceptions.InvalidEmissionFactorException;
 import com.example.carboncalculator.repositories.EmissionFactorRepository;
+import com.example.carboncalculator.repositories.InstitutionRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,32 +31,41 @@ public class EmissionFactorService {
     private static final Logger log = LoggerFactory.getLogger(EmissionFactorService.class);
 
     private final EmissionFactorRepository repository;
+    private final InstitutionRepository institutionRepository;
 
     @Transactional
     public EmissionFactorDTO create(CreateEmissionFactorRequest request) {
         validate(request);
 
-        if (repository.existsByYearAndMonth(request.year(), request.month())) {
-            throw new DuplicateEmissionFactorException(request.year(), request.month());
+        if (repository.existsByReferenceMonth(request.referenceMonth())) {
+            throw new DuplicateEmissionFactorException(request.referenceMonth());
         }
 
+        Institution institution = institutionRepository.getReferenceById(
+                UUID.fromString(TenantContext.getInstitutionId()));
+
         EmissionFactor factor = EmissionFactor.builder()
-                .year(request.year())
-                .month(request.month())
+                .referenceMonth(request.referenceMonth())
                 .value(request.value())
                 .source(request.source().trim())
+                .institution(institution)
                 .build();
 
         EmissionFactorDTO dto = toDTO(repository.save(factor));
-        log.info("Emission factor created: id={}, {}/{}", dto.id(), request.month(), request.year());
+        log.info("Emission factor created: id={}, month={}", dto.id(), dto.referenceMonth());
         return dto;
     }
 
     @Transactional(readOnly = true)
-    public Page<EmissionFactorDTO> list(Short year, Pageable pageable) {
-        Page<EmissionFactor> page = year != null
-                ? repository.findByYear(year, pageable)
-                : repository.findAll(pageable);
+    public Page<EmissionFactorDTO> list(Integer year, Pageable pageable) {
+        Page<EmissionFactor> page;
+        if (year != null) {
+            YearMonth start = YearMonth.of(year, 1);
+            YearMonth end = YearMonth.of(year, 12);
+            page = repository.findByReferenceMonthBetween(start, end, pageable);
+        } else {
+            page = repository.findAll(pageable);
+        }
         return page.map(this::toDTO);
     }
 
@@ -62,12 +75,11 @@ public class EmissionFactorService {
 
         EmissionFactor factor = getOrThrow(id);
 
-        if (repository.existsByYearAndMonthAndIdNot(request.year(), request.month(), id)) {
-            throw new DuplicateEmissionFactorException(request.year(), request.month());
+        if (repository.existsByReferenceMonthAndIdNot(request.referenceMonth(), id)) {
+            throw new DuplicateEmissionFactorException(request.referenceMonth());
         }
 
-        factor.setYear(request.year());
-        factor.setMonth(request.month());
+        factor.setReferenceMonth(request.referenceMonth());
         factor.setValue(request.value());
         factor.setSource(request.source().trim());
 
@@ -88,11 +100,8 @@ public class EmissionFactorService {
     }
 
     private void validate(CreateEmissionFactorRequest request) {
-        if (request.year() == null) {
-            throw new InvalidEmissionFactorException("O ano é obrigatório.");
-        }
-        if (request.month() == null || request.month() < 1 || request.month() > 12) {
-            throw new InvalidEmissionFactorException("O mês deve estar entre 1 e 12.");
+        if (request.referenceMonth() == null) {
+            throw new InvalidEmissionFactorException("O mês de referência é obrigatório.");
         }
         if (request.value() == null || request.value().compareTo(BigDecimal.ZERO) <= 0) {
             throw new InvalidEmissionFactorException("O valor do fator deve ser maior que zero.");
@@ -105,8 +114,7 @@ public class EmissionFactorService {
     private EmissionFactorDTO toDTO(EmissionFactor factor) {
         return new EmissionFactorDTO(
                 factor.getId(),
-                factor.getYear(),
-                factor.getMonth(),
+                factor.getReferenceMonth(),
                 factor.getValue(),
                 factor.getSource(),
                 factor.getCreatedAt());
