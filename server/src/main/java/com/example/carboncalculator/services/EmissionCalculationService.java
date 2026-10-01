@@ -178,14 +178,8 @@ public class EmissionCalculationService {
 
             double labEnergy = 0;
             double labEmission = 0;
-            double labComputerEmission = 0;
-            double labMonitorEmission = 0;
             int labStationCount = 0;
-            List<MonthEmission> labByMonth = new ArrayList<>();
             List<ConfigurationEmission> labConfigs = new ArrayList<>();
-
-            // Per-month totals for this lab
-            Map<String, double[]> labMonthAcc = new LinkedHashMap<>();
 
             for (LaboratoryEquipment le : equipment) {
                 Configuration config = le.getConfiguration();
@@ -202,7 +196,7 @@ public class EmissionCalculationService {
                 // Track input consumptions (deduplicated)
                 if (seenConfigs.add(config.getId())) {
                     inputConsumptions.add(new InputConsumption(
-                            config.getId(), configLabel(config), "specification",
+                            config.getId(), configLabel(config),
                             computerWatts, monitorWatts, totalWatts));
                 }
 
@@ -217,19 +211,9 @@ public class EmissionCalculationService {
 
                     double energyKwh = totalWatts * hours * qty / 1000.0;
                     double emissionKg = energyKwh * factor.getValue().doubleValue();
-                    double computerEnergyKwh = computerWatts * hours * qty / 1000.0;
-                    double monitorEnergyKwh = monitorWatts * hours * qty / 1000.0;
-                    double computerEmission = computerEnergyKwh * factor.getValue().doubleValue();
-                    double monitorEmission = monitorEnergyKwh * factor.getValue().doubleValue();
 
                     configEnergy += energyKwh;
                     configEmission += emissionKg;
-                    labComputerEmission += computerEmission;
-                    labMonitorEmission += monitorEmission;
-
-                    labMonthAcc.computeIfAbsent(monthKey, k -> new double[2]);
-                    labMonthAcc.get(monthKey)[0] += energyKwh;
-                    labMonthAcc.get(monthKey)[1] += emissionKg;
 
                     // Global month aggregation
                     monthAgg.computeIfAbsent(monthKey, k -> new double[2]);
@@ -237,14 +221,16 @@ public class EmissionCalculationService {
                     monthAgg.get(monthKey)[1] += emissionKg;
 
                     // Equipment model aggregation
+                    double computerEnergyKwh = computerWatts * hours * qty / 1000.0;
                     equipModelAgg.computeIfAbsent(model.getId(), k -> new double[1]);
-                    equipModelAgg.get(model.getId())[0] += computerEmission;
+                    equipModelAgg.get(model.getId())[0] += computerEnergyKwh * factor.getValue().doubleValue();
                     equipModelNames.putIfAbsent(model.getId(), model.getName());
 
                     // Monitor model aggregation
                     if (monitor != null) {
+                        double monitorEnergyKwh = monitorWatts * hours * qty / 1000.0;
                         monitorModelAgg.computeIfAbsent(monitor.getId(), k -> new double[1]);
-                        monitorModelAgg.get(monitor.getId())[0] += monitorEmission;
+                        monitorModelAgg.get(monitor.getId())[0] += monitorEnergyKwh * factor.getValue().doubleValue();
                         monitorModelNames.putIfAbsent(monitor.getId(), monitor.getName());
                     }
 
@@ -258,20 +244,7 @@ public class EmissionCalculationService {
 
                 labConfigs.add(new ConfigurationEmission(
                         config.getId(), configLabel(config), qty,
-                        totalWatts, "specification",
-                        computerWatts, monitorWatts,
-                        round2(configEnergy), round2(configEmission)));
-            }
-
-            // Build lab by-month
-            for (YearMonth ym : months) {
-                String monthKey = ym.format(MONTH_FMT);
-                double[] vals = labMonthAcc.getOrDefault(monthKey, new double[2]);
-                if (vals[0] > 0 || vals[1] > 0) {
-                    labByMonth.add(new MonthEmission(monthKey, round2(vals[0]), round2(vals[1]),
-                            factorsByMonth.containsKey(monthKey) ? factorsByMonth.get(monthKey).getValue() : null,
-                            schoolDaysByMonth.getOrDefault(monthKey, 0)));
-                }
+                        totalWatts, round2(configEnergy), round2(configEmission)));
             }
 
             totalEnergy += labEnergy;
@@ -280,8 +253,7 @@ public class EmissionCalculationService {
             labEmissions.add(new LaboratoryEmission(
                     lab.getId(), lab.getName(),
                     round2(labEnergy), round2(labEmission), labStationCount,
-                    round2(labComputerEmission), round2(labMonitorEmission),
-                    labByMonth, labConfigs));
+                    labConfigs));
         }
 
         // Build global by-month
@@ -347,34 +319,37 @@ public class EmissionCalculationService {
                 })
                 .toList();
 
-        PeriodInfo periodInfo = new PeriodInfo(
-                period.getId(), period.getName(),
-                period.getStartDate().toString(), period.getEndDate().toString());
-
         return new EmissionResultDTO(
-                periodInfo,
+                period.getId(), period.getName(),
+                period.getStartDate().toString(), period.getEndDate().toString(),
                 round2(finalTotalEmission),
                 round2(finalTotalEnergy),
-                new Equivalences(carKm, treesNeeded),
+                carKm, treesNeeded,
                 byMonth, labEmissions, byShift, byDayOfWeek,
                 byEquipmentModel, byMonitorModel, byOS,
-                new Inputs(inputFactors, inputConsumptions));
+                inputFactors, inputConsumptions);
     }
 
     public String exportCsv(UUID periodId) {
         EmissionResultDTO result = calculate(periodId);
         StringBuilder sb = new StringBuilder();
-        sb.append("Laboratório,Mês,Energia (kWh),Emissão (kgCO₂),Fator (kgCO₂/kWh),Dias Letivos\n");
+        sb.append("Mês,Energia (kWh),Emissão (kgCO₂),Fator (kgCO₂/kWh),Dias Letivos\n");
 
+        for (MonthEmission month : result.byMonth()) {
+            sb.append(month.month()).append(',');
+            sb.append(String.format("%.2f", month.energyKwh())).append(',');
+            sb.append(String.format("%.2f", month.emissionKg())).append(',');
+            sb.append(month.emissionFactor() != null ? month.emissionFactor().toPlainString() : "").append(',');
+            sb.append(month.schoolDays()).append('\n');
+        }
+
+        // Per-laboratory totals
+        sb.append("\nLaboratório,Estações,Energia (kWh),Emissão (kgCO₂)\n");
         for (LaboratoryEmission lab : result.byLaboratory()) {
-            for (MonthEmission month : lab.byMonth()) {
-                sb.append(escapeCsv(lab.laboratoryName())).append(',');
-                sb.append(month.month()).append(',');
-                sb.append(String.format("%.2f", month.energyKwh())).append(',');
-                sb.append(String.format("%.2f", month.emissionKg())).append(',');
-                sb.append(month.emissionFactor() != null ? month.emissionFactor().toPlainString() : "").append(',');
-                sb.append(month.schoolDays()).append('\n');
-            }
+            sb.append(escapeCsv(lab.laboratoryName())).append(',');
+            sb.append(lab.stationCount()).append(',');
+            sb.append(String.format("%.2f", lab.energyKwh())).append(',');
+            sb.append(String.format("%.2f", lab.emissionKg())).append('\n');
         }
 
         return sb.toString();

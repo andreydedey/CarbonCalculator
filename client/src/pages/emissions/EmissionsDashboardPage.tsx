@@ -95,9 +95,8 @@ function ResultMetrics({
   periodName: string
 }) {
   const avgFactor =
-    result.inputs.emissionFactors.length > 0
-      ? result.inputs.emissionFactors.reduce((s, f) => s + f.value, 0) /
-        result.inputs.emissionFactors.length
+    result.emissionFactors.length > 0
+      ? result.emissionFactors.reduce((s, f) => s + f.value, 0) / result.emissionFactors.length
       : null
 
   const TARIFF = 0.7
@@ -342,8 +341,8 @@ export function EmissionsDashboardPage() {
               <LabDetailTable result={result} />
 
               <EquivalenceCards
-                carKm={result.equivalences.carKm}
-                treesNeeded={result.equivalences.treesNeeded}
+                carKm={result.equivalentCarKm}
+                treesNeeded={result.equivalentTreesNeeded}
                 totalEnergyKwh={result.totalEnergyKwh}
               />
             </div>

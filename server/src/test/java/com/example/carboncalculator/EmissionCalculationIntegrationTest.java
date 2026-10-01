@@ -512,9 +512,7 @@ class EmissionCalculationIntegrationTest {
         assertFalse(labResult.configurations().isEmpty());
         EmissionResultDTO.ConfigurationEmission config = labResult.configurations().get(0);
 
-        assertEquals(140, config.computerWatts()); // 65 CPU + 75 GPU
-        assertEquals(21, config.monitorWatts());
-        assertEquals(161, config.consumptionWatts()); // total
+        assertEquals(161, config.consumptionWatts()); // 65 CPU + 75 GPU + 21 monitor
     }
 
     // @spec:AC-086 Configuração sem monitor calcula só computador
@@ -552,25 +550,7 @@ class EmissionCalculationIntegrationTest {
         assertFalse(labResult.configurations().isEmpty());
         EmissionResultDTO.ConfigurationEmission config = labResult.configurations().get(0);
 
-        assertEquals(65, config.computerWatts());
-        assertEquals(0, config.monitorWatts());
         assertEquals(65, config.consumptionWatts());
-        // Monitor emission should be zero
-        assertEquals(0.0, labResult.monitorEmissionKg());
-    }
-
-    // @spec:AC-087 Decomposição computador vs. monitor soma igual ao total
-    @Test
-    void deveDecomposicaoComputadorMonitorSomarIgualAoTotal() {
-        setupStandardScenario();
-
-        EmissionResultDTO result = getEmissions(periodId);
-
-        for (EmissionResultDTO.LaboratoryEmission lab : result.byLaboratory()) {
-            double sum = lab.computerEmissionKg() + lab.monitorEmissionKg();
-            assertEquals(lab.emissionKg(), sum, 0.02,
-                    "computerEmission + monitorEmission should equal lab total for " + lab.laboratoryName());
-        }
     }
 
     // @spec:AC-088 Decomposição por modelo de equipamento soma igual ao total do lab
@@ -613,12 +593,12 @@ class EmissionCalculationIntegrationTest {
         // carKm = totalEmission / 0.1667
         long expectedCarKm = BigDecimal.valueOf(result.totalEmissionKg())
                 .divide(new BigDecimal("0.1667"), 0, java.math.RoundingMode.HALF_UP).longValue();
-        assertEquals(expectedCarKm, result.equivalences().carKm());
+        assertEquals(expectedCarKm, result.equivalentCarKm());
 
         // treesNeeded = totalEmission / 145.14
         double expectedTrees = BigDecimal.valueOf(result.totalEmissionKg())
                 .divide(new BigDecimal("145.14"), 2, java.math.RoundingMode.HALF_UP).doubleValue();
-        assertEquals(expectedTrees, result.equivalences().treesNeeded(), 0.01);
+        assertEquals(expectedTrees, result.equivalentTreesNeeded(), 0.01);
     }
 
     // @spec:AC-091 Feriados descontados do cálculo
