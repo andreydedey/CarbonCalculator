@@ -14,7 +14,7 @@
 - Esforço: baixo
 - Notas: Mock de EmissionFactorRepository e InstitutionRepository. Testa cada validação do service: mês nulo, valor <= 0, fonte em branco, duplicata na criação e na atualização, not found no delete.
 
-## T-053 — Frontend: computeEmissionFactorRows + testes [pendente]
+## T-053 — Frontend: computeEmissionFactorRows + testes [concluida]
 - Refs: US-035, AC-116, AC-117, AC-118
 - Arquivos: client/src/lib/utils/emission-factor-rows.ts, client/src/lib/utils/emission-factor-rows.test.ts
 - Esforço: baixo
