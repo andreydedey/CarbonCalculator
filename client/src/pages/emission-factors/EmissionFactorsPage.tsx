@@ -1,12 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { Check, Info, Leaf, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { Info, Leaf, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -44,7 +46,21 @@ import {
 } from '@/lib/utils/emission-factor-rows'
 
 // Short month names for "Mmm/AAAA" format
-const MONTH_SHORT = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+const MONTH_SHORT = [
+  '',
+  'Jan',
+  'Fev',
+  'Mar',
+  'Abr',
+  'Mai',
+  'Jun',
+  'Jul',
+  'Ago',
+  'Set',
+  'Out',
+  'Nov',
+  'Dez',
+]
 
 const CURRENT_YEAR = new Date().getFullYear()
 const YEAR_OPTIONS = Array.from({ length: 10 }, (_, i) => CURRENT_YEAR - 5 + i)
@@ -55,9 +71,9 @@ function formatCompetencia(referenceMonth: string): string {
 }
 
 function computeVariacao(rows: EmissionFactorRow[], referenceMonth: string): string {
-  const existingRows = rows.filter((r) => r.factor !== null).sort((a, b) =>
-    a.referenceMonth < b.referenceMonth ? -1 : 1,
-  )
+  const existingRows = rows
+    .filter((r) => r.factor !== null)
+    .sort((a, b) => (a.referenceMonth < b.referenceMonth ? -1 : 1))
   const idx = existingRows.findIndex((r) => r.referenceMonth === referenceMonth)
   if (idx <= 0) return '—'
   const curr = existingRows[idx].factor!.value
@@ -90,13 +106,13 @@ function StatusBadge({ status }: { status: EmissionFactorRowStatus }) {
   )
 }
 
-type EditingState = null | { mode: 'add' } | { mode: 'edit'; factor: EmissionFactor }
+type ModalState = null | { mode: 'add' } | { mode: 'edit'; factor: EmissionFactor }
 
 export function EmissionFactorsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const yearParam = searchParams.get('year')
   const yearFilter = yearParam === 'all' ? undefined : yearParam ? Number(yearParam) : CURRENT_YEAR
-  const [editing, setEditing] = useState<EditingState>(null)
+  const [modal, setModal] = useState<ModalState>(null)
 
   const {
     data: page,
@@ -125,12 +141,12 @@ export function EmissionFactorsPage() {
 
   const saveMutation = useMutation({
     mutationFn: (payload: CreateEmissionFactorPayload) =>
-      editing?.mode === 'edit'
-        ? updateEmissionFactor(editing.factor.id, payload)
+      modal?.mode === 'edit'
+        ? updateEmissionFactor(modal.factor.id, payload)
         : createEmissionFactor(payload),
     onSuccess: () => {
-      const wasEdit = editing?.mode === 'edit'
-      closeForm()
+      const wasEdit = modal?.mode === 'edit'
+      closeModal()
       refetch()
       toast.success(wasEdit ? 'Fator atualizado.' : 'Fator cadastrado.')
     },
@@ -157,27 +173,27 @@ export function EmissionFactorsPage() {
   function openAdd() {
     reset({ year: yearFilter ?? CURRENT_YEAR, month: 1, value: 0, source: '' })
     saveMutation.reset()
-    setEditing({ mode: 'add' })
+    setModal({ mode: 'add' })
   }
 
   function openEdit(factor: EmissionFactor) {
     const { year, month } = fromReferenceMonth(factor.referenceMonth)
     reset({ year, month, value: factor.value, source: factor.source })
     saveMutation.reset()
-    setEditing({ mode: 'edit', factor })
+    setModal({ mode: 'edit', factor })
   }
 
   function openAddForMonth(referenceMonth: string) {
     const { year, month } = fromReferenceMonth(referenceMonth)
     reset({ year, month, value: 0, source: '' })
     saveMutation.reset()
-    setEditing({ mode: 'add' })
+    setModal({ mode: 'add' })
   }
 
-  function closeForm() {
+  function closeModal() {
     reset()
     saveMutation.reset()
-    setEditing(null)
+    setModal(null)
   }
 
   function onSubmit(values: EmissionFactorFormValues) {
@@ -212,7 +228,7 @@ export function EmissionFactorsPage() {
               ))}
             </SelectContent>
           </Select>
-          <Button onClick={openAdd} disabled={editing !== null}>
+          <Button onClick={openAdd}>
             <Plus className="size-4" />
             Novo Fator
           </Button>
@@ -235,76 +251,79 @@ export function EmissionFactorsPage() {
         </div>
       </div>
 
-      {/* Inline add/edit form */}
-      {editing && (
-        <div className="rounded-lg border border-[#DDE3DD] bg-muted/30 p-4 flex flex-col gap-3">
-          <span className="text-sm font-medium text-[#192219]">
-            {editing.mode === 'add' ? 'Novo fator de emissão' : 'Editar fator'}
-          </span>
-          <div className="grid grid-cols-5 gap-3 items-start">
-            <div className="flex flex-col gap-1">
-              <Input type="number" placeholder="Ano" {...register('year')} />
-              {errors.year && (
-                <span className="text-xs text-destructive">{errors.year.message}</span>
-              )}
+      {/* Add / edit modal */}
+      <Dialog
+        open={modal !== null}
+        onOpenChange={(open) => {
+          if (!open) closeModal()
+        }}
+      >
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle>
+              {modal?.mode === 'edit' ? 'Editar fator de emissão' : 'Novo fator de emissão'}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 pt-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <Label>Ano</Label>
+                <Input type="number" placeholder="2025" {...register('year')} />
+                {errors.year && (
+                  <span className="text-xs text-destructive">{errors.year.message}</span>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label>Mês</Label>
+                <Select
+                  value={watch('month')?.toString()}
+                  onValueChange={(v) => setValue('month', Number(v), { shouldValidate: true })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Mês" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MONTH_SHORT.slice(1).map((name, idx) => (
+                      <SelectItem key={name} value={(idx + 1).toString()}>
+                        {name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.month && (
+                  <span className="text-xs text-destructive">{errors.month.message}</span>
+                )}
+              </div>
             </div>
-            <div className="flex flex-col gap-1">
-              <Select
-                value={watch('month')?.toString()}
-                onValueChange={(v) => setValue('month', Number(v), { shouldValidate: true })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Mês" />
-                </SelectTrigger>
-                <SelectContent>
-                  {MONTH_SHORT.slice(1).map((name, idx) => (
-                    <SelectItem key={name} value={(idx + 1).toString()}>
-                      {name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.month && (
-                <span className="text-xs text-destructive">{errors.month.message}</span>
-              )}
-            </div>
-            <div className="flex flex-col gap-1">
-              <Input
-                type="number"
-                step="0.000001"
-                placeholder="Valor (kgCO₂/kWh)"
-                {...register('value')}
-              />
+            <div className="flex flex-col gap-1.5">
+              <Label>Valor (kgCO₂/kWh)</Label>
+              <Input type="number" step="0.000001" placeholder="0.000000" {...register('value')} />
               {errors.value && (
                 <span className="text-xs text-destructive">{errors.value.message}</span>
               )}
             </div>
-            <div className="flex flex-col gap-1 col-span-2">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Fonte (ex: MCTI — Fator médio SIN)"
-                  className="flex-1"
-                  {...register('source')}
-                />
-                <Button
-                  type="button"
-                  size="icon"
-                  disabled={saveMutation.isPending}
-                  onClick={handleSubmit(onSubmit)}
-                >
-                  <Check className="size-4" />
-                </Button>
-                <Button type="button" variant="ghost" size="icon" onClick={closeForm}>
-                  <X className="size-4" />
-                </Button>
-              </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>Fonte</Label>
+              <Input placeholder="ex: MCTI — Fator médio SIN" {...register('source')} />
               {errors.source && (
                 <span className="text-xs text-destructive">{errors.source.message}</span>
               )}
             </div>
-          </div>
-        </div>
-      )}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={closeModal}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={saveMutation.isPending}>
+                {saveMutation.isPending
+                  ? 'Salvando…'
+                  : modal?.mode === 'edit'
+                    ? 'Salvar'
+                    : 'Cadastrar'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Hero card — fator em uso */}
       {activeRow?.factor && (
@@ -430,7 +449,9 @@ export function EmissionFactorsPage() {
                         <span className="text-[13px] text-[#6D786D]">—</span>
                       )}
                     </TableCell>
-                    <TableCell className={`px-4 py-0 h-[52px] text-[13px] font-semibold ${varColor}`}>
+                    <TableCell
+                      className={`px-4 py-0 h-[52px] text-[13px] font-semibold ${varColor}`}
+                    >
                       {varText}
                     </TableCell>
                     <TableCell className="px-4 py-0 h-[52px] max-w-[280px]">
@@ -450,7 +471,7 @@ export function EmissionFactorsPage() {
                               size="icon"
                               className="size-7 text-[#6D786D] hover:text-[#192219]"
                               onClick={() => openEdit(row.factor!)}
-                              disabled={editing !== null}
+                              disabled={modal !== null}
                             >
                               <Pencil className="size-3.5" />
                             </Button>
@@ -459,7 +480,7 @@ export function EmissionFactorsPage() {
                               size="icon"
                               className="size-7 text-destructive"
                               onClick={() => deleteMutation.mutate(row.factor!.id)}
-                              disabled={editing !== null}
+                              disabled={modal !== null}
                             >
                               <Trash2 className="size-3.5" />
                             </Button>
@@ -470,7 +491,7 @@ export function EmissionFactorsPage() {
                             size="sm"
                             className="h-7 text-xs border-[#C3E1D0] text-[#24744D] hover:bg-[#DEECE2]"
                             onClick={() => openAddForMonth(row.referenceMonth)}
-                            disabled={editing !== null}
+                            disabled={modal !== null}
                           >
                             Cadastrar
                           </Button>
