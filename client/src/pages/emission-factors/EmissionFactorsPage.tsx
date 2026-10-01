@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -38,6 +39,28 @@ import {
   fromReferenceMonth,
   toReferenceMonth,
 } from '@/lib/schemas/emissionFactorSchema'
+import {
+  computeEmissionFactorRows,
+  type EmissionFactorRowStatus,
+} from '@/lib/utils/emission-factor-rows'
+
+function StatusBadge({ status }: { status: EmissionFactorRowStatus }) {
+  if (status === 'em-uso') {
+    return (
+      <Badge className="border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-950/30 dark:text-green-400">
+        Em uso
+      </Badge>
+    )
+  }
+  if (status === 'pendente') {
+    return (
+      <Badge className="border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-400">
+        Pendente
+      </Badge>
+    )
+  }
+  return <Badge variant="secondary">Anterior</Badge>
+}
 
 const CURRENT_YEAR = new Date().getFullYear()
 const YEAR_OPTIONS = Array.from({ length: 10 }, (_, i) => CURRENT_YEAR - 5 + i)
@@ -60,6 +83,7 @@ export function EmissionFactorsPage() {
   })
 
   const factors = page?.content ?? []
+  const rows = computeEmissionFactorRows(factors, new Date(), yearFilter ?? CURRENT_YEAR)
 
   const {
     register,
@@ -115,6 +139,13 @@ export function EmissionFactorsPage() {
     reset({ year, month, value: factor.value, source: factor.source })
     saveMutation.reset()
     setEditing({ mode: 'edit', factor })
+  }
+
+  function openAddForMonth(referenceMonth: string) {
+    const { year, month } = fromReferenceMonth(referenceMonth)
+    reset({ year, month, value: 0, source: '' })
+    saveMutation.reset()
+    setEditing({ mode: 'add' })
   }
 
   function closeForm() {
@@ -233,7 +264,7 @@ export function EmissionFactorsPage() {
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>
-      ) : factors.length === 0 ? (
+      ) : rows.length === 0 ? (
         <div className="rounded-lg border">
           <div className="flex items-center justify-center px-4 py-8">
             <p className="text-sm text-muted-foreground italic">
@@ -249,46 +280,64 @@ export function EmissionFactorsPage() {
               <TableHead className="px-4">Mês</TableHead>
               <TableHead className="px-4 text-right">Valor (kgCO₂/kWh)</TableHead>
               <TableHead className="px-4">Fonte</TableHead>
+              <TableHead className="px-4">Status</TableHead>
               <TableHead className="px-4 text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {factors.map((f) => (
-              <TableRow key={f.id}>
-                <TableCell className="px-4 font-mono text-xs">
-                  {fromReferenceMonth(f.referenceMonth).year}
-                </TableCell>
-                <TableCell className="px-4">
-                  {MONTH_NAMES[fromReferenceMonth(f.referenceMonth).month]}
-                </TableCell>
-                <TableCell className="px-4 text-right font-mono text-xs">{f.value}</TableCell>
-                <TableCell className="px-4 text-xs text-muted-foreground max-w-xs truncate">
-                  {f.source}
-                </TableCell>
-                <TableCell className="px-4 text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-7"
-                      onClick={() => openEdit(f)}
-                      disabled={editing !== null}
-                    >
-                      <Pencil className="size-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-7 text-destructive"
-                      onClick={() => deleteMutation.mutate(f.id)}
-                      disabled={editing !== null}
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+            {rows.map((row) => {
+              const { year, month } = fromReferenceMonth(row.referenceMonth)
+              return (
+                <TableRow key={row.referenceMonth}>
+                  <TableCell className="px-4 font-mono text-xs">{year}</TableCell>
+                  <TableCell className="px-4">{MONTH_NAMES[month]}</TableCell>
+                  <TableCell className="px-4 text-right font-mono text-xs">
+                    {row.factor ? row.factor.value : '—'}
+                  </TableCell>
+                  <TableCell className="px-4 text-xs text-muted-foreground max-w-xs truncate">
+                    {row.factor ? row.factor.source : '—'}
+                  </TableCell>
+                  <TableCell className="px-4">
+                    <StatusBadge status={row.status} />
+                  </TableCell>
+                  <TableCell className="px-4 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      {row.factor ? (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7"
+                            onClick={() => openEdit(row.factor)}
+                            disabled={editing !== null}
+                          >
+                            <Pencil className="size-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 text-destructive"
+                            onClick={() => deleteMutation.mutate(row.factor.id)}
+                            disabled={editing !== null}
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openAddForMonth(row.referenceMonth)}
+                          disabled={editing !== null}
+                        >
+                          Cadastrar
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )
+            })}
           </TableBody>
         </Table>
       )}
