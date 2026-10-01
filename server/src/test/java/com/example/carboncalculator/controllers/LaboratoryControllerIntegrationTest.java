@@ -86,8 +86,7 @@ class LaboratoryControllerIntegrationTest {
 
     private UUID createInstitutionAndReturnId(String acronymPrefix) {
         CreateInstitutionRequest request = new CreateInstitutionRequest(
-                "Instituição " + acronymPrefix, acronymPrefix + "-" + System.nanoTime(), "Cidade", "PA",
-                new CreateLaboratoryRequest("LABCOMP-01", null));
+                "Instituição " + acronymPrefix, acronymPrefix + "-" + System.nanoTime(), "Cidade", "PA");
         ResponseEntity<InstitutionDTO> response = restTemplate.postForEntity(
                 "/institutions", request, InstitutionDTO.class);
         InstitutionDTO institution = response.getBody();

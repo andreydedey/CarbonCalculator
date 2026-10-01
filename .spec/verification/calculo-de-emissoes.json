@@ -1,0 +1,162 @@
+{
+  "feature": "calculo-de-emissoes",
+  "timestamp": "2026-09-30T13:39:26.692Z",
+  "gitRev": "34a80f8",
+  "command": "node --test \"client/src/lib/api/emissions.test.ts\" && cd server && DOCKER_HOST=unix:///Users/andreydedey/.colima/default/docker.sock TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock JAVA_HOME=/opt/homebrew/Cellar/openjdk@25/25.0.4/libexec/openjdk.jdk/Contents/Home ./mvnw test -Dtest='EmissionFactorIntegrationTest,EmissionCalculationIntegrationTest,InstitutionServiceTest' -Dsurefire.useFile=false",
+  "reporter": "exitcode",
+  "exitCode": 0,
+  "testsParsed": 0,
+  "results": {
+    "AC-072": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-073": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-074": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-075": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-076": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-077": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-078": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-079": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-080": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-081": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-082": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-083": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-084": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-085": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-086": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-087": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-088": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-089": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-090": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-091": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-092": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-093": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-094": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-095": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-096": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-097": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-098": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-099": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-100": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    },
+    "AC-101": {
+      "status": "pass",
+      "testName": null,
+      "method": "exitcode"
+    }
+  },
+  "principles": {}
+}
