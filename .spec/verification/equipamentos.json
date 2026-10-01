@@ -1,0 +1,97 @@
+{
+  "feature": "equipamentos",
+  "timestamp": "2026-10-01T13:46:56.835Z",
+  "gitRev": "65d9856",
+  "command": "bash .spec/scripts/run-all-tests.sh",
+  "reporter": "tap",
+  "exitCode": 0,
+  "testsParsed": 114,
+  "results": {
+    "AC-034": {
+      "status": "pass",
+      "testName": "@spec:AC-034",
+      "method": "tap"
+    },
+    "AC-035": {
+      "status": "pass",
+      "testName": "@spec:AC-035",
+      "method": "tap"
+    },
+    "AC-036": {
+      "status": "pass",
+      "testName": "@spec:AC-036 deveCriarModeloSemMonitorComSucesso",
+      "method": "tap"
+    },
+    "AC-037": {
+      "status": "pass",
+      "testName": "@spec:AC-037 deveListarModelosPaginadosOrdenadosPorNome",
+      "method": "tap"
+    },
+    "AC-038": {
+      "status": "pass",
+      "testName": "@spec:AC-038 deveBuscarModelosPorNomeCaseInsensitive",
+      "method": "tap"
+    },
+    "AC-039": {
+      "status": "pass",
+      "testName": "@spec:AC-039 deveIsolarModelosEntreInstituicoesPorRls",
+      "method": "tap"
+    },
+    "AC-040": {
+      "status": "pass",
+      "testName": "@spec:AC-040 deveEditarModeloDeEquipamento",
+      "method": "tap"
+    },
+    "AC-041": {
+      "status": "pass",
+      "testName": "@spec:AC-041",
+      "method": "tap"
+    },
+    "AC-042": {
+      "status": "pass",
+      "testName": "@spec:AC-042",
+      "method": "tap"
+    },
+    "AC-043": {
+      "status": "pass",
+      "testName": "@spec:AC-043 deveVincularConfiguracaoAoLaboratorioComSistemaOperacionalEQuantidade",
+      "method": "tap"
+    },
+    "AC-044": {
+      "status": "pass",
+      "testName": "@spec:AC-044 deveRecusarVinculacaoComQuantidadeZeroOuNegativa",
+      "method": "tap"
+    },
+    "AC-045": {
+      "status": "pass",
+      "testName": "@spec:AC-045",
+      "method": "tap"
+    },
+    "AC-046": {
+      "status": "pass",
+      "testName": "@spec:AC-046 devePemitirMesmoModeloComSistemasOperacionaisDiferentesNoMesmoLab",
+      "method": "tap"
+    },
+    "AC-047": {
+      "status": "pass",
+      "testName": "@spec:AC-047 deveRetornarComposicaoComTotaisDeEstacoes",
+      "method": "tap"
+    },
+    "AC-048": {
+      "status": "pass",
+      "testName": "@spec:AC-048 deveContarConfiguracoeSemMonitorNaComposicao",
+      "method": "tap"
+    },
+    "AC-049": {
+      "status": "pass",
+      "testName": "@spec:AC-049",
+      "method": "tap"
+    },
+    "AC-050": {
+      "status": "pass",
+      "testName": "@spec:AC-050 deveDesvincularConfiguracaoDoLaboratorioSemExcluirOModelo",
+      "method": "tap"
+    }
+  },
+  "principles": {}
+}
