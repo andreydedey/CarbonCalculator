@@ -1,16 +1,11 @@
 import { api } from './client.ts'
 import type { PageResponse } from './types'
 
-export type CreateLaboratoryPayload = {
-  name: string
-}
-
 export type CreateInstitutionPayload = {
   name: string
   acronym: string
   city?: string
   state: string
-  laboratory: CreateLaboratoryPayload
 }
 
 export type UpdateInstitutionPayload = {

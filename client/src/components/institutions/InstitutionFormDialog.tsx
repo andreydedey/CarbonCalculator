@@ -37,14 +37,9 @@ const baseFields = {
     .refine((val) => (BRAZILIAN_STATES as readonly string[]).includes(val), 'UF inválida.'),
 }
 
-const createSchema = z.object({
-  ...baseFields,
-  laboratoryName: z.string().min(1, 'Nome do laboratório é obrigatório'),
-})
+const formSchema = z.object(baseFields)
 
-const editSchema = z.object(baseFields)
-
-type CreateValues = z.infer<typeof createSchema>
+type FormValues = z.infer<typeof formSchema>
 
 interface InstitutionFormDialogProps {
   institution?: Institution
@@ -67,39 +62,32 @@ export const InstitutionFormDialog: React.FC<InstitutionFormDialogProps> = ({
     reset,
     control,
     formState: { errors, isDirty },
-  } = useForm<CreateValues>({
-    resolver: zodResolver(mode === 'edit' ? editSchema : createSchema),
+  } = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
     values: {
       name: institution?.name ?? '',
       acronym: institution?.acronym ?? '',
       city: institution?.city ?? '',
       state: institution?.state ?? '',
-      laboratoryName: '',
     },
   })
 
   const saveMutation = useMutation({
-    mutationFn: (values: CreateValues) => {
-      const city = values.city.trim()
-      if (mode === 'edit' && institution) {
-        return updateInstitution(institution.id, {
-          name: values.name.trim(),
-          acronym: values.acronym.trim(),
-          city: city || undefined,
-          state: values.state,
-        })
-      }
-      return createInstitution({
+    mutationFn: (values: FormValues) => {
+      const payload = {
         name: values.name.trim(),
         acronym: values.acronym.trim(),
-        city: city || undefined,
+        city: values.city.trim() || undefined,
         state: values.state,
-        laboratory: { name: values.laboratoryName.trim() },
-      })
+      }
+      if (mode === 'edit' && institution) {
+        return updateInstitution(institution.id, payload)
+      }
+      return createInstitution(payload)
     },
   })
 
-  async function onSubmit(values: CreateValues) {
+  async function onSubmit(values: FormValues) {
     try {
       await saveMutation.mutateAsync(values)
       reset()
@@ -127,9 +115,7 @@ export const InstitutionFormDialog: React.FC<InstitutionFormDialogProps> = ({
             {mode === 'edit' ? 'Editar Instituição' : 'Nova Instituição'}
           </DialogTitle>
           <DialogDescription>
-            {mode === 'edit'
-              ? 'Altere os dados da instituição.'
-              : 'Cadastre uma nova instituição com seu primeiro laboratório.'}
+            {mode === 'edit' ? 'Altere os dados da instituição.' : 'Cadastre uma nova instituição.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -192,19 +178,6 @@ export const InstitutionFormDialog: React.FC<InstitutionFormDialogProps> = ({
                 <FieldError message={errors.state?.message} />
               </div>
             </div>
-
-            {mode === 'create' && (
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="inst-lab">Primeiro Laboratório *</Label>
-                <Input
-                  id="inst-lab"
-                  placeholder="Ex: LABCOMP-01"
-                  aria-invalid={!!errors.laboratoryName}
-                  {...register('laboratoryName')}
-                />
-                <FieldError message={errors.laboratoryName?.message} />
-              </div>
-            )}
           </div>
 
           <DialogFooter className="mx-0 mb-0">

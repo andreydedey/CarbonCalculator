@@ -22,7 +22,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.example.carboncalculator.dto.CreateInstitutionRequest;
-import com.example.carboncalculator.dto.CreateLaboratoryRequest;
 import com.example.carboncalculator.dto.InstitutionDTO;
 import com.example.carboncalculator.dto.LaboratoryDTO;
 
@@ -45,9 +44,9 @@ class InstitutionControllerIntegrationTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    private ResponseEntity<InstitutionDTO> createInstitution(String acronym, String state, String labName) {
+    private ResponseEntity<InstitutionDTO> createInstitution(String acronym, String state) {
         CreateInstitutionRequest request = new CreateInstitutionRequest(
-                "Universidade Federal do Pará", acronym, "Belém", state, new CreateLaboratoryRequest(labName, null));
+                "Universidade Federal do Pará", acronym, "Belém", state);
         return restTemplate.postForEntity("/institutions", request, InstitutionDTO.class);
     }
 
@@ -58,7 +57,7 @@ class InstitutionControllerIntegrationTest {
     // @spec:AC-001 Instituição criada com dados válidos
     @Test
     void deveCriarInstituicaoELaboratorioVinculadoNumaUnicaOperacao() {
-        ResponseEntity<InstitutionDTO> response = createInstitution(uniqueAcronym("UFPA"), "PA", "LABCOMP-01");
+        ResponseEntity<InstitutionDTO> response = createInstitution(uniqueAcronym("UFPA"), "PA");
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         InstitutionDTO institution = response.getBody();
@@ -80,11 +79,10 @@ class InstitutionControllerIntegrationTest {
     @Test
     void deveRecusarCriacaoQuandoSiglaJaExiste() {
         String acronym = uniqueAcronym("UFPA-DUP");
-        assertEquals(HttpStatus.CREATED, createInstitution(acronym, "PA", "LABCOMP-01").getStatusCode());
+        assertEquals(HttpStatus.CREATED, createInstitution(acronym, "PA").getStatusCode());
 
         ResponseEntity<Map> duplicate = restTemplate.postForEntity("/institutions",
-                new CreateInstitutionRequest("Outra Instituição", acronym, "Belém", "PA",
-                        new CreateLaboratoryRequest("LAB-02", null)),
+                new CreateInstitutionRequest("Outra Instituição", acronym, "Belém", "PA"),
                 Map.class);
 
         assertEquals(HttpStatus.CONFLICT, duplicate.getStatusCode());
@@ -94,8 +92,7 @@ class InstitutionControllerIntegrationTest {
     @Test
     void deveRecusarCriacaoQuandoUfNaoEstaEntreAs27UnidadesFederativas() {
         ResponseEntity<Map> response = restTemplate.postForEntity("/institutions",
-                new CreateInstitutionRequest("Instituição Teste", uniqueAcronym("IT"), "Cidade", "XX",
-                        new CreateLaboratoryRequest("LAB-01", null)),
+                new CreateInstitutionRequest("Instituição Teste", uniqueAcronym("IT"), "Cidade", "XX"),
                 Map.class);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());

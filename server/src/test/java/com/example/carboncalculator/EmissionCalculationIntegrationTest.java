@@ -149,8 +149,7 @@ class EmissionCalculationIntegrationTest {
 
     private InstitutionDTO createInstitution(String acronym) {
         CreateInstitutionRequest request = new CreateInstitutionRequest(
-                "Instituição " + acronym, acronym, "Cidade", "PA",
-                new CreateLaboratoryRequest("LABCOMP-01", null));
+                "Instituição " + acronym, acronym, "Cidade", "PA");
         ResponseEntity<InstitutionDTO> response = restTemplate.exchange(
                 "/institutions", HttpMethod.POST,
                 new HttpEntity<>(request, authHeaders()),

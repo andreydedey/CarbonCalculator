@@ -17,18 +17,14 @@ import com.example.carboncalculator.dto.InstitutionDTO;
 import com.example.carboncalculator.dto.UpdateInstitutionRequest;
 import com.example.carboncalculator.entities.AppUser;
 import com.example.carboncalculator.entities.Institution;
-import com.example.carboncalculator.entities.Laboratory;
 import com.example.carboncalculator.exceptions.DuplicateAcronymException;
 import com.example.carboncalculator.exceptions.InstitutionNotFoundException;
 import com.example.carboncalculator.exceptions.InvalidStateException;
 import com.example.carboncalculator.mappers.InstitutionMapper;
 import com.example.carboncalculator.repositories.InstitutionRepository;
-import com.example.carboncalculator.repositories.LaboratoryRepository;
 import com.example.carboncalculator.specifications.InstitutionSpecification;
 
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.jdbc.core.JdbcTemplate;
 
 @Service
 @RequiredArgsConstructor
@@ -42,8 +38,6 @@ public class InstitutionService {
             "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO");
 
     private final InstitutionRepository institutionRepository;
-    private final LaboratoryRepository laboratoryRepository;
-    private final JdbcTemplate jdbcTemplate;
 
     @Transactional(readOnly = true)
     public Page<InstitutionDTO> listForUser(AppUser user, String search, Pageable pageable) {
@@ -70,20 +64,6 @@ public class InstitutionService {
         validateAcronymNotDuplicate(request.acronym());
 
         Institution institution = institutionRepository.save(InstitutionMapper.toEntity(request));
-
-        // The laboratory table is protected by a Row-Level Security (RLS) policy that
-        // only allows INSERTs when `app.current_institution` matches the lab's institution_id.
-        // Since this is a brand-new institution (just created above), no tenant context exists
-        // yet for it, so we set it explicitly here to satisfy the RLS check.
-        jdbcTemplate.queryForObject(
-                "SELECT set_config('app.current_institution', ?, true)",
-                String.class, institution.getId().toString());
-
-        Laboratory laboratory = Laboratory.builder()
-                .institution(institution)
-                .name(request.laboratory().name())
-                .build();
-        laboratoryRepository.save(laboratory);
 
         log.info("Institution created: id={}, acronym={}", institution.getId(), institution.getAcronym());
         return InstitutionMapper.toDTO(institution);
