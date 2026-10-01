@@ -1,11 +1,11 @@
 {
   "feature": "calculo-de-emissoes",
-  "timestamp": "2026-10-01T02:42:36.257Z",
-  "gitRev": "44a150e",
+  "timestamp": "2026-10-01T12:46:26.325Z",
+  "gitRev": "d2bb4b7",
   "command": "bash .spec/scripts/run-all-tests.sh",
   "reporter": "tap",
   "exitCode": 0,
-  "testsParsed": 38,
+  "testsParsed": 88,
   "results": {
     "AC-072": {
       "status": "pass",

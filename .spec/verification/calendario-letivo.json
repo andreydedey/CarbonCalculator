@@ -1,11 +1,112 @@
 {
   "feature": "calendario-letivo",
-  "timestamp": "2026-09-28T14:19:04.264Z",
-  "gitRev": "ec1ef90",
-  "command": "node --test --test-reporter=tap \"client/src/**/*.test.ts\"",
+  "timestamp": "2026-10-01T12:43:51.247Z",
+  "gitRev": "d2bb4b7",
+  "command": "bash .spec/scripts/run-all-tests.sh",
   "reporter": "tap",
-  "exitCode": 1,
-  "testsParsed": 6,
-  "results": {},
+  "exitCode": 0,
+  "testsParsed": 88,
+  "results": {
+    "AC-051": {
+      "status": "pass",
+      "testName": "@spec:AC-051 deveCriarPeriodoComDatasValidas",
+      "method": "tap"
+    },
+    "AC-052": {
+      "status": "pass",
+      "testName": "@spec:AC-052 deveRejeitarPeriodoComDataFinalAnteriorAInicial",
+      "method": "tap"
+    },
+    "AC-053": {
+      "status": "pass",
+      "testName": "@spec:AC-053 deveRejeitarPeriodoSobreposto",
+      "method": "tap"
+    },
+    "AC-054": {
+      "status": "pass",
+      "testName": "@spec:AC-054 deveListarPeriodosPaginados",
+      "method": "tap"
+    },
+    "AC-055": {
+      "status": "pass",
+      "testName": "@spec:AC-055 deveEditarPeriodo",
+      "method": "tap"
+    },
+    "AC-056": {
+      "status": "pass",
+      "testName": "@spec:AC-056 deveExcluirPeriodoComCascade",
+      "method": "tap"
+    },
+    "AC-057": {
+      "status": "pass",
+      "testName": "@spec:AC-057 deveSubstituirListaDeFeriadosComTipo",
+      "method": "tap"
+    },
+    "AC-058": {
+      "status": "pass",
+      "testName": "@spec:AC-058 deveRejeitarFeriadoForaDoIntervalo",
+      "method": "tap"
+    },
+    "AC-067": {
+      "status": "pass",
+      "testName": "@spec:AC-067 deveConfigurarTurnosComEndTimeCalculado",
+      "method": "tap"
+    },
+    "AC-068": {
+      "status": "pass",
+      "testName": "@spec:AC-068 deveRejeitarTurnoComClassesPerDayZero",
+      "method": "tap"
+    },
+    "AC-069": {
+      "status": "pass",
+      "testName": "@spec:AC-069 deveRejeitarTurnoDuplicado",
+      "method": "tap"
+    },
+    "AC-070": {
+      "status": "pass",
+      "testName": "@spec:AC-070 turnoDesativadoNaoContabiliza",
+      "method": "tap"
+    },
+    "AC-059": {
+      "status": "pass",
+      "testName": "@spec:AC-059 deveSubstituirGradeDeOcupacaoPorSlots",
+      "method": "tap"
+    },
+    "AC-060": {
+      "status": "pass",
+      "testName": "@spec:AC-060 deveRejeitarSlotForaDoRange",
+      "method": "tap"
+    },
+    "AC-061": {
+      "status": "pass",
+      "testName": "@spec:AC-061 deveRejeitarDiaForaDosActiveDays",
+      "method": "tap"
+    },
+    "AC-062": {
+      "status": "pass",
+      "testName": "@spec:AC-062 deveCalcularDiasLetivosPorMes",
+      "method": "tap"
+    },
+    "AC-063": {
+      "status": "pass",
+      "testName": "@spec:AC-063 deveCalcularHorasDeUsoPorSlots",
+      "method": "tap"
+    },
+    "AC-064": {
+      "status": "pass",
+      "testName": "@spec:AC-064 laboratorioSemGradeRetornaZeroHoras",
+      "method": "tap"
+    },
+    "AC-065": {
+      "status": "pass",
+      "testName": "@spec:AC-065 deveCopiarPeriodoComTurnosFeriadosEGrades",
+      "method": "tap"
+    },
+    "AC-066": {
+      "status": "pass",
+      "testName": "@spec:AC-066 deveIsolarPeriodosPorInstituicaoViaRls",
+      "method": "tap"
+    }
+  },
   "principles": {}
 }
