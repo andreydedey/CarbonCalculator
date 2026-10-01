@@ -8,7 +8,7 @@
 - Esforço: alto
 - Notas: Testcontainers + PostgreSQL real (RLS). Cobre CRUD completo, validações (400/409/404), controle de acesso (403 para MANAGER), isolamento de instituições e filtro por ano. Código backend já existente (EmissionFactorController + Service + V18).
 
-## T-052 — Testes unitários (EmissionFactorServiceTest) [pendente]
+## T-052 — Testes unitários (EmissionFactorServiceTest) [concluida]
 - Refs: US-033, AC-104, AC-105, AC-106, AC-107, AC-109, AC-111
 - Arquivos: server/src/test/java/com/example/carboncalculator/services/EmissionFactorServiceTest.java
 - Esforço: baixo
