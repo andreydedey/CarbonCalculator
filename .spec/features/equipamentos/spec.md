@@ -163,13 +163,13 @@ no parque.
 
 | ID | Suposição | Status | Resolução |
 |---|---|---|---|
-| ASM-005 | As unidades de um mesmo modelo dentro de um laboratório são equivalentes em consumo — o estudo de referência assumiu isso. | confirmada | Mesmo pressuposto do artigo base |
-| ASM-006 | As especificações são preenchidas manualmente, a partir da ficha do fabricante — não há integração com bases de dados de hardware. | confirmada | Alinhado com o escopo do TCC |
-| ASM-007 | Um monitor por modelo é suficiente para representar a realidade de laboratórios de ensino (compra em lote). | confirmada | Decisão documentada no TDD-03 |
+| ASM-020 | As unidades de um mesmo modelo dentro de um laboratório são equivalentes em consumo — o estudo de referência assumiu isso. | confirmada | Mesmo pressuposto do artigo base |
+| ASM-021 | As especificações são preenchidas manualmente, a partir da ficha do fabricante — não há integração com bases de dados de hardware. | confirmada | Alinhado com o escopo do TCC |
+| ASM-022 | Um monitor por modelo é suficiente para representar a realidade de laboratórios de ensino (compra em lote). | confirmada | Decisão documentada no TDD-03 |
 
 ## Perguntas em aberto
 
 | ID | Pergunta | Status | Resposta |
 |---|---|---|---|
 | Q-005 | Se o escopo 3 entrar no trabalho, ano de fabricação e vida útil precisarão ser adicionados ao modelo. Vale adicionar os campos agora como opcionais? | respondida | Não — adicionar via migration quando necessário. Decisão documentada no TDD-03. |
-| Q-006 | Até que ponto detalhar a placa de vídeo? O estudo coletou o dado, mas labs de ensino raramente têm GPU dedicada em uso intenso. | respondida | Flag `has_dedicated_gpu` + campo opcional `gpu_model`. Simplificação documentada no TDD-03. |
+| Q-008 | Até que ponto detalhar a placa de vídeo? O estudo coletou o dado, mas labs de ensino raramente têm GPU dedicada em uso intenso. | respondida | Flag `has_dedicated_gpu` + campo opcional `gpu_model`. Simplificação documentada no TDD-03. |

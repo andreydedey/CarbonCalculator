@@ -17,7 +17,7 @@ cd ..
 
 # Build method→spec mapping from Java source (// @spec:AC-xxx above @Test)
 SPEC_MAP=$(mktemp)
-for src in server/src/test/java/com/example/carboncalculator/*.java; do
+for src in $(find server/src/test/java/com/example/carboncalculator -name '*.java' 2>/dev/null); do
   [ -f "$src" ] || continue
   prev_spec=""
   while IFS= read -r line; do
