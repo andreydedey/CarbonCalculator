@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,11 +42,13 @@ import com.example.carboncalculator.dto.AcademicPeriodDTO;
 import com.example.carboncalculator.dto.ConfigurationDTO;
 import com.example.carboncalculator.dto.CreateAcademicPeriodRequest;
 import com.example.carboncalculator.dto.CreateConfigurationRequest;
+import com.example.carboncalculator.dto.CreateEmissionFactorRequest;
 import com.example.carboncalculator.dto.CreateEquipmentModelRequest;
 import com.example.carboncalculator.dto.CreateInstitutionRequest;
 import com.example.carboncalculator.dto.CreateLaboratoryEquipmentRequest;
 import com.example.carboncalculator.dto.CreateLaboratoryRequest;
 import com.example.carboncalculator.dto.CreateMonitorRequest;
+import com.example.carboncalculator.dto.EmissionFactorDTO;
 import com.example.carboncalculator.dto.EmissionResultDTO;
 import com.example.carboncalculator.dto.EquipmentModelDTO;
 import com.example.carboncalculator.dto.InstitutionDTO;
@@ -240,6 +243,16 @@ class EmissionCalculationIntegrationTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
     }
 
+    private void createEmissionFactor(YearMonth month, String value) {
+        CreateEmissionFactorRequest request = new CreateEmissionFactorRequest(
+                month, new BigDecimal(value), "MCTI — SIN " + month);
+        ResponseEntity<EmissionFactorDTO> response = restTemplate.exchange(
+                "/emission-factors", HttpMethod.POST,
+                new HttpEntity<>(request, headersFor(institutionId)),
+                EmissionFactorDTO.class);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+    }
+
     private ReadinessDTO getReadiness(UUID periodId) {
         ResponseEntity<ReadinessDTO> response = restTemplate.exchange(
                 "/academic-periods/" + periodId + "/emissions/readiness",
@@ -275,6 +288,9 @@ class EmissionCalculationIntegrationTest {
      * Returns the period ID.
      */
     private UUID setupStandardScenario() {
+        // Create emission factor for March 2025 (institution-scoped)
+        createEmissionFactor(YearMonth.of(2025, 3), "0.0425");
+
         // Create a dedicated lab for this scenario (avoids inheriting seed equipment)
         UUID myLabId = createLab("LAB-STD-" + System.nanoTime());
 
@@ -389,6 +405,8 @@ class EmissionCalculationIntegrationTest {
     // @spec:AC-082 Configuração sem monitor sinalizada como aviso
     @Test
     void deveSinalizarConfiguracaoSemMonitorComoAviso() {
+        createEmissionFactor(YearMonth.of(2025, 3), "0.0425");
+
         UUID myLabId = createLab("LAB-NOMON-" + System.nanoTime());
 
         UUID modelId = createEquipmentModel("Model-" + System.nanoTime(), 65, null);
@@ -435,6 +453,9 @@ class EmissionCalculationIntegrationTest {
     // @spec:AC-084 Cada mês usa seu próprio fator
     @Test
     void deveCadaMesUsarSeuProprioFator() {
+        createEmissionFactor(YearMonth.of(2025, 3), "0.0425");
+        createEmissionFactor(YearMonth.of(2025, 4), "0.0450");
+
         UUID myLabId = createLab("LAB-FATOR-MES-" + System.nanoTime());
 
         UUID modelId = createEquipmentModel("Model-" + System.nanoTime(), 65, null);
@@ -478,6 +499,8 @@ class EmissionCalculationIntegrationTest {
     // @spec:AC-085 Configuração com GPU inclui gpuTdpWatts
     @Test
     void deveIncluirGpuTdpNaConfiguracao() {
+        createEmissionFactor(YearMonth.of(2025, 3), "0.0425");
+
         UUID myLabId = createLab("LAB-GPU-" + System.nanoTime());
 
         // CPU 65W + GPU 75W + Monitor 21W = 161W
@@ -520,6 +543,8 @@ class EmissionCalculationIntegrationTest {
     // @spec:AC-086 Configuração sem monitor calcula só computador
     @Test
     void deveCalcularSemMonitorApenasComputador() {
+        createEmissionFactor(YearMonth.of(2025, 3), "0.0425");
+
         UUID myLabId = createLab("LAB-NOMON-CALC-" + System.nanoTime());
 
         UUID modelId = createEquipmentModel("NoMon-" + System.nanoTime(), 65, null);
@@ -734,22 +759,37 @@ class EmissionCalculationIntegrationTest {
         }
     }
 
-    // @spec:AC-101 Fatores de emissão são globais
+    // @spec:AC-101 Fatores de emissão são isolados por instituição
     @Test
-    void deveFatoresSeremGlobais() {
-        // Emission factors are global (no RLS), visible without tenant header
+    void deveFatoresSeremIsoladosPorInstituicao() {
+        // Create factors for the test institution
+        createEmissionFactor(YearMonth.of(2025, 1), "0.0400");
+        createEmissionFactor(YearMonth.of(2025, 2), "0.0410");
+
+        // Test institution sees its own factors
         ResponseEntity<String> response = restTemplate.exchange(
-                "/emission-factors?year=2025&size=12", HttpMethod.GET,
-                new HttpEntity<>(authHeaders()), String.class);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(response.getBody().contains("\"totalElements\":12"));
-
-        // Same factors accessible with a different institution's tenant header
-        ResponseEntity<String> response2 = restTemplate.exchange(
-                "/emission-factors?year=2025&size=12", HttpMethod.GET,
+                "/emission-factors?year=2025&size=100", HttpMethod.GET,
                 new HttpEntity<>(headersFor(institutionId)), String.class);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(response.getBody().contains("\"totalElements\":2"));
+
+        // A different institution sees no factors (RLS isolation)
+        String otherAcronym = "OTH" + (System.nanoTime() % 100000);
+        CreateInstitutionRequest otherReq = new CreateInstitutionRequest(
+                "Outra Inst", otherAcronym, "Cidade", "SP");
+        ResponseEntity<String> createResp = restTemplate.exchange(
+                "/institutions", HttpMethod.POST,
+                new HttpEntity<>(otherReq, authHeaders()), String.class);
+        assertEquals(HttpStatus.CREATED, createResp.getStatusCode());
+        // Extract UUID from JSON without full DTO deserialization
+        String body = createResp.getBody();
+        String idStr = body.substring(body.indexOf("\"id\":\"") + 6, body.indexOf("\"", body.indexOf("\"id\":\"") + 6));
+        UUID otherId = UUID.fromString(idStr);
+
+        ResponseEntity<String> response2 = restTemplate.exchange(
+                "/emission-factors?year=2025&size=100", HttpMethod.GET,
+                new HttpEntity<>(headersFor(otherId)), String.class);
         assertEquals(HttpStatus.OK, response2.getStatusCode());
-        assertTrue(response2.getBody().contains("\"totalElements\":12"));
+        assertTrue(response2.getBody().contains("\"totalElements\":0"));
     }
 }
