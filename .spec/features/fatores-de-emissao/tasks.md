@@ -2,7 +2,7 @@
 
 > feature: fatores-de-emissao
 
-## T-051 — Testes de integração (EmissionFactorControllerIntegrationTest) [pendente]
+## T-051 — Testes de integração (EmissionFactorControllerIntegrationTest) [concluida]
 - Refs: US-033, US-034, AC-103, AC-104, AC-105, AC-106, AC-107, AC-108, AC-109, AC-110, AC-111, AC-112, AC-113, AC-114, AC-115
 - Arquivos: server/src/test/java/com/example/carboncalculator/controllers/EmissionFactorControllerIntegrationTest.java
 - Esforço: alto
