@@ -3,10 +3,14 @@ import { api } from './client.ts'
 // --- Types ---
 
 export type EmissionResult = {
-  period: { id: string; name: string; startDate: string; endDate: string }
+  periodId: string
+  periodName: string
+  startDate: string
+  endDate: string
   totalEmissionKg: number
   totalEnergyKwh: number
-  equivalences: { carKm: number; treesNeeded: number }
+  equivalentCarKm: number
+  equivalentTreesNeeded: number
   byMonth: MonthEmission[]
   byLaboratory: LaboratoryEmission[]
   byShift: ShiftEmission[]
@@ -14,17 +18,14 @@ export type EmissionResult = {
   byEquipmentModel: EquipmentModelEmission[]
   byMonitorModel: MonitorModelEmission[]
   byOperatingSystem: OperatingSystemEmission[]
-  inputs: {
-    emissionFactors: { month: string; value: number; source: string }[]
-    consumptionSources: {
-      configurationId: string
-      label: string
-      source: string
-      computerWatts: number
-      monitorWatts: number
-      totalWatts: number
-    }[]
-  }
+  emissionFactors: { month: string; value: number; source: string }[]
+  consumptionSources: {
+    configurationId: string
+    label: string
+    computerWatts: number
+    monitorWatts: number
+    totalWatts: number
+  }[]
 }
 
 export type MonthEmission = {
@@ -41,9 +42,6 @@ export type LaboratoryEmission = {
   energyKwh: number
   emissionKg: number
   stationCount: number
-  computerEmissionKg: number
-  monitorEmissionKg: number
-  byMonth: MonthEmission[]
   configurations: ConfigurationEmission[]
 }
 
@@ -52,9 +50,6 @@ export type ConfigurationEmission = {
   label: string
   quantity: number
   consumptionWatts: number
-  consumptionSource: string
-  computerWatts: number
-  monitorWatts: number
   energyKwh: number
   emissionKg: number
 }

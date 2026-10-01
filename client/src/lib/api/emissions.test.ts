@@ -8,15 +8,14 @@ import { describe, test } from 'node:test'
 
 function mockEmissionResult() {
   return {
-    period: {
-      id: '550e8400-e29b-41d4-a716-446655440000',
-      name: '2025.1',
-      startDate: '2025-03-01',
-      endDate: '2025-07-31',
-    },
+    periodId: '550e8400-e29b-41d4-a716-446655440000',
+    periodName: '2025.1',
+    startDate: '2025-03-01',
+    endDate: '2025-07-31',
     totalEmissionKg: 42.5,
     totalEnergyKwh: 1000.0,
-    equivalences: { carKm: 255, treesNeeded: 0.29 },
+    equivalentCarKm: 255,
+    equivalentTreesNeeded: 0.29,
     byMonth: [
       {
         month: '2025-03',
@@ -40,18 +39,12 @@ function mockEmissionResult() {
         energyKwh: 600.0,
         emissionKg: 25.5,
         stationCount: 30,
-        computerEmissionKg: 18.0,
-        monitorEmissionKg: 7.5,
-        byMonth: [],
         configurations: [
           {
             configurationId: 'cfg-001',
             label: 'Dell OptiPlex + Windows 10 + Monitor E2020H',
             quantity: 30,
             consumptionWatts: 86,
-            consumptionSource: 'specification',
-            computerWatts: 65,
-            monitorWatts: 21,
             energyKwh: 600.0,
             emissionKg: 25.5,
           },
@@ -63,9 +56,6 @@ function mockEmissionResult() {
         energyKwh: 400.0,
         emissionKg: 17.0,
         stationCount: 25,
-        computerEmissionKg: 12.0,
-        monitorEmissionKg: 5.0,
-        byMonth: [],
         configurations: [],
       },
     ],
@@ -103,22 +93,19 @@ function mockEmissionResult() {
       { operatingSystem: 'Windows 10', emissionKg: 25.5, percentage: 60.0 },
       { operatingSystem: 'Linux', emissionKg: 17.0, percentage: 40.0 },
     ],
-    inputs: {
-      emissionFactors: [
-        { month: '2025-03', value: 0.0425, source: 'MCTI — SIN mar/2025' },
-        { month: '2025-04', value: 0.045, source: 'MCTI — SIN abr/2025' },
-      ],
-      consumptionSources: [
-        {
-          configurationId: 'cfg-001',
-          label: 'Dell OptiPlex 7090 + Windows 10 + Dell E2020H',
-          source: 'specification',
-          computerWatts: 65,
-          monitorWatts: 21,
-          totalWatts: 86,
-        },
-      ],
-    },
+    emissionFactors: [
+      { month: '2025-03', value: 0.0425, source: 'MCTI — SIN mar/2025' },
+      { month: '2025-04', value: 0.045, source: 'MCTI — SIN abr/2025' },
+    ],
+    consumptionSources: [
+      {
+        configurationId: 'cfg-001',
+        label: 'Dell OptiPlex 7090 + Windows 10 + Dell E2020H',
+        computerWatts: 65,
+        monitorWatts: 21,
+        totalWatts: 86,
+      },
+    ],
   }
 }
 
@@ -149,7 +136,7 @@ describe('emissions dashboard data contract', () => {
   })
 
   // @spec:AC-094 Dashboard mostra decomposição por laboratório
-  test('@spec:AC-094 Dashboard mostra decomposição por laboratório — resposta contém byLaboratory com estações, computador e monitor', () => {
+  test('@spec:AC-094 Dashboard mostra decomposição por laboratório — resposta contém byLaboratory com estações e configurações', () => {
     const result = mockEmissionResult()
 
     assert.ok(Array.isArray(result.byLaboratory))
@@ -161,28 +148,17 @@ describe('emissions dashboard data contract', () => {
       assert.equal(typeof lab.energyKwh, 'number')
       assert.equal(typeof lab.emissionKg, 'number')
       assert.equal(typeof lab.stationCount, 'number')
-      assert.equal(typeof lab.computerEmissionKg, 'number')
-      assert.equal(typeof lab.monitorEmissionKg, 'number')
     }
-
-    // Decomposição computador + monitor ≈ total do lab
-    const lab1 = result.byLaboratory[0]
-    assert.equal(
-      lab1.computerEmissionKg + lab1.monitorEmissionKg,
-      lab1.emissionKg,
-      'parcela computador + monitor deve somar o total do laboratório',
-    )
   })
 
   // @spec:AC-095 Dashboard mostra equivalências do cotidiano
-  test('@spec:AC-095 Dashboard mostra equivalências do cotidiano — resposta contém equivalences com carKm e treesNeeded', () => {
+  test('@spec:AC-095 Dashboard mostra equivalências do cotidiano — resposta contém equivalentCarKm e equivalentTreesNeeded', () => {
     const result = mockEmissionResult()
 
-    assert.ok(result.equivalences != null, 'equivalences deve estar presente')
-    assert.equal(typeof result.equivalences.carKm, 'number')
-    assert.ok(result.equivalences.carKm > 0, 'km de carro deve ser positivo')
-    assert.equal(typeof result.equivalences.treesNeeded, 'number')
-    assert.ok(result.equivalences.treesNeeded > 0, 'árvores deve ser positivo')
+    assert.equal(typeof result.equivalentCarKm, 'number')
+    assert.ok(result.equivalentCarKm > 0, 'km de carro deve ser positivo')
+    assert.equal(typeof result.equivalentTreesNeeded, 'number')
+    assert.ok(result.equivalentTreesNeeded > 0, 'árvores deve ser positivo')
   })
 
   // @spec:AC-096 Dashboard mostra rankings de modelos e SOs
@@ -218,15 +194,13 @@ describe('emissions dashboard data contract', () => {
   })
 
   // @spec:AC-097 Dashboard mostra painel de transparência
-  test('@spec:AC-097 Dashboard mostra painel de transparência — resposta contém inputs com fatores de emissão e fontes de consumo', () => {
+  test('@spec:AC-097 Dashboard mostra painel de transparência — resposta contém emissionFactors e consumptionSources', () => {
     const result = mockEmissionResult()
 
-    assert.ok(result.inputs != null, 'inputs deve estar presente')
-
     // Fatores de emissão
-    assert.ok(Array.isArray(result.inputs.emissionFactors))
-    assert.ok(result.inputs.emissionFactors.length >= 1)
-    for (const factor of result.inputs.emissionFactors) {
+    assert.ok(Array.isArray(result.emissionFactors))
+    assert.ok(result.emissionFactors.length >= 1)
+    for (const factor of result.emissionFactors) {
       assert.equal(typeof factor.month, 'string')
       assert.match(factor.month, /^\d{4}-\d{2}$/)
       assert.equal(typeof factor.value, 'number')
@@ -236,9 +210,9 @@ describe('emissions dashboard data contract', () => {
     }
 
     // Fontes de consumo
-    assert.ok(Array.isArray(result.inputs.consumptionSources))
-    assert.ok(result.inputs.consumptionSources.length >= 1)
-    for (const src of result.inputs.consumptionSources) {
+    assert.ok(Array.isArray(result.consumptionSources))
+    assert.ok(result.consumptionSources.length >= 1)
+    for (const src of result.consumptionSources) {
       assert.equal(typeof src.configurationId, 'string')
       assert.equal(typeof src.label, 'string')
       assert.equal(typeof src.computerWatts, 'number')
