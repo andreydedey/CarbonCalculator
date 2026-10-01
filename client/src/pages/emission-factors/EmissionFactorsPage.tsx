@@ -382,6 +382,20 @@ export function EmissionFactorsPage() {
         </div>
       )}
 
+      {/* Fonte oficial card */}
+      <div className="flex items-center gap-3 rounded-lg border border-[#C3E1D0] bg-[#DEECE2] px-5 py-4">
+        <Info className="size-[18px] shrink-0 text-[#24744D]" />
+        <div className="flex flex-col gap-0.5">
+          <p className="text-[13px] font-semibold text-[#192219]">
+            Fonte oficial: MCTI — Sistema de Registro Nacional de Emissões (SIRENE)
+          </p>
+          <p className="text-[12px] text-[#24744D]">
+            Os fatores de emissão são atualizados anualmente pelo Ministério da Ciência, Tecnologia
+            e Inovação.
+          </p>
+        </div>
+      </div>
+
       {/* Table card */}
       <div className="rounded-[10px] border border-[#DDE3DD] bg-white overflow-hidden">
         {/* Card header */}
