@@ -1,0 +1,96 @@
+{
+  "runId": "CarbonCalculatorTCC-fatores-de-emissao-mupn0u1z",
+  "feature": "fatores-de-emissao",
+  "agent": "claude",
+  "modo": "sequencial",
+  "paralelizar": null,
+  "modeloForcado": null,
+  "esforcoForcado": null,
+  "geradoEm": "2026-10-01 14:36",
+  "branchTrabalho": "spec/fatores-de-emissao",
+  "baseDir": ".spec/features/fatores-de-emissao",
+  "specDir": ".spec",
+  "repoName": "CarbonCalculatorTCC",
+  "logsDir": "../onp-worktrees/CarbonCalculatorTCC-fatores-de-emissao-logs",
+  "ondas": [],
+  "faixas": [],
+  "sequenciais": [
+    {
+      "id": "T-051",
+      "titulo": "Testes de integração (EmissionFactorControllerIntegrationTest)",
+      "modelo": "claude-sonnet-5",
+      "esforco": "high",
+      "arquivos": [
+        "server/src/test/java/com/example/carboncalculator/controllers/EmissionFactorControllerIntegrationTest.java"
+      ],
+      "refs": [
+        "US-033",
+        "US-034",
+        "AC-103",
+        "AC-104",
+        "AC-105",
+        "AC-106",
+        "AC-107",
+        "AC-108",
+        "AC-109",
+        "AC-110",
+        "AC-111",
+        "AC-112",
+        "AC-113",
+        "AC-114",
+        "AC-115"
+      ]
+    },
+    {
+      "id": "T-052",
+      "titulo": "Testes unitários (EmissionFactorServiceTest)",
+      "modelo": "claude-sonnet-5",
+      "esforco": "low",
+      "arquivos": [
+        "server/src/test/java/com/example/carboncalculator/services/EmissionFactorServiceTest.java"
+      ],
+      "refs": [
+        "US-033",
+        "AC-104",
+        "AC-105",
+        "AC-106",
+        "AC-107",
+        "AC-109",
+        "AC-111"
+      ]
+    },
+    {
+      "id": "T-053",
+      "titulo": "Frontend: computeEmissionFactorRows + testes",
+      "modelo": "claude-sonnet-5",
+      "esforco": "low",
+      "arquivos": [
+        "client/src/lib/utils/emission-factor-rows.ts",
+        "client/src/lib/utils/emission-factor-rows.test.ts"
+      ],
+      "refs": [
+        "US-035",
+        "AC-116",
+        "AC-117",
+        "AC-118"
+      ]
+    },
+    {
+      "id": "T-054",
+      "titulo": "Frontend: integrar detecção de lacunas na EmissionFactorsPage",
+      "modelo": "claude-sonnet-5",
+      "esforco": "medium",
+      "arquivos": [
+        "client/src/pages/emission-factors/EmissionFactorsPage.tsx"
+      ],
+      "refs": [
+        "US-035",
+        "AC-116",
+        "AC-117",
+        "AC-118"
+      ]
+    }
+  ],
+  "concluidas": [],
+  "avisos": []
+}
