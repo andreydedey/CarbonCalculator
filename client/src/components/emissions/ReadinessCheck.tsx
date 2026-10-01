@@ -8,15 +8,31 @@ interface ReadinessCheckProps {
 export function ReadinessCheck({ readiness }: ReadinessCheckProps) {
   if (readiness.ready && readiness.configurationsWithoutMonitor.length === 0) return null
 
+  const isBlocking = !readiness.ready
+
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
-      <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+    <div
+      className={
+        isBlocking
+          ? 'flex flex-col gap-2 rounded-lg border border-red-300 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950/30'
+          : 'flex flex-col gap-2 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30'
+      }
+    >
+      <div
+        className={
+          isBlocking
+            ? 'flex items-center gap-2 text-red-700 dark:text-red-400'
+            : 'flex items-center gap-2 text-amber-700 dark:text-amber-400'
+        }
+      >
         <AlertTriangle className="size-4" />
         <span className="text-sm font-medium">
-          {readiness.ready ? 'Avisos' : 'Pré-requisitos não atendidos'}
+          {isBlocking ? 'Pré-requisitos não atendidos' : 'Avisos'}
         </span>
       </div>
-      <ul className="text-xs text-amber-700 dark:text-amber-400 space-y-1 ml-6 list-disc">
+      <ul
+        className={`text-xs space-y-1 ml-6 list-disc ${isBlocking ? 'text-red-700 dark:text-red-400' : 'text-amber-700 dark:text-amber-400'}`}
+      >
         {readiness.missingEmissionFactors.length > 0 && (
           <li>
             Fatores de emissão faltantes:{' '}
