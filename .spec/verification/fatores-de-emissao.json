@@ -1,7 +1,7 @@
 {
   "feature": "fatores-de-emissao",
-  "timestamp": "2026-10-01T15:06:35.596Z",
-  "gitRev": "99db1c6",
+  "timestamp": "2026-10-01T15:07:04.796Z",
+  "gitRev": "cc02576",
   "command": "bash .spec/scripts/run-all-tests.sh",
   "reporter": "tap",
   "exitCode": 0,
