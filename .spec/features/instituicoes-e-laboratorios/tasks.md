@@ -24,7 +24,7 @@
 
 ## T-005 — DTOs e Mappers [concluida]
 - Refs: US-001, US-002
-- Arquivos: server/src/main/java/com/example/carboncalculator/dto/CreateInstitutionRequest.java, server/src/main/java/com/example/carboncalculator/dto/InstitutionResponse.java, server/src/main/java/com/example/carboncalculator/dto/CreateLaboratoryRequest.java, server/src/main/java/com/example/carboncalculator/dto/LaboratoryResponse.java, server/src/main/java/com/example/carboncalculator/mappers/InstitutionMapper.java, server/src/main/java/com/example/carboncalculator/mappers/LaboratoryMapper.java
+- Arquivos: server/src/main/java/com/example/carboncalculator/dto/CreateInstitutionRequest.java, server/src/main/java/com/example/carboncalculator/dto/InstitutionDTO.java, server/src/main/java/com/example/carboncalculator/dto/CreateLaboratoryRequest.java, server/src/main/java/com/example/carboncalculator/dto/LaboratoryDTO.java, server/src/main/java/com/example/carboncalculator/mappers/InstitutionMapper.java, server/src/main/java/com/example/carboncalculator/mappers/LaboratoryMapper.java
 - Notas: Records Java para DTOs. Mapper manual (sem MapStruct). Depende de T-002.
 
 ## T-006 — Services [concluida]
@@ -45,22 +45,22 @@
 
 ## T-009 — Contexto de instituição e layout [concluida]
 - Refs: US-004, AC-008, AC-009
-- Arquivos: client/src/context/InstitutionContext.tsx, client/src/layout/AppLayout.tsx, client/src/layout/InstitutionSwitcher.tsx
+- Arquivos: client/src/context/InstitutionContext.tsx, client/src/components/layout/AppLayout.tsx
 - Notas: InstitutionContext persiste institutionId em localStorage. AppLayout com sidebar conforme design. InstitutionSwitcher no header. Depende de T-008.
 
 ## T-010 — Formulário de instituição [concluida]
 - Refs: US-001, AC-001, AC-002, AC-003
-- Arquivos: client/src/pages/institutions/InstitutionForm.tsx, client/src/lib/schemas/institutionSchema.ts
+- Arquivos: client/src/components/institutions/InstitutionFormDialog.tsx, client/src/lib/schemas/institutionSchema.ts
 - Notas: Dois cards conforme design (dados da instituição + laboratório vinculado). Schema Zod valida UF contra lista de 27 estados. Depende de T-008, T-009.
 
 ## T-011 — Lista de laboratórios [concluida]
 - Refs: US-003, AC-006, AC-007
-- Arquivos: client/src/pages/laboratories/LaboratoryList.tsx
+- Arquivos: client/src/components/laboratories/LaboratoryList.tsx
 - Notas: Cards conforme design com nome, status e badge. Consultar o design (ADR-003). Depende de T-008, T-009.
 
 ## T-012 — Formulário de laboratório e desativação [concluida]
 - Refs: US-002, US-005, AC-004, AC-005, AC-011
-- Arquivos: client/src/pages/laboratories/LaboratoryForm.tsx, client/src/pages/laboratories/DeactivateDialog.tsx, client/src/lib/schemas/laboratorySchema.ts
+- Arquivos: client/src/components/laboratories/LaboratoryForm.tsx, client/src/components/laboratories/DeactivateDialog.tsx, client/src/lib/schemas/laboratorySchema.ts
 - Notas: Formulário de criação/edição + diálogo de confirmação de desativação. Depende de T-008, T-009.
 
 ## T-013 — Testes de integração (backend + RLS) [concluida]
