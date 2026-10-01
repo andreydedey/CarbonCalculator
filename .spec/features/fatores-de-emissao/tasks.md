@@ -20,7 +20,7 @@
 - Esforço: baixo
 - Notas: Extrair lógica de status em função pura `computeEmissionFactorRows(factors, currentDate, year)`. Testa com Node.js test runner: Pendente para meses sem fator ≤ hoje, Em uso para o mais recente ≤ hoje, Anterior para os demais.
 
-## T-054 — Frontend: integrar detecção de lacunas na EmissionFactorsPage [pendente]
+## T-054 — Frontend: integrar detecção de lacunas na EmissionFactorsPage [concluida]
 - Refs: US-035, AC-116, AC-117, AC-118
 - Arquivos: client/src/pages/emission-factors/EmissionFactorsPage.tsx
 - Esforço: medio
