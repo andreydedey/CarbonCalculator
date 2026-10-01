@@ -14,35 +14,41 @@
 
 ## Contexto
 
-O cálculo de emissões (PRD 06) produz um resultado on-demand: re-executa toda a aritmética a cada requisição a partir dos dados cadastrados. Isso é correto para análise atual, mas impede qualquer comparação temporal — se alguém corrigir o cadastro de um equipamento depois de fechar o semestre, o número "oficial" de 2024.2 muda silenciosamente.
+O cálculo de emissões (PRD 06) é on-demand: recomputa tudo a cada requisição a partir dos dados cadastrados. Isso é correto para análise do momento atual, mas não permite acompanhamento histórico — qualquer correção retroativa no cadastro altera silenciosamente os números "passados".
 
-O acompanhamento longitudinal resolve isso com **instantâneos imutáveis**: o gestor congela explicitamente o resultado de um período letivo, que passa a compor uma série histórica auditável. Cada instantâneo preserva não só o total de emissões, mas todas as premissas que o geraram.
+O acompanhamento longitudinal resolve isso com **instantâneos diários imutáveis**: um cron job captura automaticamente, a cada dia, as emissões da instituição. O dado histórico fica preservado mesmo que equipamentos ou fatores sejam corrigidos depois. A interface exibe os dados agregados com um seletor de granularidade (Diária / Semanal / Mensal / Por Período).
 
-O design no Pencil (frame "8 – Acompanhamento") mostra uma única tela com quatro zonas: KPI cards de tendência, gráfico de barras semestral, tabela histórica e o botão "Registrar Instantâneo" como única ação de escrita.
+A captura diária é justificada porque cada dia do período letivo tem características distintas: laboratórios operam dias da semana diferentes (`LaboratorySchedule.dayOfWeek`), feriados produzem emissão zero, e a ocupação varia ao longo do período. A agregação mensal ou por período é derivada sobre esses snapshots diários, não ao contrário.
+
+O design no Pencil (frame "8 – Acompanhamento") mostra: badge "Coleta automática diária" no header, quatro KPI cards, gráfico de barras com toggle de granularidade (Diária / Semanal / Mensal / Por Período), e tabela histórica ordenada do mais recente para o mais antigo.
 
 ### O que existe hoje
 
-- `EmissionCalculationService.calculate(periodId)` — motor de cálculo on-demand, retorna `EmissionResultDTO` completo
-- Nenhuma entidade de persistência de resultado existe; tudo é recomputado a cada chamada
-- `AcademicPeriod` — tem `name`, `startDate`, `endDate` (fonte do label "2025.1")
+- `EmissionCalculationService.calculate(periodId)` — motor on-demand; retorna `EmissionResultDTO` com breakdown por mês e laboratório
+- `LaboratorySchedule` — define quais dias da semana um laboratório opera
+- `AcademicPeriod` — tem `startDate`, `endDate` e conjunto de `schoolDays` efetivos
+- `EmissionFactor` — fator SIN mensal (`referenceMonth`, `value`)
+- Nenhuma entidade de persistência de resultado histórico existe
 
 ### Decisões resolvidas
 
-- **Instantâneo criado por ação explícita do usuário.** O PRD deixava em aberto criação manual vs. automática ao fim do período. O design resolve: botão "Registrar Instantâneo" (ícone câmera) no header da página. Criação automática fica para V2.
+- **Snapshots criados automaticamente por cron diário.** A discussão entre manual (botão) e automático foi resolvida a favor do cron: o usuário não precisa lembrar de registrar — o sistema captura todos os dias dentro de um período letivo ativo. O botão "Registrar Instantâneo" do esboço anterior foi removido; o design exibe apenas um badge informativo.
 
-- **Instantâneos são imutáveis — apenas deleção é permitida.** O PRD cita imutabilidade como requisito central da série histórica. Se um erro real de cadastro for descoberto, o fluxo correto é: deletar o instantâneo, corrigir os dados, recalcular e registrar novamente. Não existe endpoint de atualização.
+- **Granularidade de captura: diária. Granularidade de exibição: configurável.** O cron persiste um registro por dia por instituição. A API agrega esses registros conforme o parâmetro `granularity` solicitado pelo frontend (diária, semanal, mensal, por período). Isso garante máxima fidelidade sem impor uma granularidade de leitura fixa.
 
-- **O instantâneo armazena o resultado completo serializado como JSON.** Para garantir auditabilidade plena das premissas (parque, fatores, ocupação), o `EmissionResultDTO` completo é persistido como `JSONB`. Os campos resumo (emissão total, energia, estações, fator médio) ficam em colunas separadas para consulta eficiente sem deserializar o JSON.
+- **Apenas dias dentro de um período letivo ativo são capturados.** Dias fora de qualquer `AcademicPeriod` não geram snapshot. Gaps entre períodos são implicitamente zero e não aparecem na série histórica.
 
-- **Fator SIN na tabela = média ponderada pela energia de cada mês do período.** O período abrange vários meses com fatores distintos. O valor exibido na coluna "FATOR SIN" é `Σ(emissão_mês) / Σ(energia_mês)` — o fator efetivo do período — calculado no momento do snapshot e persistido.
+- **Cron é idempotente.** Se o snapshot do dia já existe (captura duplicada por retry, por exemplo), o cron pula. Isso permite re-execução manual de recovery sem duplicar dados.
 
-- **VARIAÇÃO relativa ao instantâneo imediatamente anterior (por data de início do período).** Comparação cronológica, não ano-a-ano. O primeiro instantâneo da série exibe "—".
+- **Snapshots são imutáveis — nenhum endpoint de deleção ou edição.** A série histórica deve ser confiável. Se os dados de um dia estiverem errados por falha de infraestrutura, a estratégia de correção é um endpoint administrativo de re-captura forçada (V2). Em V1, o dado do dia fica como está.
 
-- **Apenas ADMIN e MANAGER podem registrar e deletar instantâneos.** Consulta aberta a todos os papéis autenticados.
+- **Fator SIN exibido = média ponderada pela energia.** Para agregações mensais/período, `avgEmissionFactor = Σ(daily_emission_kg) / Σ(daily_energy_kwh)` — o fator efetivo do intervalo.
 
-- **"Redução Possível" no KPI card é placeholder em V1.** O design mostra "–57,5% · cenário mini PCs" que depende de um cenário salvo (PRD 07). Enquanto PRD 07 não estiver implementado, o card exibe "—" com label "configure um cenário de simulação".
+- **VARIAÇÃO relativa ao registro imediatamente anterior na mesma granularidade.** Comparação cronológica, não ano-a-ano. O primeiro registro da série exibe "—".
 
-- **Sem paginação na tabela em V1.** O design mostra todos os registros inline. A série histórica de um TCC raramente ultrapassa 10–15 períodos; paginação fica para V2.
+- **Apenas ADMIN e MANAGER podem forçar re-captura (futuro V2).** Leitura aberta a todos os papéis autenticados.
+
+- **"Redução Possível" no KPI card é placeholder em V1.** Depende de cenário salvo (PRD 07). Enquanto não implementado, exibe "—" com nota "configure um cenário de simulação".
 
 ---
 
@@ -50,24 +56,23 @@ O design no Pencil (frame "8 – Acompanhamento") mostra uma única tela com qua
 
 ### Dentro do escopo
 
-- Entidade `EmissionSnapshot` com RLS por instituição
-- Criação de instantâneo a partir de um período calculado (POST)
-- Listagem de instantâneos da instituição (GET)
-- Detalhe de um instantâneo com premissas completas (GET)
-- Deleção deliberada de instantâneo (DELETE)
-- Página de acompanhamento: 4 KPI cards + gráfico de barras + tabela histórica
-- Cálculo de variação entre períodos consecutivos
-- Estado vazio com explicação (menos de 2 instantâneos)
+- Entidade `EmissionSnapshot` diária com RLS por instituição
+- Cron job Spring Boot (`@Scheduled`) capturando emissões do dia anterior por instituição
+- API de consulta com parâmetro `granularity` (daily / weekly / monthly / period)
+- Lógica de agregação no backend para cada granularidade
+- Cálculo de `variationPct` entre registros consecutivos na granularidade solicitada
+- Página de acompanhamento: 4 KPI cards + gráfico com toggle de granularidade + tabela histórica
+- Estado vazio (sem snapshots ainda) com explicação
 
 ### Fora do escopo
 
-- Criação automática de instantâneo ao fim do período
-- Edição de instantâneo (apenas delete)
+- Re-captura forçada de dia passado (V2)
 - Comparação entre instituições
 - Projeção de tendência futura
 - KPI "Redução Possível" (depende de PRD 07)
 - Drill-down por laboratório no gráfico (V2)
-- Seletor de intervalo de datas interativo (V1 mostra todos)
+- Notificação de falha do cron (V2 — observabilidade)
+- Dados para dias fora de período letivo
 
 ---
 
@@ -77,219 +82,210 @@ O design no Pencil (frame "8 – Acompanhamento") mostra uma única tela com qua
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  Frontend (React + Vite + shadcn/ui)                         │
+│  Frontend (React + Vite + shadcn/ui + Recharts)              │
 │                                                              │
 │  LongitudinalPage                                            │
-│  ├─ KPI Trend Cards (4 cards)                                │
-│  ├─ Bar Chart (Recharts — emissão por semestre)              │
-│  ├─ Historical Table (semestre/estações/consumo/emissão/     │
-│  │                    fator/variação)                        │
-│  └─ "Registrar Instantâneo" modal (select período)           │
+│  ├─ KPI Cards (4 cards)                                      │
+│  ├─ GranularityToggle (Diária/Semanal/Mensal/Por Período)    │
+│  ├─ BarChart (Recharts — granularidade selecionada)          │
+│  └─ HistoricalTable (data/estações/consumo/emissão/fator/var)│
 └──────────────────────────┬───────────────────────────────────┘
-                           │ HTTP JSON / X-Institution-Id
+                           │ GET /snapshots?granularity=...
 ┌──────────────────────────▼───────────────────────────────────┐
 │  Backend                                                     │
 │                                                              │
 │  EmissionSnapshotController                                  │
-│  EmissionSnapshotService                                     │
-│    → chama EmissionCalculationService.calculate(periodId)    │
-│    → persiste EmissionSnapshot com JSONB do resultado        │
+│  EmissionSnapshotQueryService  ← agrega snapshots diários    │
+│                                                              │
+│  EmissionSnapshotCronService   ← @Scheduled diário           │
+│    → calcula emissão do dia anterior por instituição         │
+│    → persiste EmissionSnapshot (idempotente)                 │
 └──────────────────────────┬───────────────────────────────────┘
                            │ JDBC
 ┌──────────────────────────▼───────────────────────────────────┐
 │  PostgreSQL + RLS                                            │
-│  emission_snapshot                                           │
+│  emission_snapshot (por dia por instituição)                 │
 │  RLS policy por institution_id                               │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 ### Modelo de dados
 
-**Nova tabela `emission_snapshot`** (V19)
+**Nova tabela `emission_snapshot`** (verificar numeração antes do merge; V19 ou V20 dependendo do estado do main)
 
-| Coluna                | Tipo                 | Restrições                                       |
-| --------------------- | -------------------- | ------------------------------------------------ |
-| `id`                  | `UUID`               | PK                                               |
-| `institution_id`      | `UUID`               | FK → institution(id), NOT NULL                   |
-| `period_id`           | `UUID`               | FK → academic_period(id), NOT NULL               |
-| `period_name`         | `VARCHAR(100)`       | NOT NULL — ex: "2025.1" (denormalizado)          |
-| `period_start`        | `DATE`               | NOT NULL — denormalizado para ordenação          |
-| `period_end`          | `DATE`               | NOT NULL                                         |
-| `total_emission_kg`   | `NUMERIC(12, 2)`     | NOT NULL                                         |
-| `total_energy_kwh`    | `NUMERIC(12, 2)`     | NOT NULL                                         |
-| `station_count`       | `INTEGER`            | NOT NULL                                         |
-| `school_days`         | `INTEGER`            | NOT NULL                                         |
-| `avg_emission_factor` | `NUMERIC(10, 6)`     | NOT NULL — média ponderada por energia            |
-| `result_json`         | `JSONB`              | NOT NULL — EmissionResultDTO completo            |
-| `created_at`          | `TIMESTAMP WITH TZ`  | NOT NULL                                         |
+| Coluna                  | Tipo                 | Restrições                                               |
+| ----------------------- | -------------------- | -------------------------------------------------------- |
+| `id`                    | `UUID`               | PK                                                       |
+| `institution_id`        | `UUID`               | FK → institution(id), NOT NULL                           |
+| `period_id`             | `UUID`               | FK → academic_period(id), NOT NULL                       |
+| `snapshot_date`         | `DATE`               | NOT NULL — o dia representado                            |
+| `day_of_week`           | `SMALLINT`           | NOT NULL — 1=Seg … 7=Dom                                 |
+| `is_school_day`         | `BOOLEAN`            | NOT NULL — false se feriado ou recesso                   |
+| `daily_emission_kg`     | `NUMERIC(12, 4)`     | NOT NULL                                                 |
+| `daily_energy_kwh`      | `NUMERIC(12, 4)`     | NOT NULL                                                 |
+| `emission_factor_value` | `NUMERIC(10, 6)`     | NOT NULL — fator SIN do mês do dia                       |
+| `station_count`         | `INTEGER`            | NOT NULL — estações ativas nesse dia                     |
+| `created_at`            | `TIMESTAMP WITH TZ`  | NOT NULL                                                 |
 
 **Constraints:**
-- `UNIQUE (institution_id, period_id)` — um instantâneo por período por instituição
+- `UNIQUE (institution_id, snapshot_date)` — um snapshot por dia por instituição
 - `RLS policy`: `institution_id = current_setting('app.current_institution', true)::uuid`
 
 **Índices:**
-- `idx_snapshot_institution_period_start` em `(institution_id, period_start DESC)` — listagem ordenada
+- `idx_snapshot_institution_date` em `(institution_id, snapshot_date DESC)` — listagem cronológica
+- `idx_snapshot_institution_period` em `(institution_id, period_id, snapshot_date)` — agregação por período
 
 ### API REST
 
-| Método   | Rota                              | Descrição                                      | Status | Permissão          |
-| -------- | --------------------------------- | ---------------------------------------------- | ------ | ------------------ |
-| `POST`   | `/api/v1/snapshots`               | Criar instantâneo a partir de um período       | 201    | ADMIN, MANAGER     |
-| `GET`    | `/api/v1/snapshots`               | Listar instantâneos da instituição             | 200    | autenticado        |
-| `GET`    | `/api/v1/snapshots/{id}`          | Detalhe com premissas completas (result_json)  | 200    | autenticado        |
-| `DELETE` | `/api/v1/snapshots/{id}`          | Deletar instantâneo                            | 204    | ADMIN, MANAGER     |
+| Método | Rota                   | Descrição                                         | Status | Permissão   |
+| ------ | ---------------------- | ------------------------------------------------- | ------ | ----------- |
+| `GET`  | `/api/v1/snapshots`    | Listagem agregada de snapshots                    | 200    | autenticado |
 
-**Contrato — POST:**
+**Parâmetros de query:**
 
-```json
-// Request
-{ "periodId": "uuid-do-periodo" }
+| Parâmetro     | Tipo     | Padrão    | Descrição                                            |
+| ------------- | -------- | --------- | ---------------------------------------------------- |
+| `granularity` | `string` | `monthly` | `daily` \| `weekly` \| `monthly` \| `period`         |
+| `startDate`   | `date`   | —         | Filtro de data inicial (ISO 8601)                    |
+| `endDate`     | `date`   | —         | Filtro de data final (ISO 8601)                      |
 
-// Response 201
-{
-  "id": "uuid",
-  "periodId": "uuid",
-  "periodName": "2025.1",
-  "periodStart": "2025-02-01",
-  "periodEnd": "2025-06-30",
-  "totalEmissionKg": 7971.0,
-  "totalEnergyKwh": 82516.0,
-  "stationCount": 54,
-  "schoolDays": 88,
-  "avgEmissionFactor": 0.096600,
-  "createdAt": "2026-10-01T14:30:00Z"
-}
-```
-
-**Contrato — GET `/snapshots` (listagem):**
+**Contrato — GET `/snapshots?granularity=monthly`:**
 
 ```json
 [
   {
-    "id": "uuid",
-    "periodName": "2025.1",
-    "periodStart": "2025-02-01",
-    "totalEmissionKg": 7971.0,
-    "totalEnergyKwh": 82516.0,
+    "label": "Out 2025",
+    "startDate": "2025-10-01",
+    "endDate": "2025-10-31",
+    "totalEmissionKg": 1290.0,
+    "totalEnergyKwh": 13350.0,
+    "schoolDays": 22,
     "stationCount": 54,
-    "schoolDays": 88,
     "avgEmissionFactor": 0.096600,
-    "variationPct": 12.0,
-    "createdAt": "2026-10-01T14:30:00Z"
+    "variationPct": 12.0
   }
 ]
 ```
 
-O campo `variationPct` é calculado pelo service em relação ao instantâneo anterior (por `period_start`). Primeiro da série retorna `null`.
+**Contrato — GET `/snapshots?granularity=period`:**
+
+```json
+[
+  {
+    "label": "2025.2",
+    "periodId": "uuid-do-periodo",
+    "startDate": "2025-08-01",
+    "endDate": "2025-12-15",
+    "totalEmissionKg": 5180.0,
+    "totalEnergyKwh": 53600.0,
+    "schoolDays": 88,
+    "stationCount": 54,
+    "avgEmissionFactor": 0.096600,
+    "variationPct": -8.5
+  }
+]
+```
+
+`variationPct` é calculado em relação ao registro anterior na mesma granularidade. Primeiro da série retorna `null`.
 
 **Regras de negócio:**
-- `POST` com `periodId` que já tem instantâneo → 409 Conflict
-- `POST` com `periodId` sem equipamentos ou sem fatores de emissão cadastrados → 422 (cálculo não pode ser executado)
-- `DELETE` de instantâneo inexistente → 404
+- Granularity inválida → 400 Bad Request
+- Nenhum snapshot ainda → 200 com array vazio (estado vazio tratado no frontend)
 
-### Backend — Entidade e serviço
+### Backend — Cron e serviço
 
-**`EmissionSnapshot`** — nova entidade:
-
-```java
-@Entity
-class EmissionSnapshot {
-    UUID id;
-    @ManyToOne Institution institution;
-    @ManyToOne AcademicPeriod period;
-    String periodName;           // denormalizado
-    LocalDate periodStart;       // denormalizado para ordenação
-    LocalDate periodEnd;
-    double totalEmissionKg;
-    double totalEnergyKwh;
-    int stationCount;
-    int schoolDays;
-    BigDecimal avgEmissionFactor;
-    @Column(columnDefinition = "jsonb") String resultJson;
-    Instant createdAt;
-}
-```
-
-**`EmissionSnapshotService.create(periodId)`:**
+**`EmissionSnapshotCronService.captureYesterday()`** — executado por `@Scheduled(cron = "0 0 1 * * *")`:
 
 ```
-1. Verificar que não existe snapshot para (institution, period) → 409 se sim
-2. Chamar EmissionCalculationService.calculate(periodId)
-3. Calcular avgEmissionFactor = totalEmissionKg / totalEnergyKwh
-4. Calcular stationCount = soma de quantities de todos os LaboratoryEquipments do período
-5. Calcular schoolDays = soma de schoolDays do PeriodSummary
-6. Serializar EmissionResultDTO → JSON
-7. Persistir EmissionSnapshot
+Para cada Institution:
+  1. date = ontem
+  2. Encontrar AcademicPeriod ativo para date (startDate ≤ date ≤ endDate) → pular se nenhum
+  3. Verificar se snapshot (institution, date) já existe → pular se sim (idempotente)
+  4. Obter EmissionFactor para (institution, year-month de date) → pular se ausente, logar aviso
+  5. Determinar dayOfWeek de date
+  6. Verificar se date é schoolDay no período (AcademicPeriod)
+  7. Para cada Laboratory da institution:
+     a. Verificar se LaboratorySchedule cobre dayOfWeek de date
+     b. Se sim E isSchoolDay: calcular daily_energy_kwh = Σ(watts de cada LaboratoryEquipment × hoursPerDay)
+  8. daily_emission_kg = daily_energy_kwh × emission_factor_value
+  9. station_count = count de estações únicas ativas (LaboratoryEquipments de labs que operam no dia)
+ 10. Persistir EmissionSnapshot
 ```
 
-**`EmissionSnapshotService.list()`:**
+**`EmissionSnapshotQueryService.list(granularity, startDate, endDate)`:**
 
 ```
-1. Buscar todos snapshots da instituição, ordenados por period_start DESC
-2. Para cada snapshot, calcular variationPct em relação ao anterior na lista
-   (i.e., índice i compara com índice i+1, que é o mais antigo)
-3. Retornar lista de EmissionSnapshotDTO com variationPct
+1. Buscar EmissionSnapshot da instituição no intervalo, ordenados por snapshot_date
+2. Agrupar por granularidade:
+   - daily: um registro por snapshot_date
+   - weekly: agrupar por ISO week (ano + número da semana)
+   - monthly: agrupar por ano-mês
+   - period: agrupar por period_id
+3. Para cada grupo: somar daily_emission_kg e daily_energy_kwh;
+   avgEmissionFactor = totalEmissionKg / totalEnergyKwh;
+   schoolDays = count(is_school_day = true);
+   stationCount = max(station_count) do grupo
+4. Calcular variationPct entre grupos consecutivos (por startDate)
+5. Retornar lista de SnapshotAggregateDTO
 ```
 
-**`EmissionSnapshotController`** — sem `@PreAuthorize` global; POST e DELETE restringidos a ADMIN/MANAGER via anotação por método.
+**`EmissionSnapshotController`** — único endpoint GET, sem restrição de papel.
 
 ### Frontend
 
 **Rota:** `/longitudinal` → `LongitudinalPage`
 
-O sidebar item "Acompanhamento" já existe no design — aponta para `/longitudinal`.
+**Biblioteca de gráfico:** Recharts (já instalada).
 
-**Biblioteca de gráfico:** Recharts (já instalada no projeto via `recharts`).
-
-**`LongitudinalPage`** — estrutura fiel ao design:
+**`LongitudinalPage`** — estrutura fiel ao design atualizado:
 
 ```
 Page header
   ├─ Breadcrumb: "Análise › Acompanhamento"
   ├─ Título: "Acompanhamento de Emissões"
-  ├─ Badge de período: "YYYY.S – YYYY.S" (primeiro ao último snapshot)
-  └─ Botão "Registrar Instantâneo" (câmera icon) → abre modal
+  ├─ Badge "Coleta automática diária" (ícone clock, verde)
+  └─ Badge de intervalo: "startDate – endDate" do conjunto de snapshots
 
 KPI Cards (4 cards em grid)
-  ├─ Emissão Atual: valor do snapshot mais recente + variação vs. anterior
-  ├─ Média Semestral: média de todos os snapshots
-  ├─ Menor Emissão: mínimo histórico + período de referência
-  └─ Redução Possível: placeholder "—" (PRD 07)
+  ├─ Emissão Atual: total do mês mais recente + variação vs. anterior
+  ├─ Média Mensal: média dos totais mensais nos últimos 12 meses
+  ├─ Menor Emissão: mínimo mensal histórico + referência de mês
+  └─ Redução Possível: placeholder "—" com nota (PRD 07)
 
 Chart Card
-  └─ BarChart (Recharts): eixo X = periodName, eixo Y = totalEmissionKg
-     Barra atual em #24744D, demais em #8AB89C
+  ├─ GranularityToggle: Diária | Semanal | Mensal (ativo) | Por Período
+  └─ BarChart (Recharts): eixo X = label do período, eixo Y = totalEmissionKg
+     Barra mais recente em #24744D, demais em #8AB89C
 
 Historical Table Card
-  └─ Colunas: SEMESTRE / ESTAÇÕES / CONSUMO (kWh) / EMISSÃO (kg CO₂) / FATOR SIN / VARIAÇÃO
+  └─ Colunas: DATA / ESTAÇÕES / CONSUMO (kWh) / EMISSÃO (kg CO₂) / FATOR SIN / VARIAÇÃO
      Ordenação: mais recente primeiro
-     VARIAÇÃO: ↑ em #DC2626 (aumento) / ↓ em #24744D (redução) / — para baseline
+     VARIAÇÃO: ↑ em #DC2626 (aumento) / ↓ em #16A34A (redução) / — para baseline
 
-Estado vazio (< 1 snapshot)
-  └─ Card centralizado explicando que a série se forma com o uso ao longo dos períodos
-     + botão "Registrar primeiro instantâneo"
+Estado vazio (nenhum snapshot ainda)
+  └─ Card centralizado explicando coleta automática com texto:
+     "A série histórica é formada automaticamente a cada dia de aula.
+      Os primeiros dados aparecerão amanhã."
 ```
 
-**Modal "Registrar Instantâneo":**
-- Select de período (lista os `AcademicPeriod` da instituição que ainda não têm snapshot)
-- Botão "Registrar" — chama `POST /snapshots`
-- Em caso de 422: mostra erro "O período não está pronto para cálculo" com link para a tela de cálculo
+**Toggle de granularidade:** ao alternar, o frontend re-consulta `GET /snapshots?granularity=<novo>` e re-renderiza o gráfico e a tabela. Os KPI cards sempre usam `granularity=monthly`.
 
 **Tipos TypeScript:**
 
 ```typescript
-interface EmissionSnapshotDTO {
-  id: string
-  periodId: string
-  periodName: string
-  periodStart: string
+type Granularity = 'daily' | 'weekly' | 'monthly' | 'period'
+
+interface SnapshotAggregateDTO {
+  label: string
+  startDate: string
+  endDate: string
+  periodId?: string
   totalEmissionKg: number
   totalEnergyKwh: number
-  stationCount: number
   schoolDays: number
+  stationCount: number
   avgEmissionFactor: number
   variationPct: number | null
-  createdAt: string
 }
 ```
 
@@ -299,11 +295,11 @@ interface EmissionSnapshotDTO {
 
 | Risco | Impacto | Probabilidade | Mitigação |
 |-------|---------|---------------|-----------|
-| `result_json` cresce muito com muitos labs/meses | Baixo | Baixa | JSONB comprimido pelo PostgreSQL; série histórica de TCC < 15 períodos |
-| Usuário deleta snapshot por engano e perde a série | Alto | Baixa | Modal de confirmação com nome do período explícito; sem undo |
-| Cálculo falha no momento do snapshot (fator ausente) | Alto | Média | Retornar 422 com mensagem; usuário preenche o fator e tenta novamente |
-| Migração V19 colide com PRD 07 (também usa V19) | Médio | Alta | Usar V20 se PRD 07 for mergeado primeiro; verificar numeração antes do merge |
-| `avgEmissionFactor` calculado incorretamente para períodos com meses sem emissão | Baixo | Baixa | Usar `totalEmissionKg / totalEnergyKwh` — divide por 0 impossível se totalEnergyKwh > 0 |
+| Cron falha silenciosamente (fator SIN ausente, instituição sem período ativo) | Médio | Média | Logar aviso estruturado por instituição; gap no histórico é visível na UI |
+| Volume de dados: 365 dias × N instituições × anos de operação | Baixo | Baixa | Série de TCC raramente ultrapassa 3 anos; índice por `(institution_id, snapshot_date DESC)` garante consultas O(log n) |
+| Agregação semanal com semanas ISO cruzando dois meses | Baixo | Média | Usar `DATE_TRUNC('week', snapshot_date)` do PostgreSQL — comportamento consistente |
+| `avgEmissionFactor` com `totalEnergyKwh = 0` (dia sem aula) | Baixo | Alta | Snapshots só são criados quando `isSchoolDay = true` e há laboratórios operando; se `totalEnergyKwh = 0`, logar e pular o dia |
+| Migração colide com PRD 07 (ambos precisam de V19+) | Médio | Alta | Verificar numeração antes do merge |
 
 ---
 
@@ -311,15 +307,16 @@ interface EmissionSnapshotDTO {
 
 | Fase | Tarefa | Descrição | Esforço |
 |------|--------|-----------|---------|
-| **1 — Spec** | Spec + tasks | Escrever spec formal com histórias e critérios de aceite; criar tasks.md | baixo |
-| **2 — Backend** | Migration + entidade | V19 (ou V20): tabela `emission_snapshot` com RLS; entidade, repositório | baixo |
-| **2 — Backend** | CRUD de snapshots | `EmissionSnapshotController` + `EmissionSnapshotService` (create, list, get, delete) | médio |
-| **2 — Testes** | Testes de integração | CRUD (201/409/422/404/403), imutabilidade, RLS, cálculo de variação | alto |
-| **2 — Testes** | Testes unitários | Service: duplicata, variationPct, avgEmissionFactor, 422 sem fator | médio |
-| **3 — Frontend** | LongitudinalPage | KPI cards + Recharts bar chart + tabela histórica + modal + estado vazio | alto |
+| **1 — Spec** | Spec + tasks | Histórias e critérios de aceite; tasks.md | baixo |
+| **2 — Backend** | Migration + entidade | Tabela `emission_snapshot` com RLS; entidade, repositório | baixo |
+| **2 — Backend** | Cron de captura | `EmissionSnapshotCronService` com lógica diária; idempotência | alto |
+| **2 — Backend** | API de consulta | `EmissionSnapshotController` + `EmissionSnapshotQueryService` com agregação por granularidade | alto |
+| **2 — Testes** | Testes de integração | Cron (captura, idempotência, pulo sem fator/período), query por granularidade, RLS | alto |
+| **2 — Testes** | Testes unitários | QueryService: agregação, variationPct, divisão por zero | médio |
+| **3 — Frontend** | LongitudinalPage | KPI cards + toggle + Recharts + tabela + estado vazio | alto |
 | **4 — Gate** | Verify + Audit | `onp-spec verify` + `onp-spec audit --ci` → exit 0 | — |
 
-**Dependências:** backend desbloqueia frontend. PRD 07 não é pré-requisito (KPI "Redução Possível" é placeholder).
+**Dependências:** backend (especialmente cron) desbloqueia frontend. PRD 07 não é pré-requisito.
 
 ---
 
@@ -327,27 +324,31 @@ interface EmissionSnapshotDTO {
 
 | Tipo | Escopo | Abordagem |
 |------|--------|-----------|
-| **Integração (backend)** | CRUD + RLS + imutabilidade + variação | Testcontainers + PostgreSQL real; seed com período, equipamentos e fatores |
-| **Unitário (backend)** | Service — validações e cálculos | Mocks dos repositórios; foco em variationPct, avgEmissionFactor, duplicata e 422 |
+| **Integração (backend)** | Cron + query + RLS | Testcontainers + PostgreSQL real; seed com período, equipamentos, fatores e snapshots pré-criados |
+| **Unitário (backend)** | QueryService — agregação e cálculos | Mocks do repositório; foco em variationPct, avgEmissionFactor, divisão por zero |
 
-**Cenários a testar — integração:**
+**Cenários a testar — integração (cron):**
 
-- ADMIN cria snapshot de período válido → 201 com campos corretos
-- Cria snapshot de período que já tem snapshot → 409
-- Cria snapshot de período sem fatores de emissão → 422
-- Lista snapshots: retorna apenas snapshots da instituição (RLS)
-- Lista snapshots: variationPct calculado corretamente entre dois períodos consecutivos
-- Primeiro snapshot da série: variationPct null
-- Detalhe do snapshot contém result_json não nulo
-- RESEARCHER tenta POST → 403
-- DELETE de snapshot existente → 204
-- DELETE de snapshot inexistente → 404
-- Snapshot de instituição B invisível para instituição A (RLS)
+- Dia dentro de período ativo com fator disponível → snapshot criado com valores corretos
+- Cron chamado duas vezes para o mesmo dia (idempotência) → segundo chamado não cria duplicata
+- Dia fora de qualquer período letivo → nenhum snapshot criado
+- Dia dentro de período mas fator SIN ausente para o mês → snapshot não criado, aviso logado
+- Dia não-letivo (`isSchoolDay = false`) → snapshot criado com `daily_emission_kg = 0`
+- Laboratório sem `LaboratorySchedule` para o `dayOfWeek` do dia → não contribui para emissão
+
+**Cenários a testar — integração (query):**
+
+- `granularity=monthly`: soma correta de vários dias do mesmo mês
+- `granularity=period`: soma correta de dias do mesmo `period_id`
+- `granularity=weekly`: agrupamento correto por ISO week
+- `variationPct` com dois meses: `(b - a) / a × 100`
+- Primeiro registro da série: `variationPct = null`
+- RLS: snapshots de instituição B invisíveis para instituição A
+- Filtro `startDate`/`endDate` exclui registros fora do intervalo
 
 **Cenários a testar — unitários:**
 
-- `create` com period já com snapshot → exceção de duplicata
-- `create` com cálculo retornando energia zero → não lança NPE
-- `list` com dois snapshots: variationPct = `(b - a) / a * 100`
-- `list` com um snapshot: variationPct = null
-- `avgEmissionFactor` = totalEmissionKg / totalEnergyKwh arredondado corretamente
+- `avgEmissionFactor = totalEmissionKg / totalEnergyKwh` arredondado corretamente
+- `variationPct` com dois grupos consecutivos
+- `variationPct` com um único grupo → null
+- Grupo com `totalEnergyKwh = 0` → `avgEmissionFactor = null` (não lança NPE)
