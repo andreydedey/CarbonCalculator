@@ -9,14 +9,6 @@ import {
   type SnapshotAggregateDTO,
 } from './LongitudinalPage.logic.ts'
 
-/**
- * Este projeto não tem @testing-library/react nem jsdom instalados, e o runner de
- * testes do frontend (`node --test`) não transpila JSX. Por isso — e seguindo a
- * mesma convenção já usada em `computeEmissionFactorRows` (feature fatores-de-emissao,
- * client/src/lib/utils/emission-factor-rows.ts) — este teste exercita a lógica pura
- * extraída para `LongitudinalPage.logic.ts`, em vez de renderizar o DOM.
- */
-
 function makeSnapshot(
   label: string,
   totalEmissionKg: number,
@@ -56,13 +48,10 @@ describe('LongitudinalPage', () => {
 
       const [current, average, min] = cards
 
-      // Emissão Atual = total do mês mais recente (último da série)
       assert.equal(current.value, 950)
 
-      // Média Mensal = média dos totais mensais (aqui, últimos 12 meses == todos, só há 4)
       assert.equal(average.value, (1000 + 900 + 1100 + 950) / 4)
 
-      // Menor Emissão = mínimo mensal histórico
       assert.equal(min.value, 900)
     })
 
@@ -94,9 +83,6 @@ describe('LongitudinalPage', () => {
     test('@spec:AC-119 KPI cards sempre usam granularidade mensal, independente do toggle selecionado (ASM-034)', () => {
       assert.equal(KPI_GRANULARITY, 'monthly')
 
-      // computeKpiCards não aceita granularidade como parâmetro: o chamador sempre
-      // precisa fornecer os snapshots mensais, não os da granularidade selecionada no
-      // toggle — isso garante que mudar o toggle não altera os KPI cards.
       assert.equal(computeKpiCards.length, 1)
     })
   })

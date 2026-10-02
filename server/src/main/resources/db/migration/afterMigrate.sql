@@ -268,7 +268,6 @@ BEGIN
 
   -- LABIA: no schedule (AC-064 — zero hours)
 
-  -- Academic Period: 2025.2
   INSERT INTO academic_period (id, institution_id, name, start_date, end_date)
   VALUES ('aaaa0001-0001-0001-0002-000000000001', '11111111-1111-1111-1111-111111111111', '2025.2', '2025-08-11', '2025-12-12');
 
@@ -285,7 +284,6 @@ BEGIN
     ('bbbb0001-0002-0002-0002-000000000003', 'aaaa0001-0001-0001-0002-000000000001', '2025-11-15', 'Proclamação da República', 'NATIONAL'),
     ('bbbb0001-0002-0002-0002-000000000004', 'aaaa0001-0001-0001-0002-000000000001', '2025-11-20', 'Consciência Negra',        'NATIONAL');
 
-  -- Schedules for 2025.2 — same layout as 2025.1
   INSERT INTO laboratory_schedule (id, shift_id, laboratory_id, day_of_week, occupied_slots)
   VALUES
     ('cccc0001-0002-0002-0002-000000000001', '55550001-0002-0002-0002-000000000002', 'cccccccc-0001-0001-0001-000000000001', 1, '{1,2,3,4,5}'),
@@ -304,7 +302,6 @@ BEGIN
     ('cccc0001-0002-0002-0002-000000000019', '55550001-0002-0002-0002-000000000002', 'cccccccc-0001-0001-0001-000000000002', 4, '{1,2,3}'),
     ('cccc0001-0002-0002-0002-000000000020', '55550001-0002-0002-0002-000000000002', 'cccccccc-0001-0001-0001-000000000002', 5, '{1,2,3}');
 
-  -- Academic Period: 2026.1
   INSERT INTO academic_period (id, institution_id, name, start_date, end_date)
   VALUES ('aaaa0001-0001-0001-0003-000000000001', '11111111-1111-1111-1111-111111111111', '2026.1', '2026-03-02', '2026-07-10');
 
@@ -501,7 +498,6 @@ BEGIN
      'cccccccc-0002-0002-0002-000000000002', 5, '{1,2,3,4}')
   ;
 
-  -- Academic Period: 2025.2
   INSERT INTO academic_period (id, institution_id, name, start_date, end_date)
   VALUES ('aaaa0002-0002-0002-0003-000000000001', '22222222-2222-2222-2222-222222222222', '2025.2', '2025-08-04', '2025-12-05');
 
@@ -533,7 +529,6 @@ BEGIN
     ('cccc0002-0003-0003-0003-000000000012', '55550002-0003-0003-0003-000000000002', 'cccccccc-0002-0002-0002-000000000002', 3, '{1,2,3,4}'),
     ('cccc0002-0003-0003-0003-000000000013', '55550002-0003-0003-0003-000000000002', 'cccccccc-0002-0002-0002-000000000002', 5, '{1,2,3,4}');
 
-  -- Academic Period: 2026.1
   INSERT INTO academic_period (id, institution_id, name, start_date, end_date)
   VALUES ('aaaa0002-0002-0002-0003-000000000002', '22222222-2222-2222-2222-222222222222', '2026.1', '2026-02-23', '2026-07-03');
 
@@ -639,20 +634,6 @@ INSERT INTO emission_factor (reference_month, value, source, institution_id) VAL
   ('2026-11-01', 0.0398, 'MCTI — Fator médio SIN, nov/2026', '22222222-2222-2222-2222-222222222222'),
   ('2026-12-01', 0.0375, 'MCTI — Fator médio SIN, dez/2026', '22222222-2222-2222-2222-222222222222');
 
--- =================== EMISSION SNAPSHOTS (backfill histórico) ===================
--- Gera um snapshot por dia letivo (seg-sex, fora de feriados, dentro de período ativo).
--- Valores calculados com a mesma fórmula do EmissionSnapshotCronService:
---   energy = watts × (slots × classDuration_min / 60) × qty / 1000
--- UFPA (todos os dias úteis, Mon-Fri):
---   LABCOMP-01 (AFTERNOON 5 slots × 50 min): 30 × (65+21) × 250/60 / 1000 = 10.7500 kWh
---   LABCOMP-02 (MORNING 5 + AFTERNOON 3 slots × 50 min): 25 × (65+18) × 400/60 / 1000 = 13.8333 kWh
---   Total: 24.5833 kWh, 55 estações
--- UNICAMP Mon/Wed/Fri (LCC-A + LCC-B):
---   LCC-A (MORNING 5 + AFTERNOON 4 slots): 40 × (65+25) × 450/60 / 1000 = 27.0000 kWh
---   LCC-B (AFTERNOON 4 slots): 15 × (65+25) × 200/60 / 1000 + 5 × 28 × 200/60 / 1000 = 4.9667 kWh
---   Total: 31.9667 kWh, 60 estações
--- UNICAMP Tue/Thu (LCC-A only): 27.0000 kWh, 40 estações
-
 DO $$
 DECLARE
   d          DATE;
@@ -663,7 +644,6 @@ DECLARE
   rec        RECORD;
   holidays   DATE[];
 BEGIN
-  -- ---- UFPA ----
   PERFORM set_config('app.current_institution', '11111111-1111-1111-1111-111111111111', true);
   FOR rec IN
     SELECT id, start_date, end_date FROM academic_period
@@ -698,7 +678,6 @@ BEGIN
     END LOOP;
   END LOOP;
 
-  -- ---- UNICAMP ----
   PERFORM set_config('app.current_institution', '22222222-2222-2222-2222-222222222222', true);
   FOR rec IN
     SELECT id, start_date, end_date FROM academic_period
@@ -719,7 +698,6 @@ BEGIN
         AND reference_month = DATE_TRUNC('month', d)::DATE;
       IF factor_val IS NULL THEN d := d + 1; CONTINUE; END IF;
 
-      -- LCC-B only active Mon/Wed/Fri (DOW 1, 3, 5)
       IF dow IN (1, 3, 5) THEN
         energy_kwh  := 31.9667;
         station_cnt := 60;

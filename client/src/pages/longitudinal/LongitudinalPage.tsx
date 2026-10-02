@@ -31,7 +31,6 @@ import {
   type SnapshotAggregateDTO,
 } from './LongitudinalPage.logic.ts'
 
-// Re-export pure logic so tests can import from this module (consumed by LongitudinalPage.test.ts)
 export type { Granularity, KpiCard, SnapshotAggregateDTO }
 export {
   computeKpiCards,
@@ -40,8 +39,6 @@ export {
   getVariationColor,
   KPI_GRANULARITY,
 }
-
-// --- Page component ---
 
 export function LongitudinalPage() {
   const [granularity, setGranularity] = useState<Granularity>('monthly')
@@ -99,7 +96,6 @@ export function LongitudinalPage() {
         </div>
       </div>
 
-      {/* KPI Cards (AC-118) */}
       <div className="grid grid-cols-3 gap-4">
         {kpiCards.map((card) => (
           <div key={card.label} className="rounded-lg border bg-card p-4 flex flex-col gap-1">
@@ -116,7 +112,6 @@ export function LongitudinalPage() {
         ))}
       </div>
 
-      {/* Granularity toggle (AC-119) */}
       <div className="flex items-center gap-1 rounded-lg border bg-muted/30 p-1 w-fit">
         {GRANULARITY_OPTIONS.map((opt) => (
           <button
@@ -134,14 +129,12 @@ export function LongitudinalPage() {
         ))}
       </div>
 
-      {/* Empty state (AC-120) */}
       {isEmpty ? (
         <div className="rounded-lg border p-8 flex items-center justify-center">
           <p className="text-sm text-muted-foreground text-center max-w-sm">{EMPTY_STATE_MESSAGE}</p>
         </div>
       ) : (
         <>
-          {/* Bar chart */}
           <div className="rounded-lg border p-4">
             <div className="flex items-start justify-between mb-4">
               <div>
@@ -179,7 +172,6 @@ export function LongitudinalPage() {
             </ResponsiveContainer>
           </div>
 
-          {/* Historical table */}
           <div className="rounded-lg border">
             <div className="px-4 py-3 border-b">
               <p className="text-sm font-medium">Histórico de Emissões</p>

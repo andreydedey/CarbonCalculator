@@ -3,88 +3,62 @@ package com.example.carboncalculator;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 
 import com.example.carboncalculator.dto.SnapshotAggregateDTO;
-import com.example.carboncalculator.entities.AcademicPeriod;
-import com.example.carboncalculator.entities.EmissionSnapshot;
-import com.example.carboncalculator.entities.Institution;
+import com.example.carboncalculator.dto.SnapshotBucketDTO;
+import com.example.carboncalculator.entities.SnapshotGranularity;
 import com.example.carboncalculator.repositories.EmissionSnapshotRepository;
 import com.example.carboncalculator.services.EmissionSnapshotQueryService;
 
-/**
- * Unit tests for EmissionSnapshotQueryService aggregation logic (US-033).
- * Uses mock repository so no database is needed.
- */
 class EmissionSnapshotQueryServiceTest {
 
     private EmissionSnapshotRepository repository;
     private EmissionSnapshotQueryService service;
 
-    private Institution institution;
-    private AcademicPeriod period;
-
     @BeforeEach
     void setUp() {
         repository = mock(EmissionSnapshotRepository.class);
         service = new EmissionSnapshotQueryService(repository);
-
-        institution = Institution.builder()
-                .id(UUID.randomUUID())
-                .name("Test Institution")
-                .acronym("TEST")
-                .state("PA")
-                .build();
-
-        period = AcademicPeriod.builder()
-                .id(UUID.randomUUID())
-                .institution(institution)
-                .name("2025.2")
-                .startDate(LocalDate.of(2025, 8, 1))
-                .endDate(LocalDate.of(2025, 12, 15))
-                .build();
     }
 
-    private EmissionSnapshot snapshot(LocalDate date, String emissionKg, boolean schoolDay) {
-        return EmissionSnapshot.builder()
-                .id(UUID.randomUUID())
-                .institution(institution)
-                .academicPeriod(period)
-                .snapshotDate(date)
-                .dayOfWeek(date.getDayOfWeek())
-                .schoolDay(schoolDay)
-                .dailyEmissionKg(new BigDecimal(emissionKg))
-                .dailyEnergyKwh(new BigDecimal(emissionKg).multiply(BigDecimal.valueOf(20)))
-                .emissionFactorValue(new BigDecimal("0.0500"))
-                .stationCount(10)
-                .build();
+    private SnapshotBucketDTO month(LocalDate firstDay, String emissionKg, int schoolDays) {
+        return new SnapshotBucketDTO(
+                firstDay,
+                firstDay.withDayOfMonth(firstDay.lengthOfMonth()),
+                null,
+                null,
+                new BigDecimal(emissionKg),
+                new BigDecimal(emissionKg).multiply(BigDecimal.valueOf(20)),
+                schoolDays,
+                10,
+                new BigDecimal("0.050000"));
+    }
+
+    private void givenAllBuckets(SnapshotBucketDTO... mostRecentFirst) {
+        when(repository.findAllBucketsMostRecentFirst(eq(SnapshotGranularity.MONTHLY), any(), any()))
+                .thenReturn(List.of(mostRecentFirst));
     }
 
     // @spec:AC-103 Agregação mensal soma corretamente dias do mesmo mês
     @Test
     void deveAgregarMensalmenteSomandoDiasDoMesmoMes() {
-        List<EmissionSnapshot> snapshots = List.of(
-                snapshot(LocalDate.of(2025, 10, 6), "100", true),
-                snapshot(LocalDate.of(2025, 10, 7), "120", true),
-                snapshot(LocalDate.of(2025, 10, 8), "90", true),
-                snapshot(LocalDate.of(2025, 10, 9), "110", true),
-                snapshot(LocalDate.of(2025, 10, 10), "130", true));
-
-        when(repository.findAll(any(Specification.class), any(Sort.class))).thenReturn(snapshots);
+        givenAllBuckets(month(LocalDate.of(2025, 10, 1), "550", 5));
 
         List<SnapshotAggregateDTO> result = service.list("monthly", null, null);
 
@@ -96,26 +70,21 @@ class EmissionSnapshotQueryServiceTest {
     // @spec:AC-107 variationPct calculado em relação ao registro imediatamente anterior
     @Test
     void deveCalcularVariationPctEmRelacaoAoRegistroAnterior() {
-        List<EmissionSnapshot> snapshots = List.of(
-                snapshot(LocalDate.of(2025, 9, 15), "1000", true),
-                snapshot(LocalDate.of(2025, 10, 15), "1120", true));
-
-        when(repository.findAll(any(Specification.class), any(Sort.class))).thenReturn(snapshots);
+        givenAllBuckets(
+                month(LocalDate.of(2025, 10, 1), "1120", 1),
+                month(LocalDate.of(2025, 9, 1), "1000", 1));
 
         List<SnapshotAggregateDTO> result = service.list("monthly", null, null);
 
         assertEquals(2, result.size());
-        assertNull(result.get(0).variationPct(), "first record must have null variationPct");
+        assertNull(result.get(0).variationPct());
         assertEquals(12.0, result.get(1).variationPct().doubleValue(), 0.01);
     }
 
     // @spec:AC-108 Primeiro registro da série tem variationPct null
     @Test
     void devePrimeiroRegistroDaSerieTerVariationPctNulo() {
-        List<EmissionSnapshot> snapshots = List.of(
-                snapshot(LocalDate.of(2025, 11, 10), "300", true));
-
-        when(repository.findAll(any(Specification.class), any(Sort.class))).thenReturn(snapshots);
+        givenAllBuckets(month(LocalDate.of(2025, 11, 1), "300", 1));
 
         List<SnapshotAggregateDTO> result = service.list("monthly", null, null);
 
@@ -123,37 +92,50 @@ class EmissionSnapshotQueryServiceTest {
         assertNull(result.get(0).variationPct());
     }
 
-    // listHistory() feeds the "Histórico de Emissões" table: most-recent-first, paginated
     @Test
     void listHistoryDeveRetornarOrdemDoMaisRecenteParaOMaisAntigo() {
-        List<EmissionSnapshot> snapshots = List.of(
-                snapshot(LocalDate.of(2025, 1, 10), "100", true),
-                snapshot(LocalDate.of(2025, 2, 10), "200", true),
-                snapshot(LocalDate.of(2025, 3, 10), "300", true));
-
-        when(repository.findAll(any(Specification.class), any(Sort.class))).thenReturn(snapshots);
+        when(repository.findBucketsMostRecentFirst(eq(SnapshotGranularity.MONTHLY), any(), any(), eq(0L), eq(21)))
+                .thenReturn(List.of(
+                        month(LocalDate.of(2025, 3, 1), "300", 1),
+                        month(LocalDate.of(2025, 2, 1), "200", 1),
+                        month(LocalDate.of(2025, 1, 1), "100", 1)));
+        when(repository.countBuckets(eq(SnapshotGranularity.MONTHLY), any(), any())).thenReturn(3L);
 
         Page<SnapshotAggregateDTO> page = service.listHistory("monthly", null, null, PageRequest.of(0, 20));
 
         assertEquals(3, page.getContent().size());
         assertEquals(0, new BigDecimal("300").compareTo(page.getContent().get(0).totalEmissionKg()));
         assertEquals(0, new BigDecimal("100").compareTo(page.getContent().get(2).totalEmissionKg()));
+        assertEquals(50.0, page.getContent().get(0).variationPct().doubleValue(), 0.01);
+        assertNull(page.getContent().get(2).variationPct());
     }
 
-    // Server-enforced cap: even if the caller asks for more, each page tops out at 20 items
     @Test
     void listHistoryDeveLimitarTamanhoDaPaginaA20MesmoQuandoSolicitadoMaior() {
-        List<EmissionSnapshot> snapshots = new ArrayList<>();
-        for (int i = 0; i < 25; i++) {
-            snapshots.add(snapshot(LocalDate.of(2023, 1, 1).plusMonths(i), String.valueOf(100 + i), true));
+        List<SnapshotBucketDTO> buckets = new ArrayList<>();
+        for (int i = 0; i < 21; i++) {
+            buckets.add(month(LocalDate.of(2025, 1, 1).minusMonths(i), String.valueOf(200 - i), 1));
         }
-
-        when(repository.findAll(any(Specification.class), any(Sort.class))).thenReturn(snapshots);
+        when(repository.findBucketsMostRecentFirst(any(), any(), any(), anyLong(), anyInt())).thenReturn(buckets);
+        when(repository.countBuckets(any(), any(), any())).thenReturn(25L);
 
         Page<SnapshotAggregateDTO> page = service.listHistory("monthly", null, null, PageRequest.of(0, 50));
 
+        verify(repository).findBucketsMostRecentFirst(SnapshotGranularity.MONTHLY, null, null, 0L, 21);
         assertEquals(20, page.getContent().size());
         assertEquals(20, page.getSize());
         assertEquals(25, page.getTotalElements());
+        assertEquals(0, new BigDecimal("181").compareTo(page.getContent().get(19).totalEmissionKg()));
+        assertEquals(new BigDecimal("0.56"), page.getContent().get(19).variationPct());
+    }
+
+    @Test
+    void listHistoryDeveBuscarAPaginaSolicitadaNoBanco() {
+        when(repository.findBucketsMostRecentFirst(any(), any(), any(), anyLong(), anyInt())).thenReturn(List.of());
+        when(repository.countBuckets(any(), any(), any())).thenReturn(45L);
+
+        service.listHistory("weekly", null, null, PageRequest.of(2, 20));
+
+        verify(repository).findBucketsMostRecentFirst(SnapshotGranularity.WEEKLY, null, null, 40L, 21);
     }
 }

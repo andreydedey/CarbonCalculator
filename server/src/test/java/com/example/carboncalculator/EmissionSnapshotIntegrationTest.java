@@ -78,18 +78,6 @@ import com.example.carboncalculator.specifications.EmissionSnapshotSpecification
 import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.services.EmissionSnapshotCronService;
 
-/**
- * Integration tests for the longitudinal tracking feature (US-033, US-034):
- * the daily cron capture (EmissionSnapshotCronService) and the aggregated
- * query API (GET /snapshots, backed by EmissionSnapshotQueryService).
- *
- * <p>Query scenarios seed {@link EmissionSnapshot} rows directly through the
- * repository (there is no create endpoint by design — snapshots are
- * cron-only and immutable) inside a manually tenant-scoped transaction that
- * mirrors what {@code TenantFilter} does for HTTP requests. Cron scenarios
- * invoke {@link EmissionSnapshotCronService#captureYesterday()} directly and
- * then inspect the persisted result the same way.
- */
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
@@ -148,7 +136,6 @@ class EmissionSnapshotIntegrationTest {
 
     private JdbcTemplate jdbcTemplate;
 
-    // --- Shared test state ---
     private String adminToken;
     private UUID institutionId;
 
@@ -167,8 +154,6 @@ class EmissionSnapshotIntegrationTest {
         InstitutionDTO institution = createInstitution("TEST-" + System.nanoTime());
         institutionId = institution.id();
     }
-
-    // ========================= HTTP helpers =========================
 
     private HttpHeaders headersFor(UUID instId) {
         HttpHeaders headers = new HttpHeaders();
@@ -326,14 +311,6 @@ class EmissionSnapshotIntegrationTest {
         return response.getBody();
     }
 
-    // ========================= Direct repository helpers =========================
-    // There is no snapshot-creation endpoint by design (US-034: cron-only, immutable).
-    // Query scenarios need deterministic historical dates that the cron (which always
-    // targets "yesterday") cannot produce, so we seed rows directly through the
-    // repository inside a manually tenant-scoped transaction — replicating exactly
-    // what TenantFilter does for HTTP requests (SELECT set_config(...) then the JPA
-    // call in the same transaction/connection).
-
     private <T> T runTenantScoped(UUID instId, java.util.function.Supplier<T> work) {
         TransactionTemplate tx = new TransactionTemplate(transactionManager);
         return tx.execute(status -> {
@@ -372,8 +349,6 @@ class EmissionSnapshotIntegrationTest {
     private boolean snapshotExists(UUID instId, LocalDate date) {
         return Boolean.TRUE.equals(runTenantScoped(instId, () -> snapshotRepository.existsBySnapshotDate(date)));
     }
-
-    // ========================= QUERY TESTS (US-033) =========================
 
     // @spec:AC-103 Agregação mensal soma corretamente dias do mesmo mês
     @Test
@@ -427,7 +402,6 @@ class EmissionSnapshotIntegrationTest {
         UUID periodId = createPeriod(institutionId, "2025.W-" + System.nanoTime(),
                 LocalDate.of(2025, 11, 1), LocalDate.of(2025, 11, 30));
 
-        // Monday 2025-11-03 through Friday 2025-11-07 — same ISO week
         LocalDate monday = LocalDate.of(2025, 11, 3);
         for (int i = 0; i < 5; i++) {
             seedSnapshot(institutionId, periodId, monday.plusDays(i), "20", "400", "0.0500", true, 10);
@@ -500,7 +474,6 @@ class EmissionSnapshotIntegrationTest {
         seedSnapshot(otherInstitution.id(), otherPeriodId, LocalDate.of(2025, 11, 10),
                 "500", "10000", "0.0500", true, 10);
 
-        // institutionId (from @BeforeEach) has no snapshots at all
         List<SnapshotAggregateDTO> result = getSnapshots(institutionId, adminToken, "monthly", null, null);
 
         assertTrue(result.isEmpty());
@@ -534,8 +507,6 @@ class EmissionSnapshotIntegrationTest {
 
         assertNotNull(result);
     }
-
-    // ========================= CRON TESTS (US-034) =========================
 
     // @spec:AC-112 Cron cria snapshot para dia dentro de período ativo com fator disponível
     @Test
@@ -601,7 +572,6 @@ class EmissionSnapshotIntegrationTest {
     void deveCronNaoCriarSnapshotParaDiaForaDePeriodoLetivo() {
         LocalDate yesterday = LocalDate.now().minusDays(1);
         createEmissionFactor(institutionId, YearMonth.from(yesterday), "0.0500");
-        // No AcademicPeriod created at all for this institution
 
         cronService.captureYesterday();
 
@@ -613,7 +583,6 @@ class EmissionSnapshotIntegrationTest {
     void deveCronNaoCriarSnapshotQuandoFatorSinAusente() {
         LocalDate yesterday = LocalDate.now().minusDays(1);
         int dow = yesterday.getDayOfWeek().getValue();
-        // No EmissionFactor created for yesterday's month
 
         UUID labId = createLab(institutionId, "LAB-NOFATOR-" + System.nanoTime());
         UUID modelId = createEquipmentModel(institutionId, "Model-" + System.nanoTime(), 100);
@@ -668,17 +637,15 @@ class EmissionSnapshotIntegrationTest {
     void deveLabSemScheduleParaDiaNaoContribuirParaEmissao() {
         LocalDate yesterday = LocalDate.now().minusDays(1);
         int yesterdayDow = yesterday.getDayOfWeek().getValue();
-        int otherDow = (yesterdayDow % 7) + 1; // guaranteed different from yesterdayDow
+        int otherDow = (yesterdayDow % 7) + 1;
 
         createEmissionFactor(institutionId, YearMonth.from(yesterday), "0.0500");
 
-        // Lab A: schedule only for a day that is NOT yesterday — must not contribute
         UUID labA = createLab(institutionId, "LAB-A-" + System.nanoTime());
         UUID modelA = createEquipmentModel(institutionId, "Model-A-" + System.nanoTime(), 100);
         UUID configA = createConfiguration(institutionId, modelA, "Linux");
         assignEquipment(institutionId, labA, configA, 5);
 
-        // Lab B: schedule for yesterday's day of week — must contribute
         UUID labB = createLab(institutionId, "LAB-B-" + System.nanoTime());
         UUID modelB = createEquipmentModel(institutionId, "Model-B-" + System.nanoTime(), 50);
         UUID configB = createConfiguration(institutionId, modelB, "Linux");
@@ -700,7 +667,6 @@ class EmissionSnapshotIntegrationTest {
         cronService.captureYesterday();
 
         EmissionSnapshot snapshot = fetchSnapshot(institutionId, yesterday).orElseThrow();
-        // Only lab B's 2 stations should be counted — lab A's 5 stations must be excluded
         assertEquals(2, snapshot.getStationCount());
         assertTrue(snapshot.getDailyEnergyKwh().compareTo(BigDecimal.ZERO) > 0);
     }

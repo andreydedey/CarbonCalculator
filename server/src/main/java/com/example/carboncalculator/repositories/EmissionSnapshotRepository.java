@@ -12,12 +12,9 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import com.example.carboncalculator.entities.EmissionSnapshot;
 
-/**
- * Snapshots are institution-scoped via RLS (app.current_institution), so
- * query methods do not need an explicit institution filter.
- */
 public interface EmissionSnapshotRepository
-        extends JpaRepository<EmissionSnapshot, UUID>, JpaSpecificationExecutor<EmissionSnapshot> {
+        extends JpaRepository<EmissionSnapshot, UUID>, JpaSpecificationExecutor<EmissionSnapshot>,
+        EmissionSnapshotRepositoryCustom {
 
     boolean existsBySnapshotDate(LocalDate snapshotDate);
 

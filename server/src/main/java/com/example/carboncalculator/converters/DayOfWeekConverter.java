@@ -11,7 +11,7 @@ public class DayOfWeekConverter implements AttributeConverter<DayOfWeek, Short> 
     @Override
     public Short convertToDatabaseColumn(DayOfWeek attribute) {
         if (attribute == null) return null;
-        return (short) attribute.getValue(); // ISO: Mon=1 … Sun=7
+        return (short) attribute.getValue();
     }
 
     @Override

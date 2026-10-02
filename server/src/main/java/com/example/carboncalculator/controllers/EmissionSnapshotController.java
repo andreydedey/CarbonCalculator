@@ -17,12 +17,6 @@ import com.example.carboncalculator.services.EmissionSnapshotQueryService;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * Read-only longitudinal history of emissions (US-033). Snapshots are
- * captured daily by EmissionSnapshotCronService (US-034); this endpoint
- * aggregates them by the requested granularity. Open to every authenticated
- * role (no restriction) per TDD-08.
- */
 @RestController
 @RequestMapping("/snapshots")
 @RequiredArgsConstructor
@@ -39,7 +33,6 @@ public class EmissionSnapshotController {
         return queryService.list(granularity, startDate, endDate);
     }
 
-    // Paginated, most-recent-first listing for the "Histórico de Emissões" table.
     @GetMapping("/history")
     @PreAuthorize("isAuthenticated()")
     public PageResponse<SnapshotAggregateDTO> history(

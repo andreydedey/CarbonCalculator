@@ -1,6 +1,3 @@
--- emission_snapshot: daily emission capture per institution, created by the
--- cron job (US-034) and aggregated by granularity for the longitudinal view (US-033)
-
 CREATE TABLE emission_snapshot (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     institution_id UUID NOT NULL REFERENCES institution (id),
@@ -24,7 +21,6 @@ CREATE INDEX idx_emission_snapshot_institution_id ON emission_snapshot (institut
 CREATE INDEX idx_emission_snapshot_date ON emission_snapshot (snapshot_date);
 CREATE INDEX idx_emission_snapshot_period ON emission_snapshot (academic_period_id);
 
--- RLS
 ALTER TABLE emission_snapshot ENABLE ROW LEVEL SECURITY;
 ALTER TABLE emission_snapshot FORCE ROW LEVEL SECURITY;
 

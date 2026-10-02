@@ -4,15 +4,14 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-public record SnapshotAggregateDTO(
-        String label,
+public record SnapshotBucketDTO(
         LocalDate startDate,
         LocalDate endDate,
         UUID periodId,
+        String periodName,
         BigDecimal totalEmissionKg,
         BigDecimal totalEnergyKwh,
         int schoolDays,
         int stationCount,
-        BigDecimal avgEmissionFactor,
-        BigDecimal variationPct) {
+        BigDecimal avgEmissionFactor) {
 }

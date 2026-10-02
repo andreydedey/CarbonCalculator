@@ -25,11 +25,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/**
- * Immutable daily emission snapshot, captured automatically by the cron job
- * for each school day within an active academic period (US-034). The query
- * API aggregates these records by granularity (US-033).
- */
 @Entity
 @Table(name = "emission_snapshot")
 @Getter

@@ -1,5 +1,5 @@
 import { api } from './client.ts'
-import type { PageResponse } from './types'
+import type { PageParams, PageResponse } from './types'
 
 export type SnapshotAggregateDTO = {
   label: string
@@ -22,28 +22,34 @@ export type ListSnapshotsParams = {
   endDate?: string
 }
 
-export async function listSnapshots(params: ListSnapshotsParams): Promise<SnapshotAggregateDTO[]> {
-  const query = new URLSearchParams({ granularity: params.granularity })
-  if (params.startDate) query.set('startDate', params.startDate)
-  if (params.endDate) query.set('endDate', params.endDate)
-  return api.get<SnapshotAggregateDTO[]>(`/snapshots?${query.toString()}`).then((r) => r.data)
-}
+export type ListSnapshotHistoryParams = ListSnapshotsParams & PageParams
 
-export type ListSnapshotHistoryParams = ListSnapshotsParams & {
-  page?: number
-  size?: number
-}
-
-// Paginated, most-recent-first history for the "Histórico de Emissões" table (the
-// backend caps size at 20 regardless of what is requested here).
-export async function listSnapshotHistory(
-  params: ListSnapshotHistoryParams,
-): Promise<PageResponse<SnapshotAggregateDTO>> {
-  const { page = 0, size = 20, granularity, startDate, endDate } = params
-  const query = new URLSearchParams({ granularity, page: String(page), size: String(size) })
+function buildSnapshotQuery({
+  granularity,
+  startDate,
+  endDate,
+}: ListSnapshotsParams): URLSearchParams {
+  const query = new URLSearchParams({ granularity })
   if (startDate) query.set('startDate', startDate)
   if (endDate) query.set('endDate', endDate)
+  return query
+}
+
+export async function listSnapshots(params: ListSnapshotsParams): Promise<SnapshotAggregateDTO[]> {
   return api
-    .get<PageResponse<SnapshotAggregateDTO>>(`/snapshots/history?${query.toString()}`)
+    .get<SnapshotAggregateDTO[]>(`/snapshots?${buildSnapshotQuery(params)}`)
+    .then((r) => r.data)
+}
+
+export async function listSnapshotHistory({
+  page = 0,
+  size = 20,
+  ...params
+}: ListSnapshotHistoryParams): Promise<PageResponse<SnapshotAggregateDTO>> {
+  const query = buildSnapshotQuery(params)
+  query.set('page', String(page))
+  query.set('size', String(size))
+  return api
+    .get<PageResponse<SnapshotAggregateDTO>>(`/snapshots/history?${query}`)
     .then((r) => r.data)
 }

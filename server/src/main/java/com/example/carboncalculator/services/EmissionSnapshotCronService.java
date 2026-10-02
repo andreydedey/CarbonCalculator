@@ -34,11 +34,6 @@ import com.example.carboncalculator.repositories.LaboratoryScheduleRepository;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * Daily cron that captures one {@link EmissionSnapshot} per institution for
- * yesterday (US-034). Runs at 01:00 every night and is idempotent — a second
- * execution on the same day for the same institution is a no-op (AC-113).
- */
 @Service
 @RequiredArgsConstructor
 public class EmissionSnapshotCronService {
@@ -73,7 +68,6 @@ public class EmissionSnapshotCronService {
         TransactionTemplate tx = new TransactionTemplate(transactionManager);
 
         tx.execute(status -> {
-            // Set RLS tenant context for this institution
             jdbc.execute((ConnectionCallback<Void>) conn -> {
                 try (PreparedStatement ps = conn.prepareStatement(
                         "SELECT set_config('app.current_institution', ?, true)")) {
@@ -83,12 +77,10 @@ public class EmissionSnapshotCronService {
                 return null;
             });
 
-            // Idempotency: skip if snapshot already exists (AC-113)
             if (snapshotRepository.existsBySnapshotDate(date)) {
                 return null;
             }
 
-            // Find period containing date (AC-114: skip if not in any active period)
             List<AcademicPeriod> periods = academicPeriodRepository.findAll();
             Optional<AcademicPeriod> periodOpt = periods.stream()
                     .filter(p -> !date.isBefore(p.getStartDate()) && !date.isAfter(p.getEndDate()))
@@ -98,7 +90,6 @@ public class EmissionSnapshotCronService {
             }
             AcademicPeriod period = periodOpt.get();
 
-            // Find emission factor for date's month (AC-115: skip + warn if absent)
             Optional<EmissionFactor> factorOpt = emissionFactorRepository.findByReferenceMonth(YearMonth.from(date));
             if (factorOpt.isEmpty()) {
                 log.warn("Snapshot omitted for institution {} on {}: no SIN factor for {}",
@@ -107,7 +98,6 @@ public class EmissionSnapshotCronService {
             }
             EmissionFactor factor = factorOpt.get();
 
-            // Check for holiday (AC-116)
             boolean isHoliday = period.getHolidays().stream()
                     .anyMatch(h -> h.getDate().equals(date));
 
@@ -142,7 +132,6 @@ public class EmissionSnapshotCronService {
             LocalDate date, EmissionFactor factor) {
         int dow = date.getDayOfWeek().getValue();
 
-        // Get all schedules for this period on this day of week (AC-117)
         List<LaboratorySchedule> daySchedules = scheduleRepository.findByPeriodId(period.getId())
                 .stream()
                 .filter(s -> s.getDayOfWeek() == dow && s.getShift().isEnabled())
@@ -151,7 +140,6 @@ public class EmissionSnapshotCronService {
         BigDecimal totalEnergyKwh = BigDecimal.ZERO;
         int stationCount = 0;
 
-        // Aggregate per lab (a lab may appear in multiple shifts)
         var labHours = new java.util.LinkedHashMap<java.util.UUID, Double>();
         for (LaboratorySchedule schedule : daySchedules) {
             java.util.UUID labId = schedule.getLaboratory().getId();
