@@ -44,7 +44,7 @@ public class EmissionSnapshot {
     private Institution institution;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "period_id", nullable = false)
+    @JoinColumn(name = "academic_period_id", nullable = false)
     private AcademicPeriod academicPeriod;
 
     @Column(name = "snapshot_date", nullable = false)

@@ -6,6 +6,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.example.carboncalculator.entities.EmissionSnapshot;
 
@@ -19,7 +21,9 @@ public interface EmissionSnapshotRepository extends JpaRepository<EmissionSnapsh
 
     boolean existsBySnapshotDate(LocalDate snapshotDate);
 
-    List<EmissionSnapshot> findAllByOrderBySnapshotDateAsc();
+    @Query("SELECT s FROM EmissionSnapshot s JOIN FETCH s.academicPeriod ORDER BY s.snapshotDate ASC")
+    List<EmissionSnapshot> findAllWithPeriod();
 
-    List<EmissionSnapshot> findBySnapshotDateBetweenOrderBySnapshotDateAsc(LocalDate startDate, LocalDate endDate);
+    @Query("SELECT s FROM EmissionSnapshot s JOIN FETCH s.academicPeriod WHERE s.snapshotDate BETWEEN :start AND :end ORDER BY s.snapshotDate ASC")
+    List<EmissionSnapshot> findAllWithPeriodBetween(@Param("start") LocalDate start, @Param("end") LocalDate end);
 }

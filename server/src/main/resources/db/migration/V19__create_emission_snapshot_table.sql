@@ -6,9 +6,11 @@ CREATE TABLE emission_snapshot (
     institution_id UUID NOT NULL REFERENCES institution (id),
     academic_period_id UUID NOT NULL REFERENCES academic_period (id),
     snapshot_date DATE NOT NULL,
+    day_of_week SMALLINT NOT NULL,
     daily_energy_kwh NUMERIC(12,4) NOT NULL,
     daily_emission_kg NUMERIC(12,4) NOT NULL,
     emission_factor_value NUMERIC(10,6) NOT NULL,
+    station_count INTEGER NOT NULL DEFAULT 0,
     is_school_day BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
 
