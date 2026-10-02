@@ -2,6 +2,7 @@ package com.example.carboncalculator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -12,6 +13,8 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
 import com.example.carboncalculator.dto.SnapshotAggregateDTO;
 import com.example.carboncalculator.entities.AcademicPeriod;
@@ -59,7 +62,7 @@ class EmissionSnapshotQueryServiceTest {
                 .institution(institution)
                 .academicPeriod(period)
                 .snapshotDate(date)
-                .dayOfWeek((short) date.getDayOfWeek().getValue())
+                .dayOfWeek(date.getDayOfWeek())
                 .schoolDay(schoolDay)
                 .dailyEmissionKg(new BigDecimal(emissionKg))
                 .dailyEnergyKwh(new BigDecimal(emissionKg).multiply(BigDecimal.valueOf(20)))
@@ -78,7 +81,7 @@ class EmissionSnapshotQueryServiceTest {
                 snapshot(LocalDate.of(2025, 10, 9), "110", true),
                 snapshot(LocalDate.of(2025, 10, 10), "130", true));
 
-        when(repository.findAllWithPeriod()).thenReturn(snapshots);
+        when(repository.findAll(any(Specification.class), any(Sort.class))).thenReturn(snapshots);
 
         List<SnapshotAggregateDTO> result = service.list("monthly", null, null);
 
@@ -94,7 +97,7 @@ class EmissionSnapshotQueryServiceTest {
                 snapshot(LocalDate.of(2025, 9, 15), "1000", true),
                 snapshot(LocalDate.of(2025, 10, 15), "1120", true));
 
-        when(repository.findAllWithPeriod()).thenReturn(snapshots);
+        when(repository.findAll(any(Specification.class), any(Sort.class))).thenReturn(snapshots);
 
         List<SnapshotAggregateDTO> result = service.list("monthly", null, null);
 
@@ -109,7 +112,7 @@ class EmissionSnapshotQueryServiceTest {
         List<EmissionSnapshot> snapshots = List.of(
                 snapshot(LocalDate.of(2025, 11, 10), "300", true));
 
-        when(repository.findAllWithPeriod()).thenReturn(snapshots);
+        when(repository.findAll(any(Specification.class), any(Sort.class))).thenReturn(snapshots);
 
         List<SnapshotAggregateDTO> result = service.list("monthly", null, null);
 

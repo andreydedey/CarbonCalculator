@@ -34,6 +34,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -350,7 +351,7 @@ class EmissionSnapshotIntegrationTest {
                     .institution(institution)
                     .academicPeriod(period)
                     .snapshotDate(date)
-                    .dayOfWeek((short) date.getDayOfWeek().getValue())
+                    .dayOfWeek(date.getDayOfWeek())
                     .schoolDay(schoolDay)
                     .dailyEmissionKg(new BigDecimal(emissionKg))
                     .dailyEnergyKwh(new BigDecimal(energyKwh))
@@ -362,7 +363,9 @@ class EmissionSnapshotIntegrationTest {
     }
 
     private Optional<EmissionSnapshot> fetchSnapshot(UUID instId, LocalDate date) {
-        return runTenantScoped(instId, () -> snapshotRepository.findBySnapshotDate(date));
+        return runTenantScoped(instId, () -> snapshotRepository
+                .findAll(EmissionSnapshotRepository.withinDateRange(date, date), Sort.unsorted())
+                .stream().findFirst());
     }
 
     private boolean snapshotExists(UUID instId, LocalDate date) {
