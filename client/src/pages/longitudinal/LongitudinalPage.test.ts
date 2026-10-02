@@ -7,53 +7,14 @@ import {
   GRANULARITY_OPTIONS,
   KPI_GRANULARITY,
   type SnapshotAggregateDTO,
-} from './LongitudinalPage.tsx'
+} from './LongitudinalPage.logic.ts'
 
 /**
  * Este projeto não tem @testing-library/react nem jsdom instalados, e o runner de
  * testes do frontend (`node --test`) não transpila JSX. Por isso — e seguindo a
  * mesma convenção já usada em `computeEmissionFactorRows` (feature fatores-de-emissao,
  * client/src/lib/utils/emission-factor-rows.ts) — este teste exercita a lógica pura
- * que a `LongitudinalPage` deve exportar junto do componente, em vez de renderizar o
- * DOM. Contrato assumido (deduzido de docs/tdds/08-acompanhamento-longitudinal.md e de
- * .spec/features/acompanhamento-longitudinal/spec.md — ASM-034, AC-118..AC-121):
- *
- *   export type Granularity = 'daily' | 'weekly' | 'monthly' | 'period'
- *
- *   export interface SnapshotAggregateDTO {
- *     label: string
- *     startDate: string
- *     endDate: string
- *     periodId?: string
- *     totalEmissionKg: number
- *     totalEnergyKwh: number
- *     schoolDays: number
- *     stationCount: number
- *     avgEmissionFactor: number
- *     variationPct: number | null
- *   }
- *
- *   export interface KpiCard { label: string; value: number | string }
- *
- *   // Os KPI cards sempre usam granularity=monthly, independente do toggle (ASM-034).
- *   export const KPI_GRANULARITY: Granularity
- *
- *   // Opções do toggle de granularidade, na ordem exibida no design (AC-119).
- *   export const GRANULARITY_OPTIONS: { value: Granularity; label: string }[]
- *
- *   // 4 cards na ordem fixa do design (AC-118): Emissão Atual, Média Mensal,
- *   // Menor Emissão (mínimo histórico, não só dos últimos 12 meses), Redução Possível.
- *   export function computeKpiCards(monthlySnapshots: SnapshotAggregateDTO[]): KpiCard[]
- *
- *   // Cor da variação na tabela histórica (AC-121): vermelho para aumento, verde para
- *   // redução, null quando não há registro anterior (exibido como "—").
- *   export function getVariationColor(variationPct: number | null): string | null
- *
- *   // Mensagem de estado vazio (AC-120), texto exato do TDD.
- *   export const EMPTY_STATE_MESSAGE: string
- *
- * Caso a implementação real (faixa-8, T-058) use nomes diferentes, a integração deve
- * alinhar os nomes entre os dois módulos — as asserções abaixo continuam válidas.
+ * extraída para `LongitudinalPage.logic.ts`, em vez de renderizar o DOM.
  */
 
 function makeSnapshot(

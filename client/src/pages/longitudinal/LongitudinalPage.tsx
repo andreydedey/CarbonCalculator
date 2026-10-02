@@ -8,76 +8,27 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { listSnapshots, type Granularity } from '@/lib/api/snapshots.ts'
+import { listSnapshots } from '@/lib/api/snapshots.ts'
 import { useState } from 'react'
+import {
+  computeKpiCards,
+  EMPTY_STATE_MESSAGE,
+  getVariationColor,
+  GRANULARITY_OPTIONS,
+  KPI_GRANULARITY,
+  type Granularity,
+  type KpiCard,
+  type SnapshotAggregateDTO,
+} from './LongitudinalPage.logic.ts'
 
-// --- Exported types and constants (consumed by LongitudinalPage.test.tsx) ---
-
-export type { Granularity }
-
-export interface SnapshotAggregateDTO {
-  label: string
-  startDate: string
-  endDate: string
-  periodId?: string
-  totalEmissionKg: number
-  totalEnergyKwh: number
-  schoolDays: number
-  stationCount: number
-  avgEmissionFactor: number
-  variationPct: number | null
-}
-
-export interface KpiCard {
-  label: string
-  value: number | string
-}
-
-// KPI cards always use monthly granularity, independent of the toggle (ASM-034, AC-119)
-export const KPI_GRANULARITY: Granularity = 'monthly'
-
-// Toggle options in design order (AC-119)
-export const GRANULARITY_OPTIONS: { value: Granularity; label: string }[] = [
-  { value: 'daily', label: 'Diária' },
-  { value: 'weekly', label: 'Semanal' },
-  { value: 'monthly', label: 'Mensal' },
-  { value: 'period', label: 'Por Período' },
-]
-
-// AC-120: empty-state message
-export const EMPTY_STATE_MESSAGE =
-  'A série histórica é formada automaticamente a cada dia de aula. Os primeiros dados aparecerão amanhã.'
-
-// AC-118: 4 KPI cards — Emissão Atual, Média Mensal (últimos 12 meses), Menor Emissão, Redução Possível
-export function computeKpiCards(monthlySnapshots: SnapshotAggregateDTO[]): KpiCard[] {
-  if (monthlySnapshots.length === 0) {
-    return [
-      { label: 'Emissão Atual', value: 0 },
-      { label: 'Média Mensal', value: 0 },
-      { label: 'Menor Emissão', value: 0 },
-      { label: 'Redução Possível', value: '—' },
-    ]
-  }
-
-  const current = monthlySnapshots[monthlySnapshots.length - 1].totalEmissionKg
-
-  const last12 = monthlySnapshots.slice(-12)
-  const average = last12.reduce((sum, s) => sum + s.totalEmissionKg, 0) / last12.length
-
-  const min = Math.min(...monthlySnapshots.map((s) => s.totalEmissionKg))
-
-  return [
-    { label: 'Emissão Atual', value: current },
-    { label: 'Média Mensal', value: average },
-    { label: 'Menor Emissão', value: min },
-    { label: 'Redução Possível', value: '—' },
-  ]
-}
-
-// AC-121: positive variation (increase) = red, negative (reduction) = green, null = no color
-export function getVariationColor(variationPct: number | null): string | null {
-  if (variationPct === null) return null
-  return variationPct > 0 ? '#DC2626' : '#16A34A'
+// Re-export pure logic so tests can import from this module (consumed by LongitudinalPage.test.ts)
+export type { Granularity, KpiCard, SnapshotAggregateDTO }
+export {
+  computeKpiCards,
+  EMPTY_STATE_MESSAGE,
+  getVariationColor,
+  GRANULARITY_OPTIONS,
+  KPI_GRANULARITY,
 }
 
 // --- Page component ---

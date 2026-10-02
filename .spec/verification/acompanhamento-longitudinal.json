@@ -1,11 +1,107 @@
 {
   "feature": "acompanhamento-longitudinal",
-  "timestamp": "2026-10-02T00:20:58.544Z",
-  "gitRev": "a055183",
+  "timestamp": "2026-10-02T00:54:16.117Z",
+  "gitRev": "7340dac",
   "command": "bash .spec/scripts/run-all-tests.sh",
   "reporter": "tap",
   "exitCode": 0,
-  "testsParsed": 114,
-  "results": {},
+  "testsParsed": 145,
+  "results": {
+    "AC-103": {
+      "status": "pass",
+      "testName": "@spec:AC-103",
+      "method": "tap"
+    },
+    "AC-104": {
+      "status": "pass",
+      "testName": "@spec:AC-104 deveAgregarPorPeriodoSomandoTodosOsDias",
+      "method": "tap"
+    },
+    "AC-105": {
+      "status": "pass",
+      "testName": "@spec:AC-105 deveAgregarSemanalmentePorSemanaIso",
+      "method": "tap"
+    },
+    "AC-106": {
+      "status": "pass",
+      "testName": "@spec:AC-106 deveRetornarUmRegistroPorDataNaGranularidadeDiaria",
+      "method": "tap"
+    },
+    "AC-107": {
+      "status": "pass",
+      "testName": "@spec:AC-107",
+      "method": "tap"
+    },
+    "AC-108": {
+      "status": "pass",
+      "testName": "@spec:AC-108",
+      "method": "tap"
+    },
+    "AC-109": {
+      "status": "pass",
+      "testName": "@spec:AC-109 deveIsolarSnapshotsPorInstituicaoViaRls",
+      "method": "tap"
+    },
+    "AC-110": {
+      "status": "pass",
+      "testName": "@spec:AC-110 deveFiltrarPorStartDateEEndDateExcluindoForaDoIntervalo",
+      "method": "tap"
+    },
+    "AC-111": {
+      "status": "pass",
+      "testName": "@spec:AC-111 deveResearcherConseguirConsultarSnapshots",
+      "method": "tap"
+    },
+    "AC-112": {
+      "status": "pass",
+      "testName": "@spec:AC-112 deveCronCriarSnapshotParaDiaDentroDePeriodoAtivoComFatorDisponivel",
+      "method": "tap"
+    },
+    "AC-113": {
+      "status": "pass",
+      "testName": "@spec:AC-113 deveCronSerIdempotente",
+      "method": "tap"
+    },
+    "AC-114": {
+      "status": "pass",
+      "testName": "@spec:AC-114 deveCronNaoCriarSnapshotParaDiaForaDePeriodoLetivo",
+      "method": "tap"
+    },
+    "AC-115": {
+      "status": "pass",
+      "testName": "@spec:AC-115 deveCronNaoCriarSnapshotQuandoFatorSinAusente",
+      "method": "tap"
+    },
+    "AC-116": {
+      "status": "pass",
+      "testName": "@spec:AC-116 deveDiaFeriadoGerarSnapshotComEmissaoZero",
+      "method": "tap"
+    },
+    "AC-117": {
+      "status": "pass",
+      "testName": "@spec:AC-117 deveLabSemScheduleParaDiaNaoContribuirParaEmissao",
+      "method": "tap"
+    },
+    "AC-118": {
+      "status": "pass",
+      "testName": "@spec:AC-118 retorna 4 cards na ordem do design, com Emissão Atual, Média Mensal e Menor Emissão calculados",
+      "method": "tap"
+    },
+    "AC-119": {
+      "status": "pass",
+      "testName": "@spec:AC-119 expõe as 4 opções de granularidade na ordem do design",
+      "method": "tap"
+    },
+    "AC-120": {
+      "status": "pass",
+      "testName": "@spec:AC-120 mensagem explica a coleta automática e não menciona tabela/gráfico vazios",
+      "method": "tap"
+    },
+    "AC-121": {
+      "status": "pass",
+      "testName": "@spec:AC-121 variação positiva (aumento) é vermelha (\\#DC2626)",
+      "method": "tap"
+    }
+  },
   "principles": {}
 }

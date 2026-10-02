@@ -14,7 +14,7 @@
 
 ## T-053 — EmissionSnapshotCronService: captura diária automática [concluida]
 - Refs: US-034, AC-112, AC-113, AC-114, AC-115, AC-116, AC-117
-- Arquivos: server/src/main/java/com/example/carboncalculator/services/EmissionSnapshotCronService.java
+- Arquivos: server/src/main/java/com/example/carboncalculator/services/EmissionSnapshotCronService.java, server/src/main/java/com/example/carboncalculator/CarboncalculatorApplication.java
 - Esforço: alto
 
 ## T-054 — EmissionSnapshotQueryService: agregação por granularidade [concluida]
@@ -39,10 +39,10 @@
 
 ## T-058 — LongitudinalPage: React com toggle, gráfico e tabela [concluida]
 - Refs: US-035, AC-118, AC-119, AC-120, AC-121
-- Arquivos: client/src/pages/longitudinal/LongitudinalPage.tsx, client/src/lib/api/snapshots.ts, client/src/lib/schemas/snapshotSchema.ts
+- Arquivos: client/src/pages/longitudinal/LongitudinalPage.tsx, client/src/pages/longitudinal/LongitudinalPage.logic.ts, client/src/lib/api/snapshots.ts, client/src/lib/schemas/snapshotSchema.ts
 - Esforço: alto
 
 ## T-059 — Testes de componente: LongitudinalPage [concluida]
 - Refs: US-035, AC-118, AC-119, AC-120, AC-121
-- Arquivos: client/src/pages/longitudinal/LongitudinalPage.test.tsx
+- Arquivos: client/src/pages/longitudinal/LongitudinalPage.test.ts
 - Esforço: médio
