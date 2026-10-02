@@ -25,5 +25,5 @@ export async function listSnapshots(params: ListSnapshotsParams): Promise<Snapsh
   const query = new URLSearchParams({ granularity: params.granularity })
   if (params.startDate) query.set('startDate', params.startDate)
   if (params.endDate) query.set('endDate', params.endDate)
-  return api.get<SnapshotAggregateDTO[]>(`/snapshots?${query.toString()}`)
+  return api.get<SnapshotAggregateDTO[]>(`/snapshots?${query.toString()}`).then((r) => r.data)
 }
