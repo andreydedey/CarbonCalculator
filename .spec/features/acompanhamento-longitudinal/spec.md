@@ -115,11 +115,11 @@ Como sistema, quero capturar automaticamente as emissões de cada dia dentro de 
 
 Como gestor da instituição, quero visualizar o histórico de emissões em gráfico com toggle de granularidade, KPI cards e tabela histórica, para que eu acompanhe tendências de forma intuitiva.
 
-#### AC-118 — Página exibe 4 KPI cards com valores calculados
+#### AC-118 — Página exibe 3 KPI cards com valores calculados
 
 - **Dado** que existem snapshots históricos para a instituição
 - **Quando** acesso `/longitudinal`
-- **Então** a página exibe 4 cards: "Emissão Atual" (total do mês mais recente), "Média Mensal" (média dos últimos 12 meses), "Menor Emissão" (mínimo mensal histórico), "Redução Possível" (placeholder "—")
+- **Então** a página exibe 3 cards: "Emissão Atual" (total do mês mais recente), "Média Mensal" (média dos últimos 12 meses), "Menor Emissão" (mínimo mensal histórico)
 
 #### AC-119 — Toggle de granularidade atualiza gráfico e tabela
 
@@ -144,7 +144,7 @@ Como gestor da instituição, quero visualizar o histórico de emissões em grá
 - Re-captura forçada de dia passado (V2)
 - Comparação entre instituições
 - Projeção de tendência futura
-- KPI "Redução Possível" funcional (depende de PRD 07)
+- KPI "Redução Possível" (movido para PRD 07 — Simulação de Cenários)
 - Drill-down por laboratório no gráfico (V2)
 - Notificação de falha do cron (V2)
 - Snapshots para dias fora de período letivo

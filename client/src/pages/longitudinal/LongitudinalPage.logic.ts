@@ -35,14 +35,13 @@ export const GRANULARITY_OPTIONS: { value: Granularity; label: string }[] = [
 export const EMPTY_STATE_MESSAGE =
   'A série histórica é formada automaticamente a cada dia de aula. Os primeiros dados aparecerão amanhã.'
 
-// AC-118: 4 KPI cards — Emissão Atual, Média Mensal (últimos 12 meses), Menor Emissão, Redução Possível
+// AC-118: 3 KPI cards — Emissão Atual, Média Mensal (últimos 12 meses), Menor Emissão
 export function computeKpiCards(monthlySnapshots: SnapshotAggregateDTO[]): KpiCard[] {
   if (monthlySnapshots.length === 0) {
     return [
       { label: 'Emissão Atual', value: 0 },
       { label: 'Média Mensal', value: 0 },
       { label: 'Menor Emissão', value: 0 },
-      { label: 'Redução Possível', value: '—' },
     ]
   }
 
@@ -57,7 +56,6 @@ export function computeKpiCards(monthlySnapshots: SnapshotAggregateDTO[]): KpiCa
     { label: 'Emissão Atual', value: current },
     { label: 'Média Mensal', value: average },
     { label: 'Menor Emissão', value: min },
-    { label: 'Redução Possível', value: '—' },
   ]
 }
 

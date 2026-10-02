@@ -38,7 +38,7 @@ function makeSnapshot(
 
 describe('LongitudinalPage', () => {
   describe('@spec:AC-118 KPI cards com valores calculados', () => {
-    test('@spec:AC-118 retorna 4 cards na ordem do design, com Emissão Atual, Média Mensal e Menor Emissão calculados', () => {
+    test('@spec:AC-118 retorna 3 cards na ordem do design, com Emissão Atual, Média Mensal e Menor Emissão calculados', () => {
       const monthlySnapshots = [
         makeSnapshot('Jul 2025', 1000),
         makeSnapshot('Ago 2025', 900),
@@ -48,13 +48,13 @@ describe('LongitudinalPage', () => {
 
       const cards = computeKpiCards(monthlySnapshots)
 
-      assert.equal(cards.length, 4, 'deve haver exatamente 4 KPI cards')
+      assert.equal(cards.length, 3, 'deve haver exatamente 3 KPI cards')
       assert.deepEqual(
         cards.map((c) => c.label),
-        ['Emissão Atual', 'Média Mensal', 'Menor Emissão', 'Redução Possível'],
+        ['Emissão Atual', 'Média Mensal', 'Menor Emissão'],
       )
 
-      const [current, average, min, reduction] = cards
+      const [current, average, min] = cards
 
       // Emissão Atual = total do mês mais recente (último da série)
       assert.equal(current.value, 950)
@@ -64,9 +64,6 @@ describe('LongitudinalPage', () => {
 
       // Menor Emissão = mínimo mensal histórico
       assert.equal(min.value, 900)
-
-      // Redução Possível = placeholder "—" (depende de PRD 07, fora de escopo em V1)
-      assert.equal(reduction.value, '—')
     })
 
     test('@spec:AC-118 Média Mensal considera apenas os últimos 12 meses quando há mais histórico', () => {
