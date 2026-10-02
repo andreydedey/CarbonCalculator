@@ -22,6 +22,7 @@ import com.example.carboncalculator.dto.SnapshotAggregateDTO;
 import com.example.carboncalculator.entities.AcademicPeriod;
 import com.example.carboncalculator.entities.EmissionSnapshot;
 import com.example.carboncalculator.repositories.EmissionSnapshotRepository;
+import com.example.carboncalculator.specifications.EmissionSnapshotSpecification;
 
 import lombok.RequiredArgsConstructor;
 
@@ -42,7 +43,7 @@ public class EmissionSnapshotQueryService {
     @Transactional(readOnly = true)
     public List<SnapshotAggregateDTO> list(String granularity, LocalDate startDate, LocalDate endDate) {
         List<EmissionSnapshot> snapshots = snapshotRepository.findAll(
-                EmissionSnapshotRepository.withinDateRange(startDate, endDate),
+                EmissionSnapshotSpecification.withinDateRange(startDate, endDate),
                 Sort.by("snapshotDate").ascending());
 
         return switch (granularity.toLowerCase()) {

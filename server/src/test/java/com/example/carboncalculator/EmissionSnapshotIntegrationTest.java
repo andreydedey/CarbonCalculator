@@ -74,6 +74,7 @@ import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.ShiftType;
 import com.example.carboncalculator.repositories.AcademicPeriodRepository;
 import com.example.carboncalculator.repositories.EmissionSnapshotRepository;
+import com.example.carboncalculator.specifications.EmissionSnapshotSpecification;
 import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.services.EmissionSnapshotCronService;
 
@@ -364,7 +365,7 @@ class EmissionSnapshotIntegrationTest {
 
     private Optional<EmissionSnapshot> fetchSnapshot(UUID instId, LocalDate date) {
         return runTenantScoped(instId, () -> snapshotRepository
-                .findAll(EmissionSnapshotRepository.withinDateRange(date, date), Sort.unsorted())
+                .findAll(EmissionSnapshotSpecification.withinDateRange(date, date), Sort.unsorted())
                 .stream().findFirst());
     }
 

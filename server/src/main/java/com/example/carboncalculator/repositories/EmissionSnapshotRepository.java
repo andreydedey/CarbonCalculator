@@ -23,9 +23,4 @@ public interface EmissionSnapshotRepository
 
     @EntityGraph(attributePaths = {"academicPeriod"})
     List<EmissionSnapshot> findAll(Specification<EmissionSnapshot> spec, Sort sort);
-
-    static Specification<EmissionSnapshot> withinDateRange(LocalDate start, LocalDate end) {
-        if (start == null || end == null) return (root, query, cb) -> cb.conjunction();
-        return (root, query, cb) -> cb.between(root.get("snapshotDate"), start, end);
-    }
 }
