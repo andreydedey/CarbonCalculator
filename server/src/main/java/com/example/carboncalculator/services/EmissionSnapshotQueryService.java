@@ -10,9 +10,11 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,18 +34,16 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class EmissionSnapshotQueryService {
 
-    private static final String[] PT_MONTH_ABBR = {
-        "", "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
-        "Jul", "Ago", "Set", "Out", "Nov", "Dez"
-    };
+    private static final DateTimeFormatter MONTH_LABEL =
+            DateTimeFormatter.ofPattern("MMM yyyy", new Locale("pt", "BR"));
 
     private final EmissionSnapshotRepository snapshotRepository;
 
     @Transactional(readOnly = true)
     public List<SnapshotAggregateDTO> list(String granularity, LocalDate startDate, LocalDate endDate) {
-        List<EmissionSnapshot> snapshots = (startDate != null && endDate != null)
-                ? snapshotRepository.findAllWithPeriodBetween(startDate, endDate)
-                : snapshotRepository.findAllWithPeriod();
+        List<EmissionSnapshot> snapshots = snapshotRepository.findAll(
+                EmissionSnapshotRepository.withinDateRange(startDate, endDate),
+                Sort.by("snapshotDate").ascending());
 
         return switch (granularity.toLowerCase()) {
             case "daily" -> aggregateDaily(snapshots);
@@ -104,7 +104,7 @@ public class EmissionSnapshotQueryService {
         for (Map.Entry<YearMonth, List<EmissionSnapshot>> entry : groups.entrySet()) {
             YearMonth ym = entry.getKey();
             List<EmissionSnapshot> group = entry.getValue();
-            String label = PT_MONTH_ABBR[ym.getMonthValue()] + " " + ym.getYear();
+            String label = ym.atDay(1).format(MONTH_LABEL);
             result.add(buildAggregate(label, ym.atDay(1), ym.atEndOfMonth(), null, group));
         }
         return withVariation(result);
