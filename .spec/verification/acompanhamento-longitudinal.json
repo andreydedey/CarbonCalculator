@@ -1,0 +1,107 @@
+{
+  "feature": "acompanhamento-longitudinal",
+  "timestamp": "2026-10-02T02:23:47.122Z",
+  "gitRev": "66520b6",
+  "command": "bash .spec/scripts/run-all-tests.sh",
+  "reporter": "tap",
+  "exitCode": 0,
+  "testsParsed": 169,
+  "results": {
+    "AC-103": {
+      "status": "pass",
+      "testName": "@spec:AC-103 deveCriarFatorComDadosValidos",
+      "method": "tap"
+    },
+    "AC-104": {
+      "status": "pass",
+      "testName": "@spec:AC-104",
+      "method": "tap"
+    },
+    "AC-105": {
+      "status": "pass",
+      "testName": "@spec:AC-105 deveRecusarFatorComValorZeroOuNegativo",
+      "method": "tap"
+    },
+    "AC-106": {
+      "status": "pass",
+      "testName": "@spec:AC-106",
+      "method": "tap"
+    },
+    "AC-107": {
+      "status": "pass",
+      "testName": "@spec:AC-107 deveBloquearDuplicataDoMesmoMes",
+      "method": "tap"
+    },
+    "AC-108": {
+      "status": "pass",
+      "testName": "@spec:AC-108 deveAtualizarFatorComSucesso",
+      "method": "tap"
+    },
+    "AC-109": {
+      "status": "pass",
+      "testName": "@spec:AC-109 deveBloquearAtualizacaoParaMesJaOcupadoPorOutroFator",
+      "method": "tap"
+    },
+    "AC-110": {
+      "status": "pass",
+      "testName": "@spec:AC-110 deveRemoverFatorComSucesso",
+      "method": "tap"
+    },
+    "AC-111": {
+      "status": "pass",
+      "testName": "@spec:AC-111 deveRetornar404AoRemoverFatorInexistente",
+      "method": "tap"
+    },
+    "AC-112": {
+      "status": "pass",
+      "testName": "@spec:AC-112 deveListarFatoresEmOrdemDecrescenteDeCompetencia",
+      "method": "tap"
+    },
+    "AC-113": {
+      "status": "pass",
+      "testName": "@spec:AC-113 deveFiltrarPorAnoRetornandoApenasFatoresDaqueleAno",
+      "method": "tap"
+    },
+    "AC-114": {
+      "status": "pass",
+      "testName": "@spec:AC-114 managerNaoPodeCriarAtualizarNemRemoverFatores",
+      "method": "tap"
+    },
+    "AC-115": {
+      "status": "pass",
+      "testName": "@spec:AC-115 deveIsolarFatoresEntreInstituicoesPorRls",
+      "method": "tap"
+    },
+    "AC-116": {
+      "status": "pass",
+      "testName": "@spec:AC-116 marca como pendente meses já passados sem fator cadastrado",
+      "method": "tap"
+    },
+    "AC-117": {
+      "status": "pass",
+      "testName": "@spec:AC-117 marca exatamente um fator — o mais recente ≤ hoje — como em-uso",
+      "method": "tap"
+    },
+    "AC-118": {
+      "status": "pass",
+      "testName": "@spec:AC-118 marca fatores mais antigos que o em-uso como anterior",
+      "method": "tap"
+    },
+    "AC-119": {
+      "status": "pass",
+      "testName": "@spec:AC-119 expõe as 4 opções de granularidade na ordem do design",
+      "method": "tap"
+    },
+    "AC-120": {
+      "status": "pass",
+      "testName": "@spec:AC-120 mensagem explica a coleta automática e não menciona tabela/gráfico vazios",
+      "method": "tap"
+    },
+    "AC-121": {
+      "status": "pass",
+      "testName": "@spec:AC-121 variação positiva (aumento) é vermelha (\\#DC2626)",
+      "method": "tap"
+    }
+  },
+  "principles": {}
+}

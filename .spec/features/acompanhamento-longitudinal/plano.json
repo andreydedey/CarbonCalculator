@@ -1,0 +1,276 @@
+{
+  "runId": "CarbonCalculatorTCC-acompanhamento-longitudinal-mupyb52k",
+  "feature": "acompanhamento-longitudinal",
+  "agent": "claude",
+  "modo": "paralelo",
+  "paralelizar": null,
+  "modeloForcado": null,
+  "esforcoForcado": null,
+  "geradoEm": "2026-10-01 19:52",
+  "branchTrabalho": "spec/acompanhamento-longitudinal",
+  "baseDir": ".spec/features/acompanhamento-longitudinal",
+  "specDir": ".spec",
+  "repoName": "CarbonCalculatorTCC",
+  "logsDir": "../onp-worktrees/CarbonCalculatorTCC-acompanhamento-longitudinal-logs",
+  "ondas": [
+    [
+      "faixa-1",
+      "faixa-2",
+      "faixa-3"
+    ],
+    [
+      "faixa-4",
+      "faixa-5",
+      "faixa-6"
+    ],
+    [
+      "faixa-7",
+      "faixa-8",
+      "faixa-9"
+    ]
+  ],
+  "faixas": [
+    {
+      "id": "faixa-1",
+      "branch": "spec/acompanhamento-longitudinal-faixa-1",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-acompanhamento-longitudinal-faixa-1",
+      "tarefas": [
+        {
+          "id": "T-051",
+          "titulo": "Migration V19: tabela emission_snapshot",
+          "modelo": "claude-sonnet-5",
+          "esforco": "low",
+          "arquivos": [
+            "server/src/main/resources/db/migration/V19__create_emission_snapshot_table.sql"
+          ],
+          "refs": [
+            "US-033",
+            "US-034",
+            "AC-103",
+            "AC-112"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-2",
+      "branch": "spec/acompanhamento-longitudinal-faixa-2",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-acompanhamento-longitudinal-faixa-2",
+      "tarefas": [
+        {
+          "id": "T-052",
+          "titulo": "Entidade, repositório e DTO de EmissionSnapshot",
+          "modelo": "claude-sonnet-5",
+          "esforco": "low",
+          "arquivos": [
+            "server/src/main/java/com/example/carboncalculator/entities/EmissionSnapshot.java",
+            "server/src/main/java/com/example/carboncalculator/repositories/EmissionSnapshotRepository.java",
+            "server/src/main/java/com/example/carboncalculator/dto/SnapshotAggregateDTO.java"
+          ],
+          "refs": [
+            "US-033",
+            "US-034",
+            "AC-103",
+            "AC-104",
+            "AC-105",
+            "AC-106",
+            "AC-107",
+            "AC-108",
+            "AC-109",
+            "AC-110",
+            "AC-111",
+            "AC-112"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-3",
+      "branch": "spec/acompanhamento-longitudinal-faixa-3",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-acompanhamento-longitudinal-faixa-3",
+      "tarefas": [
+        {
+          "id": "T-053",
+          "titulo": "EmissionSnapshotCronService: captura diária automática",
+          "modelo": "claude-sonnet-5",
+          "esforco": "high",
+          "arquivos": [
+            "server/src/main/java/com/example/carboncalculator/services/EmissionSnapshotCronService.java"
+          ],
+          "refs": [
+            "US-034",
+            "AC-112",
+            "AC-113",
+            "AC-114",
+            "AC-115",
+            "AC-116",
+            "AC-117"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-4",
+      "branch": "spec/acompanhamento-longitudinal-faixa-4",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-acompanhamento-longitudinal-faixa-4",
+      "tarefas": [
+        {
+          "id": "T-054",
+          "titulo": "EmissionSnapshotQueryService: agregação por granularidade",
+          "modelo": "claude-sonnet-5",
+          "esforco": "high",
+          "arquivos": [
+            "server/src/main/java/com/example/carboncalculator/services/EmissionSnapshotQueryService.java"
+          ],
+          "refs": [
+            "US-033",
+            "AC-103",
+            "AC-104",
+            "AC-105",
+            "AC-106",
+            "AC-107",
+            "AC-108",
+            "AC-109",
+            "AC-110"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-5",
+      "branch": "spec/acompanhamento-longitudinal-faixa-5",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-acompanhamento-longitudinal-faixa-5",
+      "tarefas": [
+        {
+          "id": "T-055",
+          "titulo": "EmissionSnapshotController: GET /api/v1/snapshots",
+          "modelo": "claude-sonnet-5",
+          "esforco": "low",
+          "arquivos": [
+            "server/src/main/java/com/example/carboncalculator/controllers/EmissionSnapshotController.java"
+          ],
+          "refs": [
+            "US-033",
+            "AC-103",
+            "AC-104",
+            "AC-105",
+            "AC-106",
+            "AC-107",
+            "AC-108",
+            "AC-109",
+            "AC-110",
+            "AC-111"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-6",
+      "branch": "spec/acompanhamento-longitudinal-faixa-6",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-acompanhamento-longitudinal-faixa-6",
+      "tarefas": [
+        {
+          "id": "T-056",
+          "titulo": "Testes de integração: cron e query",
+          "modelo": "claude-sonnet-5",
+          "esforco": "high",
+          "arquivos": [
+            "server/src/test/java/com/example/carboncalculator/EmissionSnapshotIntegrationTest.java"
+          ],
+          "refs": [
+            "US-033",
+            "US-034",
+            "AC-103",
+            "AC-104",
+            "AC-105",
+            "AC-106",
+            "AC-107",
+            "AC-108",
+            "AC-109",
+            "AC-110",
+            "AC-111",
+            "AC-112",
+            "AC-113",
+            "AC-114",
+            "AC-115",
+            "AC-116",
+            "AC-117"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-7",
+      "branch": "spec/acompanhamento-longitudinal-faixa-7",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-acompanhamento-longitudinal-faixa-7",
+      "tarefas": [
+        {
+          "id": "T-057",
+          "titulo": "Testes unitários: EmissionSnapshotQueryService",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "server/src/test/java/com/example/carboncalculator/EmissionSnapshotQueryServiceTest.java"
+          ],
+          "refs": [
+            "US-033",
+            "AC-103",
+            "AC-107",
+            "AC-108"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-8",
+      "branch": "spec/acompanhamento-longitudinal-faixa-8",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-acompanhamento-longitudinal-faixa-8",
+      "tarefas": [
+        {
+          "id": "T-058",
+          "titulo": "LongitudinalPage: React com toggle, gráfico e tabela",
+          "modelo": "claude-sonnet-5",
+          "esforco": "high",
+          "arquivos": [
+            "client/src/pages/longitudinal/LongitudinalPage.tsx",
+            "client/src/lib/api/snapshots.ts",
+            "client/src/lib/schemas/snapshotSchema.ts"
+          ],
+          "refs": [
+            "US-035",
+            "AC-118",
+            "AC-119",
+            "AC-120",
+            "AC-121"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faixa-9",
+      "branch": "spec/acompanhamento-longitudinal-faixa-9",
+      "worktree": "../onp-worktrees/CarbonCalculatorTCC-acompanhamento-longitudinal-faixa-9",
+      "tarefas": [
+        {
+          "id": "T-059",
+          "titulo": "Testes de componente: LongitudinalPage",
+          "modelo": "claude-sonnet-5",
+          "esforco": "medium",
+          "arquivos": [
+            "client/src/pages/longitudinal/LongitudinalPage.test.tsx"
+          ],
+          "refs": [
+            "US-035",
+            "AC-118",
+            "AC-119",
+            "AC-120",
+            "AC-121"
+          ]
+        }
+      ]
+    }
+  ],
+  "sequenciais": [],
+  "concluidas": [],
+  "avisos": []
+}

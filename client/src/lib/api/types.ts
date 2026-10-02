@@ -5,3 +5,8 @@ export type PageResponse<T> = {
   totalElements: number
   totalPages: number
 }
+
+export type PageParams = {
+  page?: number
+  size?: number
+}

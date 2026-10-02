@@ -119,7 +119,7 @@ public class EmissionCalculationService {
             }
         }
 
-        boolean ready = missingFactors.isEmpty() && labsWithoutSchedule.isEmpty();
+        boolean ready = missingFactors.isEmpty();
 
         return new ReadinessDTO(ready, missingFactors, labsWithoutEquipment,
                 labsWithoutSchedule, configsWithoutMonitor);

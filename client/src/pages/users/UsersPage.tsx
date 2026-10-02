@@ -18,10 +18,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { RevokeAccessDialog } from '@/components/users/RevokeAccessDialog'
 import { useAuth } from '@/context/AuthContext'
 import { useDialog } from '@/hooks/use-dialog'
 import { ApiError } from '@/lib/api/client'
-import { changeRole, inviteUser, listMembers, revokeAccess, type UserMember } from '@/lib/api/users'
+import { changeRole, inviteUser, listMembers, type UserMember } from '@/lib/api/users'
 import { type InviteFormData, inviteSchema } from '@/lib/schemas/inviteSchema'
 
 const ROLE_LABELS: Record<string, string> = {
@@ -37,6 +38,7 @@ const STATUS_LABELS: Record<string, string> = {
 export const UsersPage: React.FC = () => {
   const { user: currentUser } = useAuth()
   const inviteDialog = useDialog()
+  const revokeDialog = useDialog<UserMember>()
 
   const { data: membersPage, refetch } = useQuery({
     queryKey: ['users'],
@@ -70,17 +72,6 @@ export const UsersPage: React.FC = () => {
     },
     onError: (err) => {
       toast.error(err instanceof ApiError ? err.message : 'Erro ao alterar papel')
-    },
-  })
-
-  const revokeMutation = useMutation({
-    mutationFn: (id: string) => revokeAccess(id),
-    onSuccess: () => {
-      refetch()
-      toast.success('Acesso revogado')
-    },
-    onError: (err) => {
-      toast.error(err instanceof ApiError ? err.message : 'Erro ao revogar acesso')
     },
   })
 
@@ -158,6 +149,15 @@ export const UsersPage: React.FC = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {revokeDialog.data && (
+        <RevokeAccessDialog
+          member={revokeDialog.data}
+          open={revokeDialog.open}
+          onOpenChange={(open) => !open && revokeDialog.closeDialog()}
+          onRevoked={refetch}
+        />
+      )}
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
@@ -242,7 +242,7 @@ export const UsersPage: React.FC = () => {
                             variant="destructive"
                             size="sm"
                             className="h-7 text-xs"
-                            onClick={() => revokeMutation.mutate(member.id)}
+                            onClick={() => revokeDialog.openDialog(member)}
                           >
                             Revogar
                           </Button>
