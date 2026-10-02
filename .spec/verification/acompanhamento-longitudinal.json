@@ -1,7 +1,7 @@
 {
   "feature": "acompanhamento-longitudinal",
-  "timestamp": "2026-10-02T00:54:16.117Z",
-  "gitRev": "7340dac",
+  "timestamp": "2026-10-02T00:56:36.583Z",
+  "gitRev": "c0fe7e4",
   "command": "bash .spec/scripts/run-all-tests.sh",
   "reporter": "tap",
   "exitCode": 0,
