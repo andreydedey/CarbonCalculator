@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { CalendarDays, Timer } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import {
   Table,
@@ -8,6 +9,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { listAcademicPeriods } from '@/lib/api/academic-periods.ts'
 import { listSnapshots } from '@/lib/api/snapshots.ts'
 import { useState } from 'react'
 import {
@@ -35,15 +44,27 @@ export {
 
 export function LongitudinalPage() {
   const [granularity, setGranularity] = useState<Granularity>('monthly')
+  const [selectedPeriodId, setSelectedPeriodId] = useState<string>('all')
+
+  const { data: periodsPage } = useQuery({
+    queryKey: ['academic-periods-all'],
+    queryFn: () => listAcademicPeriods(0, 50),
+  })
+  const periods = periodsPage?.content ?? []
+
+  const selectedPeriod = periods.find((p) => p.id === selectedPeriodId)
+  const dateFilter = selectedPeriod
+    ? { startDate: selectedPeriod.startDate, endDate: selectedPeriod.endDate }
+    : {}
 
   const { data: chartData = [], isLoading: isChartLoading } = useQuery({
-    queryKey: ['snapshots', granularity],
-    queryFn: () => listSnapshots({ granularity }),
+    queryKey: ['snapshots', granularity, selectedPeriodId],
+    queryFn: () => listSnapshots({ granularity, ...dateFilter }),
   })
 
   const { data: monthlyData = [] } = useQuery({
-    queryKey: ['snapshots', KPI_GRANULARITY],
-    queryFn: () => listSnapshots({ granularity: KPI_GRANULARITY }),
+    queryKey: ['snapshots', KPI_GRANULARITY, selectedPeriodId],
+    queryFn: () => listSnapshots({ granularity: KPI_GRANULARITY, ...dateFilter }),
   })
 
   const kpiCards = computeKpiCards(monthlyData)
@@ -55,9 +76,9 @@ export function LongitudinalPage() {
         <p className="text-xs font-normal text-muted-foreground">Análise &rsaquo; Acompanhamento Longitudinal</p>
         <div className="flex items-center justify-between">
           <h1 className="font-heading text-2xl font-bold">Acompanhamento Longitudinal</h1>
-          <div className="flex items-center gap-2 rounded-lg border bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground">
-            <span className="text-base">🕐</span>
-            <span>Coleta automática diária</span>
+          <div className="flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs bg-[#F0FDF4] border-[#BBF7D0] text-[#15803D]">
+            <Timer className="size-3 text-[#16A34A]" />
+            <span className="font-medium">Coleta automática diária</span>
           </div>
         </div>
       </div>
@@ -106,8 +127,26 @@ export function LongitudinalPage() {
         <>
           {/* Bar chart */}
           <div className="rounded-lg border p-4">
-            <p className="text-sm font-medium mb-1">Evolução de Emissões</p>
-            <p className="text-xs text-muted-foreground mb-4">kg CO₂ emitidos · visão {granularity === 'monthly' ? 'mensal' : granularity === 'weekly' ? 'semanal' : granularity === 'daily' ? 'diária' : 'por período'}</p>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <p className="text-sm font-medium">Evolução de Emissões</p>
+                <p className="text-xs text-muted-foreground mt-0.5">kg CO₂ emitidos · visão {granularity === 'monthly' ? 'mensal' : granularity === 'weekly' ? 'semanal' : granularity === 'daily' ? 'diária' : 'por período'}</p>
+              </div>
+              {periods.length > 0 && (
+                <Select value={selectedPeriodId} onValueChange={setSelectedPeriodId}>
+                  <SelectTrigger className="w-auto h-8 text-xs gap-1.5 border-dashed">
+                    <CalendarDays className="size-3 text-[#24744D]" />
+                    <SelectValue placeholder="Todos os períodos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os períodos</SelectItem>
+                    {periods.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
