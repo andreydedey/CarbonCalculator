@@ -8,12 +8,17 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,10 +43,33 @@ public class EmissionSnapshotQueryService {
     private static final DateTimeFormatter MONTH_LABEL =
             DateTimeFormatter.ofPattern("MMM yyyy", new Locale("pt", "BR"));
 
+    // Server-enforced cap regardless of what the client requests (US-033 history listing)
+    private static final int MAX_HISTORY_PAGE_SIZE = 20;
+
     private final EmissionSnapshotRepository snapshotRepository;
 
     @Transactional(readOnly = true)
     public List<SnapshotAggregateDTO> list(String granularity, LocalDate startDate, LocalDate endDate) {
+        return aggregate(granularity, startDate, endDate);
+    }
+
+    // Paginated, most-recent-first view of the same series, for the "Histórico de
+    // Emissões" table (the bar chart above still needs the complete, unpaginated series).
+    @Transactional(readOnly = true)
+    public Page<SnapshotAggregateDTO> listHistory(
+            String granularity, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+        List<SnapshotAggregateDTO> all = aggregate(granularity, startDate, endDate);
+        Collections.reverse(all);
+
+        int size = Math.min(pageable.getPageSize(), MAX_HISTORY_PAGE_SIZE);
+        int pageNumber = pageable.getPageNumber();
+        int start = Math.min(pageNumber * size, all.size());
+        int end = Math.min(start + size, all.size());
+
+        return new PageImpl<>(all.subList(start, end), PageRequest.of(pageNumber, size), all.size());
+    }
+
+    private List<SnapshotAggregateDTO> aggregate(String granularity, LocalDate startDate, LocalDate endDate) {
         List<EmissionSnapshot> snapshots = snapshotRepository.findAll(
                 EmissionSnapshotSpecification.withinDateRange(startDate, endDate),
                 Sort.by("snapshotDate").ascending());

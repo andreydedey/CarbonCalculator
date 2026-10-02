@@ -8,11 +8,14 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -118,5 +121,39 @@ class EmissionSnapshotQueryServiceTest {
 
         assertEquals(1, result.size());
         assertNull(result.get(0).variationPct());
+    }
+
+    // listHistory() feeds the "Histórico de Emissões" table: most-recent-first, paginated
+    @Test
+    void listHistoryDeveRetornarOrdemDoMaisRecenteParaOMaisAntigo() {
+        List<EmissionSnapshot> snapshots = List.of(
+                snapshot(LocalDate.of(2025, 1, 10), "100", true),
+                snapshot(LocalDate.of(2025, 2, 10), "200", true),
+                snapshot(LocalDate.of(2025, 3, 10), "300", true));
+
+        when(repository.findAll(any(Specification.class), any(Sort.class))).thenReturn(snapshots);
+
+        Page<SnapshotAggregateDTO> page = service.listHistory("monthly", null, null, PageRequest.of(0, 20));
+
+        assertEquals(3, page.getContent().size());
+        assertEquals(0, new BigDecimal("300").compareTo(page.getContent().get(0).totalEmissionKg()));
+        assertEquals(0, new BigDecimal("100").compareTo(page.getContent().get(2).totalEmissionKg()));
+    }
+
+    // Server-enforced cap: even if the caller asks for more, each page tops out at 20 items
+    @Test
+    void listHistoryDeveLimitarTamanhoDaPaginaA20MesmoQuandoSolicitadoMaior() {
+        List<EmissionSnapshot> snapshots = new ArrayList<>();
+        for (int i = 0; i < 25; i++) {
+            snapshots.add(snapshot(LocalDate.of(2023, 1, 1).plusMonths(i), String.valueOf(100 + i), true));
+        }
+
+        when(repository.findAll(any(Specification.class), any(Sort.class))).thenReturn(snapshots);
+
+        Page<SnapshotAggregateDTO> page = service.listHistory("monthly", null, null, PageRequest.of(0, 50));
+
+        assertEquals(20, page.getContent().size());
+        assertEquals(20, page.getSize());
+        assertEquals(25, page.getTotalElements());
     }
 }

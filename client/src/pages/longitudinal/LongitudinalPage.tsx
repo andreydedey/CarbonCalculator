@@ -1,6 +1,15 @@
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { CalendarDays, Timer } from 'lucide-react'
+import { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { LoadMoreButton } from '@/components/ui/load-more-button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Table,
   TableBody,
@@ -9,23 +18,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { listAcademicPeriods } from '@/lib/api/academic-periods.ts'
-import { listSnapshots } from '@/lib/api/snapshots.ts'
-import { useState } from 'react'
+import { listSnapshotHistory, listSnapshots } from '@/lib/api/snapshots.ts'
 import {
   computeKpiCards,
   EMPTY_STATE_MESSAGE,
-  getVariationColor,
   GRANULARITY_OPTIONS,
-  KPI_GRANULARITY,
   type Granularity,
+  getVariationColor,
+  KPI_GRANULARITY,
   type KpiCard,
   type SnapshotAggregateDTO,
 } from './LongitudinalPage.logic.ts'
@@ -35,8 +36,8 @@ export type { Granularity, KpiCard, SnapshotAggregateDTO }
 export {
   computeKpiCards,
   EMPTY_STATE_MESSAGE,
-  getVariationColor,
   GRANULARITY_OPTIONS,
+  getVariationColor,
   KPI_GRANULARITY,
 }
 
@@ -66,6 +67,21 @@ export function LongitudinalPage() {
     queryKey: ['snapshots', KPI_GRANULARITY, selectedPeriodId],
     queryFn: () => listSnapshots({ granularity: KPI_GRANULARITY, ...dateFilter }),
   })
+
+  const {
+    data: historyData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['snapshots-history', granularity, selectedPeriodId],
+    queryFn: ({ pageParam }) =>
+      listSnapshotHistory({ granularity, page: pageParam, ...dateFilter }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) =>
+      lastPage.page + 1 < lastPage.totalPages ? lastPage.page + 1 : undefined,
+  })
+  const historyRows = historyData?.pages.flatMap((p) => p.content) ?? []
 
   const kpiCards = computeKpiCards(monthlyData)
   const isEmpty = !isChartLoading && chartData.length === 0 && monthlyData.length === 0
@@ -179,7 +195,7 @@ export function LongitudinalPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {[...chartData].reverse().map((row) => {
+                {historyRows.map((row) => {
                   const color = getVariationColor(row.variationPct)
                   return (
                     <TableRow key={row.label + row.startDate}>
@@ -208,6 +224,13 @@ export function LongitudinalPage() {
                 })}
               </TableBody>
             </Table>
+            <div className="p-2">
+              <LoadMoreButton
+                fetchNextPage={fetchNextPage}
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+              />
+            </div>
           </div>
         </>
       )}
