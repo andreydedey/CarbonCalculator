@@ -1,6 +1,7 @@
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { ConfigurationList } from '@/components/configurations/ConfigurationList'
+import { ConsumptionMeasurementList } from '@/components/consumption-measurements/ConsumptionMeasurementList'
 import { EquipmentModelList } from '@/components/equipment-models/EquipmentModelList'
 import { MonitorList } from '@/components/monitors/MonitorList'
 import { Button } from '@/components/ui/button'
@@ -10,6 +11,7 @@ const TAB_LABELS = {
   computadores: 'Novo Computador',
   monitores: 'Novo Monitor',
   configuracoes: 'Nova Configuração',
+  medicoes: 'Nova Medição',
 } as const
 
 type TabValue = keyof typeof TAB_LABELS
@@ -19,11 +21,13 @@ export function EquipmentModelsPage() {
   const [computerFormOpen, setComputerFormOpen] = useState(false)
   const [monitorFormOpen, setMonitorFormOpen] = useState(false)
   const [configFormOpen, setConfigFormOpen] = useState(false)
+  const [measurementFormOpen, setMeasurementFormOpen] = useState(false)
 
   function handleAdd() {
     if (tab === 'computadores') setComputerFormOpen(true)
     else if (tab === 'monitores') setMonitorFormOpen(true)
-    else setConfigFormOpen(true)
+    else if (tab === 'configuracoes') setConfigFormOpen(true)
+    else setMeasurementFormOpen(true)
   }
 
   return (
@@ -46,6 +50,7 @@ export function EquipmentModelsPage() {
           <TabsTrigger value="computadores">Computadores</TabsTrigger>
           <TabsTrigger value="monitores">Monitores</TabsTrigger>
           <TabsTrigger value="configuracoes">Configurações</TabsTrigger>
+          <TabsTrigger value="medicoes">Medições</TabsTrigger>
         </TabsList>
         <TabsContent value="computadores">
           <EquipmentModelList formOpen={computerFormOpen} onFormOpenChange={setComputerFormOpen} />
@@ -55,6 +60,12 @@ export function EquipmentModelsPage() {
         </TabsContent>
         <TabsContent value="configuracoes">
           <ConfigurationList formOpen={configFormOpen} onFormOpenChange={setConfigFormOpen} />
+        </TabsContent>
+        <TabsContent value="medicoes">
+          <ConsumptionMeasurementList
+            formOpen={measurementFormOpen}
+            onFormOpenChange={setMeasurementFormOpen}
+          />
         </TabsContent>
       </Tabs>
     </div>

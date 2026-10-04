@@ -31,10 +31,10 @@ import {
 } from '@/lib/api/configurations'
 import { listEquipmentModels } from '@/lib/api/equipment-models'
 import { listMonitors } from '@/lib/api/monitors'
+import { listOperatingSystems } from '@/lib/api/operating-systems'
 import {
   type ConfigurationFormValues,
   configurationFormSchema,
-  OS_OPTIONS,
 } from '@/lib/schemas/configurationSchema'
 
 interface ConfigurationFormProps {
@@ -66,6 +66,13 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
   })
   const monitors = monitorsPage?.content ?? []
 
+  const { data: osPage } = useQuery({
+    queryKey: ['operating-systems', 'all'],
+    queryFn: () => listOperatingSystems({ size: 100 }),
+    enabled: open,
+  })
+  const operatingSystems = osPage?.content ?? []
+
   const {
     handleSubmit,
     reset,
@@ -76,7 +83,7 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
     resolver: zodResolver(configurationFormSchema),
     values: {
       equipmentModelId: configuration?.equipmentModel.id ?? '',
-      operatingSystem: configuration?.operatingSystem ?? '',
+      operatingSystemId: configuration?.operatingSystem?.id ?? '',
       monitorId: configuration?.monitor?.id ?? '',
     },
   })
@@ -97,7 +104,7 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
     try {
       await saveMutation.mutateAsync({
         equipmentModelId: values.equipmentModelId,
-        operatingSystem: values.operatingSystem.trim(),
+        operatingSystemId: values.operatingSystemId,
         monitorId: finalMonitorId ?? null,
       })
       reset()
@@ -105,9 +112,7 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
       onSaved?.()
       toast.success(mode === 'edit' ? 'Configuração atualizada.' : 'Configuração cadastrada.')
     } catch (error) {
-      toast.error(
-        isApiError(error) ? error.message : 'Não foi possível salvar a configuração.',
-      )
+      toast.error(isApiError(error) ? error.message : 'Não foi possível salvar a configuração.')
     }
   }
 
@@ -158,21 +163,21 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
               <div className="flex flex-1 flex-col gap-1.5">
                 <Label>Sistema Operacional *</Label>
                 <Select
-                  value={watch('operatingSystem')}
-                  onValueChange={(v) => setValue('operatingSystem', v)}
+                  value={watch('operatingSystemId')}
+                  onValueChange={(v) => setValue('operatingSystemId', v)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecionar..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {OS_OPTIONS.map((os) => (
-                      <SelectItem key={os} value={os}>
-                        {os}
+                    {operatingSystems.map((os) => (
+                      <SelectItem key={os.id} value={os.id}>
+                        {os.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <FieldError message={errors.operatingSystem?.message} />
+                <FieldError message={errors.operatingSystemId?.message} />
               </div>
             </div>
 
@@ -209,9 +214,7 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
               <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3">
                 <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
                 <div className="flex flex-col gap-1 text-xs text-amber-800">
-                  <span className="font-medium">
-                    Sem monitor, o resultado fica subestimado
-                  </span>
+                  <span className="font-medium">Sem monitor, o resultado fica subestimado</span>
                   <span>
                     Este computador não tem tela integrada. Monitores representaram 69% e 40% dos
                     dispositivos nos casos analisados por Sutton-Parker e ficaram fora da

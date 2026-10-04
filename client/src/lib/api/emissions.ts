@@ -25,6 +25,7 @@ export type EmissionResult = {
     computerWatts: number
     monitorWatts: number
     totalWatts: number
+    consumptionSource: string
   }[]
 }
 

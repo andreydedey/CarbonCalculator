@@ -104,6 +104,7 @@ function mockEmissionResult() {
         computerWatts: 65,
         monitorWatts: 21,
         totalWatts: 86,
+        consumptionSource: 'specification',
       },
     ],
   }

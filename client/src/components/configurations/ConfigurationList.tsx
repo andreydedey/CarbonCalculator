@@ -21,14 +21,9 @@ interface ConfigurationListProps {
 
 function usageLabel(config: Configuration): string {
   if (config.usageLabCount === 0) return 'Não utilizada'
-  const labs =
-    config.usageLabCount === 1
-      ? '1 laboratório'
-      : `${config.usageLabCount} laboratórios`
+  const labs = config.usageLabCount === 1 ? '1 laboratório' : `${config.usageLabCount} laboratórios`
   const stations =
-    config.usageStationCount === 1
-      ? '1 estação'
-      : `${config.usageStationCount} estações`
+    config.usageStationCount === 1 ? '1 estação' : `${config.usageStationCount} estações`
   return `${labs} · ${stations}`
 }
 
@@ -62,9 +57,7 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
       toast.success('Configuração excluída.')
     },
     onError: (error) => {
-      toast.error(
-        isApiError(error) ? error.message : 'Não foi possível excluir a configuração.',
-      )
+      toast.error(isApiError(error) ? error.message : 'Não foi possível excluir a configuração.')
     },
   })
 
@@ -121,7 +114,7 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
                   <tr key={config.id} className="border-b last:border-b-0">
                     <td className="px-4 py-2 font-medium">{config.equipmentModel.name}</td>
                     <td className="px-4 py-2">
-                      <Badge variant="secondary">{config.operatingSystem}</Badge>
+                      <Badge variant="secondary">{config.operatingSystem.name}</Badge>
                     </td>
                     <td className="px-4 py-2 text-muted-foreground">
                       {config.equipmentModel.hasIntegratedScreen
