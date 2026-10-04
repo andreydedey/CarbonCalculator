@@ -81,7 +81,7 @@ class LaboratoryServiceTest {
     // @spec:AC-006 Lista mostra apenas laboratórios ativos por padrão
     @Test
     void deveListarApenasLaboratoriosAtivosPorPadrao() {
-        LaboratoryDTO ativoDTO = new LaboratoryDTO(UUID.randomUUID(), "Ativo", null, true, 0, 0, null);
+        LaboratoryDTO ativoDTO = new LaboratoryDTO(UUID.randomUUID(), "Ativo", null, true, 0, 0);
         when(laboratoryRepository.findAllWithCounts(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(ativoDTO)));
 
@@ -94,8 +94,8 @@ class LaboratoryServiceTest {
     // @spec:AC-007 Laboratórios inativos podem ser incluídos na listagem
     @Test
     void deveIncluirLaboratoriosInativosQuandoSolicitado() {
-        LaboratoryDTO ativoDTO = new LaboratoryDTO(UUID.randomUUID(), "Ativo", null, true, 0, 0, null);
-        LaboratoryDTO inativoDTO = new LaboratoryDTO(UUID.randomUUID(), "Inativo", null, false, 0, 0, null);
+        LaboratoryDTO ativoDTO = new LaboratoryDTO(UUID.randomUUID(), "Ativo", null, true, 0, 0);
+        LaboratoryDTO inativoDTO = new LaboratoryDTO(UUID.randomUUID(), "Inativo", null, false, 0, 0);
         when(laboratoryRepository.findAllWithCounts(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(ativoDTO, inativoDTO)));
 

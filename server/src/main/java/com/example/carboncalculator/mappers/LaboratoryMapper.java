@@ -19,7 +19,6 @@ public final class LaboratoryMapper {
                 entity.getDescription(),
                 entity.isActive(),
                 configurationCount,
-                totalStations,
-                entity.getCreatedAt());
+                totalStations);
     }
 }

@@ -13,7 +13,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -79,7 +78,7 @@ class LaboratoryControllerTest {
         when(connection.prepareStatement(anyString())).thenReturn(preparedStatement);
         when(transactionManager.getTransaction(any())).thenReturn(mock(TransactionStatus.class));
 
-        LaboratoryDTO response = new LaboratoryDTO(UUID.randomUUID(), "LABCOMP-02", null, true, 0, 0, OffsetDateTime.now());
+        LaboratoryDTO response = new LaboratoryDTO(UUID.randomUUID(), "LABCOMP-02", null, true, 0, 0);
         when(laboratoryService.create(any(CreateLaboratoryRequest.class))).thenReturn(response);
 
         mockMvc.perform(post("/laboratories")

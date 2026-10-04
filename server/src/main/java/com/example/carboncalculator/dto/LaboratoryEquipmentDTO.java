@@ -1,6 +1,5 @@
 package com.example.carboncalculator.dto;
 
-import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public record LaboratoryEquipmentDTO(
@@ -9,8 +8,7 @@ public record LaboratoryEquipmentDTO(
         EquipmentModelSummaryDTO equipmentModel,
         String operatingSystem,
         MonitorDTO monitor,
-        int quantity,
-        OffsetDateTime createdAt) {
+        int quantity) {
 
     public record EquipmentModelSummaryDTO(
             UUID id,
