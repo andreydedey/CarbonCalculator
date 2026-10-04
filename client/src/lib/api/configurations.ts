@@ -19,7 +19,6 @@ export type Configuration = {
   monitor: Monitor | null
   usageLabCount: number
   usageStationCount: number
-  createdAt?: string
 }
 
 export type CreateConfigurationPayload = {

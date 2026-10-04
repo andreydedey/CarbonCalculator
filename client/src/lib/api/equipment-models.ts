@@ -13,7 +13,6 @@ export type EquipmentModel = {
   gpuTdpWatts?: number
   hasIntegratedScreen: boolean
   description?: string
-  createdAt?: string
 }
 
 export type CreateEquipmentModelPayload = {

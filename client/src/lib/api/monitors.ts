@@ -5,7 +5,6 @@ export type Monitor = {
   id: string
   name: string
   watts?: number
-  createdAt?: string
 }
 
 export type CreateMonitorPayload = {
