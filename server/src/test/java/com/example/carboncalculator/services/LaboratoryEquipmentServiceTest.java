@@ -21,6 +21,7 @@ import com.example.carboncalculator.entities.EquipmentModel;
 import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.Laboratory;
 import com.example.carboncalculator.entities.LaboratoryEquipment;
+import com.example.carboncalculator.entities.OperatingSystem;
 import com.example.carboncalculator.exceptions.DuplicateLaboratoryEquipmentException;
 import com.example.carboncalculator.exceptions.InvalidQuantityException;
 import com.example.carboncalculator.repositories.LaboratoryEquipmentRepository;
@@ -52,11 +53,16 @@ class LaboratoryEquipmentServiceTest {
                 .memoryGb(16)
                 .hasIntegratedScreen(false)
                 .build();
+        OperatingSystem os = OperatingSystem.builder()
+                .id(UUID.randomUUID())
+                .institution(institution)
+                .name("Linux")
+                .build();
         return Configuration.builder()
                 .id(configId)
                 .institution(institution)
                 .equipmentModel(model)
-                .operatingSystem("Linux")
+                .operatingSystem(os)
                 .monitor(null)
                 .build();
     }

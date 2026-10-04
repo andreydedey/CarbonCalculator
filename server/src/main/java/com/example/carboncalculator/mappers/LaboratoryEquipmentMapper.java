@@ -25,7 +25,7 @@ public final class LaboratoryEquipmentMapper {
                         model.getCoreCount(),
                         model.getMemoryGb(),
                         model.isHasIntegratedScreen()),
-                config.getOperatingSystem(),
+                OperatingSystemMapper.toDTO(config.getOperatingSystem()),
                 MonitorMapper.toDTO(config.getMonitor()),
                 entity.getQuantity());
     }

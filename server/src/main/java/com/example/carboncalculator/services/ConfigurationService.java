@@ -16,6 +16,7 @@ import com.example.carboncalculator.entities.Configuration;
 import com.example.carboncalculator.entities.EquipmentModel;
 import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.Monitor;
+import com.example.carboncalculator.entities.OperatingSystem;
 import com.example.carboncalculator.exceptions.ConfigurationHasDependentsException;
 import com.example.carboncalculator.exceptions.ConfigurationNotFoundException;
 import com.example.carboncalculator.exceptions.DuplicateConfigurationException;
@@ -37,24 +38,26 @@ public class ConfigurationService {
     private final InstitutionRepository institutionRepository;
     private final EquipmentModelService equipmentModelService;
     private final MonitorService monitorService;
+    private final OperatingSystemService operatingSystemService;
 
     @Transactional
     public ConfigurationDTO create(CreateConfigurationRequest request) {
         UUID institutionId = currentInstitutionId();
 
         if (configurationRepository.existsDuplicate(
-                institutionId, request.equipmentModelId(), request.operatingSystem(), request.monitorId())) {
+                institutionId, request.equipmentModelId(), request.operatingSystemId(), request.monitorId())) {
             throw new DuplicateConfigurationException();
         }
 
         Institution institution = institutionRepository.getReferenceById(institutionId);
         EquipmentModel model = equipmentModelService.getOrThrow(request.equipmentModelId());
+        OperatingSystem os = operatingSystemService.getOrThrow(request.operatingSystemId());
         Monitor monitor = request.monitorId() != null ? monitorService.getOrThrow(request.monitorId()) : null;
 
         Configuration config = Configuration.builder()
                 .institution(institution)
                 .equipmentModel(model)
-                .operatingSystem(request.operatingSystem())
+                .operatingSystem(os)
                 .monitor(monitor)
                 .build();
 
@@ -80,15 +83,16 @@ public class ConfigurationService {
         UUID institutionId = currentInstitutionId();
 
         if (configurationRepository.existsDuplicateExcluding(
-                institutionId, request.equipmentModelId(), request.operatingSystem(), request.monitorId(), id)) {
+                institutionId, request.equipmentModelId(), request.operatingSystemId(), request.monitorId(), id)) {
             throw new DuplicateConfigurationException();
         }
 
         EquipmentModel model = equipmentModelService.getOrThrow(request.equipmentModelId());
+        OperatingSystem os = operatingSystemService.getOrThrow(request.operatingSystemId());
         Monitor monitor = request.monitorId() != null ? monitorService.getOrThrow(request.monitorId()) : null;
 
         config.setEquipmentModel(model);
-        config.setOperatingSystem(request.operatingSystem());
+        config.setOperatingSystem(os);
         config.setMonitor(monitor);
 
         config = configurationRepository.save(config);

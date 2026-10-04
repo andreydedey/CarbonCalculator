@@ -58,6 +58,7 @@ public class EmissionCalculationService {
     private final LaboratoryScheduleRepository scheduleRepository;
     private final EmissionFactorRepository emissionFactorRepository;
     private final PeriodSummaryService periodSummaryService;
+    private final ConsumptionResolver consumptionResolver;
 
     @Transactional(readOnly = true)
     public ReadinessDTO checkReadiness(UUID periodId) {
@@ -183,21 +184,21 @@ public class EmissionCalculationService {
 
             for (LaboratoryEquipment le : equipment) {
                 Configuration config = le.getConfiguration();
-                EquipmentModel model = config.getEquipmentModel();
-                Monitor monitor = config.getMonitor();
 
-                int computerWatts = (model.getTdpWatts() != null ? model.getTdpWatts() : 0)
-                        + (model.getGpuTdpWatts() != null ? model.getGpuTdpWatts() : 0);
-                int monitorWatts = (monitor != null && monitor.getWatts() != null) ? monitor.getWatts() : 0;
-                int totalWatts = computerWatts + monitorWatts;
+                ConsumptionResolver.ResolvedConsumption resolved = consumptionResolver.resolve(config);
+                int computerWatts = resolved.computerWatts();
+                int monitorWatts = resolved.monitorWatts();
+                int totalWatts = resolved.totalWatts();
                 int qty = le.getQuantity();
                 labStationCount += qty;
+
+                Monitor monitor = config.getMonitor();
 
                 // Track input consumptions (deduplicated)
                 if (seenConfigs.add(config.getId())) {
                     inputConsumptions.add(new InputConsumption(
                             config.getId(), configLabel(config),
-                            computerWatts, monitorWatts, totalWatts));
+                            computerWatts, monitorWatts, totalWatts, resolved.source()));
                 }
 
                 double configEnergy = 0;
@@ -235,8 +236,8 @@ public class EmissionCalculationService {
                     }
 
                     // OS aggregation
-                    osAgg.computeIfAbsent(config.getOperatingSystem(), k -> new double[1]);
-                    osAgg.get(config.getOperatingSystem())[0] += emissionKg;
+                    osAgg.computeIfAbsent(config.getOperatingSystem().getName(), k -> new double[1]);
+                    osAgg.get(config.getOperatingSystem().getName())[0] += emissionKg;
                 }
 
                 labEnergy += configEnergy;
@@ -481,7 +482,7 @@ public class EmissionCalculationService {
 
     private String configLabel(Configuration config) {
         StringBuilder sb = new StringBuilder(config.getEquipmentModel().getName());
-        sb.append(" + ").append(config.getOperatingSystem());
+        sb.append(" + ").append(config.getOperatingSystem().getName());
         if (config.getMonitor() != null) {
             sb.append(" + ").append(config.getMonitor().getName());
         }
