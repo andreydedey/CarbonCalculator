@@ -25,6 +25,8 @@ public class GlobalExceptionHandler {
             MissingLaboratoryNameException.class,
             MissingEquipmentModelNameException.class,
             MissingMonitorNameException.class,
+            MissingOperatingSystemNameException.class,
+            InvalidMeasurementTargetException.class,
             GpuTdpRequiredException.class,
             InvalidQuantityException.class,
             CannotModifySelfException.class,
@@ -65,7 +67,9 @@ public class GlobalExceptionHandler {
             MemberNotFoundException.class,
             InstitutionNotFoundException.class,
             PeriodNotFoundException.class,
-            EmissionFactorNotFoundException.class
+            EmissionFactorNotFoundException.class,
+            OperatingSystemNotFoundException.class,
+            MeasurementNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request);
@@ -84,7 +88,9 @@ public class GlobalExceptionHandler {
             DuplicateConfigurationException.class,
             DuplicateLaboratoryEquipmentException.class,
             PeriodOverlapException.class,
-            DuplicateEmissionFactorException.class
+            DuplicateEmissionFactorException.class,
+            OperatingSystemHasDependentsException.class,
+            DuplicateOperatingSystemException.class
     })
     public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex, HttpServletRequest request) {
         log.warn("Conflict on {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
