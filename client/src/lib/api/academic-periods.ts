@@ -26,7 +26,6 @@ export type AcademicPeriod = {
   endDate: string
   holidayCount: number
   shifts: Shift[]
-  createdAt: string
 }
 
 export type Holiday = {

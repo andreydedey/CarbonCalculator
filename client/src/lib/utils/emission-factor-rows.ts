@@ -6,7 +6,6 @@ export type EmissionFactor = {
   referenceMonth: string
   value: number
   source: string
-  createdAt: string
 }
 
 export type EmissionFactorRowStatus = 'pendente' | 'em-uso' | 'anterior'

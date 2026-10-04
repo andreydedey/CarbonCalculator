@@ -8,7 +8,6 @@ export type Laboratory = {
   active: boolean
   configurationCount: number
   totalStations: number
-  createdAt?: string
 }
 
 export type CreateLaboratoryPayload = {
