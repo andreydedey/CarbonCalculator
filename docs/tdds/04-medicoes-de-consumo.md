@@ -36,7 +36,7 @@ Com este PRD, o cálculo de emissões passa a ter duas fontes possíveis por com
 - **Computador medido sempre em um sistema operacional específico.** Uma medição em um SO não se aplica a outro. O campo `operatingSystem` é obrigatório em medições de tipo COMPUTER.
 - **Medição COMPUTER é independente do monitor — fundamentada na metodologia.** Sutton-Parker (2022) e o protocolo Energy Star medem o dispositivo isolado, sem periféricos conectados, para evitar que cargas externas alterem a leitura. O artigo FACOMP exigiu que cada computador fosse o único equipamento ligado ao nobreak durante a medição. O modelo aditivo (Sutton-Parker somou o consumo de um monitor medido separadamente ao consumo dos computadores) confirma que as unidades são independentes. Uma medição COMPUTER, portanto, vale para todas as configurações que compartilham aquele (modelo + SO), independentemente do monitor vinculado.
 - **Medição COMBINED existe para cobrir um edge case real.** Em alguns desktops, ligar ou desligar o monitor altera levemente o consumo da GPU (carga no barramento PCIe/DisplayPort). A medição COMBINED captura esse efeito, que as medições separadas não conseguem detectar. Por isso o tipo existe — não como alternativa de conveniência, mas como solução para ambientes onde o comportamento conjunto é relevante.
-- **Medição COMBINED referencia uma `Configuration`, não campos avulsos.** A `Configuration` (PRD 03) já representa exatamente a combinação (model + OS + monitor) com integridade referencial. Usar `configuration_id` é mais expressivo e garante que a combinação existe no sistema.
+- **Medição COMBINED usa 3 FKs, não `configuration_id`.** Usar `equipment_model_id` + `operating_system_id` + `monitor_id` diretamente permite registrar medições de combinações que ainda não foram vinculadas a nenhum laboratório. A integridade referencial está nas FKs individuais. Não depende de a `Configuration` existir.
 - **Ponto em aberto — artigo FACOMP não explicita se o monitor estava ligado durante as medições.** Isso afeta a interpretação dos 767 kg CO₂ do estudo: se o monitor estava conectado ao nobreak, o consumo já está embutido no valor medido do computador; se não estava, o consumo do monitor foi somado separadamente. A plataforma documenta essa ambiguidade no seed de dados do estudo de referência, mas não a resolve automaticamente.
 - **Data da medição é para rastreabilidade.** O fator de emissão aplicado depende dos meses do período letivo calculado, não da data da medição.
 - **Medição conjunta não pode ser somada a medições separadas no mesmo cálculo.** Quando ambas existem para a mesma configuração, o gestor escolhe explicitamente qual usar. COMBINED tem prioridade no default.
@@ -66,7 +66,8 @@ O motor de cálculo (PRD 06) já existe e funciona, mas usa exclusivamente TDP d
 
 ### Dentro do escopo
 
-- Entidade `ConsumptionMeasurement` com três tipos de alvo: COMPUTER, MONITOR, COMBINED
+- Refatoração: tabela `operating_system` substituindo o campo VARCHAR livre em `configuration`; CRUD de SOs por instituição
+- Entidade `ConsumptionMeasurement` com três tipos de alvo: COMPUTER, MONITOR, COMBINED — sem `configuration_id`, usando 3 colunas de alvo (`equipment_model_id`, `operating_system_id`, `monitor_id`)
 - CRUD completo de medições (criar, listar, atualizar, excluir)
 - Validação de campos obrigatórios por tipo de alvo: `equipmentModelId` + `operatingSystem` para COMPUTER; `monitorId` para MONITOR; todos os três para COMBINED
 - Detecção de discrepância ao criar ou atualizar: alerta quando nova medição difere mais de 50% da média das existentes para o mesmo alvo (calculado somente com 2+ medições anteriores)
@@ -124,12 +125,34 @@ O motor de cálculo (PRD 06) já existe e funciona, mas usa exclusivamente TDP d
                            │ JDBC + RLS
 ┌──────────────────────────▼───────────────────────────────┐
 │  PostgreSQL                                              │
+│  operating_system (nova, com RLS)                        │
 │  consumption_measurement (nova, com RLS)                 │
-│  + equipment_model, monitor, configuration (existentes)  │
+│  configuration (refatorada: operating_system → FK)       │
+│  + equipment_model, monitor (existentes)                 │
 └──────────────────────────────────────────────────────────┘
 ```
 
 ### Modelo de dados
+
+**Tabela `operating_system`** (nova — escopo da instituição, com RLS)
+
+Substitui o campo `VARCHAR` livre por entidade gerenciada, eliminando inconsistências de digitação e permitindo match por UUID no resolver.
+
+| Coluna           | Tipo           | Restrições                     |
+| ---------------- | -------------- | ------------------------------ |
+| `id`             | `UUID`         | PK, gerado automaticamente    |
+| `institution_id` | `UUID`         | FK → institution(id), NOT NULL |
+| `name`           | `VARCHAR(100)` | NOT NULL                       |
+
+**Constraints:**
+- UNIQUE: `(institution_id, name)` — sem duplicatas por instituição
+- RLS: policy filtrando por `current_setting('app.current_institution', true)::uuid`
+
+**Refatoração da tabela `configuration` (existente):**
+- Substituir coluna `operating_system VARCHAR(100)` por `operating_system_id UUID FK → operating_system(id)`
+- Migration com backfill: extrair valores distintos de `configuration.operating_system` → popular `operating_system` → adicionar FK → migrar → drop coluna
+
+---
 
 **Tabela `consumption_measurement`** (nova — escopo da instituição, com RLS)
 
@@ -138,10 +161,9 @@ O motor de cálculo (PRD 06) já existe e funciona, mas usa exclusivamente TDP d
 | `id`                       | `UUID`              | PK, gerado automaticamente                          |
 | `institution_id`           | `UUID`              | FK → institution(id), NOT NULL                       |
 | `target_type`              | `VARCHAR(20)`       | NOT NULL, CHECK IN ('COMPUTER', 'MONITOR', 'COMBINED') |
-| `equipment_model_id`       | `UUID`              | FK → equipment_model(id), NOT NULL se COMPUTER, NULL caso contrário |
-| `operating_system`         | `VARCHAR(100)`      | NOT NULL se COMPUTER, NULL caso contrário            |
-| `monitor_id`               | `UUID`              | FK → monitor(id), NOT NULL se MONITOR, NULL caso contrário |
-| `configuration_id`         | `UUID`              | FK → configuration(id), NOT NULL se COMBINED, NULL caso contrário |
+| `equipment_model_id`       | `UUID`              | FK → equipment_model(id), nullable                  |
+| `operating_system_id`      | `UUID`              | FK → operating_system(id), nullable                 |
+| `monitor_id`               | `UUID`              | FK → monitor(id), nullable                          |
 | `average_watts`            | `NUMERIC(8,2)`      | NOT NULL, CHECK (> 0)                               |
 | `duration_minutes`         | `INTEGER`           | NOT NULL, CHECK (> 0)                               |
 | `reading_interval_minutes` | `INTEGER`           | NULL — opcional                                      |
@@ -151,27 +173,32 @@ O motor de cálculo (PRD 06) já existe e funciona, mas usa exclusivamente TDP d
 | `created_at`               | `TIMESTAMP WITH TZ` | NOT NULL                                             |
 | `updated_at`               | `TIMESTAMP WITH TZ` | NOT NULL                                             |
 
+O tipo de alvo é determinado pela presença dos campos:
+
+| Tipo | `equipment_model_id` | `operating_system_id` | `monitor_id` |
+| ---- | -------------------- | --------------------- | ------------ |
+| COMPUTER | NOT NULL | NOT NULL | NULL |
+| MONITOR | NULL | NULL | NOT NULL |
+| COMBINED | NOT NULL | NOT NULL | NOT NULL |
+
 **Constraint de integridade por tipo de alvo:**
 
 ```sql
 CONSTRAINT chk_measurement_target_fields CHECK (
   (target_type = 'COMPUTER'
     AND equipment_model_id IS NOT NULL
-    AND operating_system IS NOT NULL
-    AND monitor_id IS NULL
-    AND configuration_id IS NULL)
+    AND operating_system_id IS NOT NULL
+    AND monitor_id IS NULL)
   OR
   (target_type = 'MONITOR'
     AND monitor_id IS NOT NULL
     AND equipment_model_id IS NULL
-    AND operating_system IS NULL
-    AND configuration_id IS NULL)
+    AND operating_system_id IS NULL)
   OR
   (target_type = 'COMBINED'
-    AND configuration_id IS NOT NULL
-    AND equipment_model_id IS NULL
-    AND operating_system IS NULL
-    AND monitor_id IS NULL)
+    AND equipment_model_id IS NOT NULL
+    AND operating_system_id IS NOT NULL
+    AND monitor_id IS NOT NULL)
 )
 ```
 
@@ -180,26 +207,26 @@ CONSTRAINT chk_measurement_target_fields CHECK (
 **Índices:**
 
 - `idx_cm_institution_id` — (institution_id) — listagem geral
-- `idx_cm_computer_target` — (institution_id, equipment_model_id, operating_system) WHERE target_type = 'COMPUTER'
-- `idx_cm_monitor_target` — (institution_id, monitor_id) WHERE target_type = 'MONITOR'
-- `idx_cm_joint_target` — (configuration_id) WHERE target_type = 'COMBINED'
+- `idx_cm_computer_target` — (equipment_model_id, operating_system_id) WHERE target_type = 'COMPUTER'
+- `idx_cm_monitor_target` — (monitor_id) WHERE target_type = 'MONITOR'
+- `idx_cm_combined_target` — (equipment_model_id, operating_system_id, monitor_id) WHERE target_type = 'COMBINED'
 
 ### Lógica de resolução de fonte (ConsumptionResolver)
 
 Para cada configuração (equipment_model + operating_system + monitor) no cálculo, a hierarquia de prioridade é:
 
 ```
-1. Medição COMBINED para configuration_id da configuração:
+1. Medição COMBINED para (equipment_model_id + operating_system_id + monitor_id):
    → totalWatts = average_watts da medição conjunta
    → computerWatts = null, monitorWatts = null (não decompostos)
    → source = "measurement_combined"
 
-2. Medição COMPUTER para (equipment_model_id + operating_system) + Medição MONITOR para monitor_id:
+2. Medição COMPUTER para (equipment_model_id + operating_system_id) + Medição MONITOR para monitor_id:
    → computerWatts = average_watts da medição COMPUTER
    → monitorWatts = average_watts da medição MONITOR
    → source = "measurement_computer+measurement_monitor"
 
-3. Medição COMPUTER para (equipment_model_id + operating_system) + Especificação MONITOR (monitor.watts):
+3. Medição COMPUTER para (equipment_model_id + operating_system_id) + Especificação MONITOR (monitor.watts):
    → computerWatts = average_watts da medição COMPUTER
    → monitorWatts = monitor.watts (spec)
    → source = "measurement_computer+spec_monitor"
@@ -240,8 +267,8 @@ O `ConsumptionResolver` recebe a lista de todas as medições da instituição e
 Parâmetros de filtro em `GET /api/v1/consumption-measurements`:
 - `targetType=COMPUTER|MONITOR|COMBINED`
 - `equipmentModelId=<uuid>`
+- `operatingSystemId=<uuid>`
 - `monitorId=<uuid>`
-- `operatingSystem=<string>`
 - Paginação: `page`, `size`; ordenação default: `measurementDate DESC`
 
 **Cálculo (extensão do PRD 06)**
@@ -259,7 +286,7 @@ Parâmetros de filtro em `GET /api/v1/consumption-measurements`:
 {
   "targetType": "COMPUTER",
   "equipmentModelId": "aaa-...",
-  "operatingSystem": "Windows 10",
+  "operatingSystemId": "os-...",
   "averageWatts": 58.5,
   "durationMinutes": 12,
   "readingIntervalMinutes": 4,
@@ -274,7 +301,8 @@ Parâmetros de filtro em `GET /api/v1/consumption-measurements`:
   "targetType": "COMPUTER",
   "equipmentModelId": "aaa-...",
   "equipmentModelName": "Dell OptiPlex 7090",
-  "operatingSystem": "Windows 10",
+  "operatingSystemId": "os-...",
+  "operatingSystemName": "Windows 10",
   "monitorId": null,
   "monitorName": null,
   "averageWatts": 58.5,
@@ -318,7 +346,9 @@ Parâmetros de filtro em `GET /api/v1/consumption-measurements`:
 // POST /api/v1/consumption-measurements — tipo COMBINED
 {
   "targetType": "COMBINED",
-  "configurationId": "cfg-...",
+  "equipmentModelId": "aaa-...",
+  "operatingSystemId": "os-...",
+  "monitorId": "bbb-...",
   "averageWatts": 78.0,
   "durationMinutes": 12,
   "readingIntervalMinutes": 4,
@@ -337,7 +367,8 @@ Parâmetros de filtro em `GET /api/v1/consumption-measurements`:
       "targetType": "COMPUTER",
       "equipmentModelId": "aaa-...",
       "equipmentModelName": "Dell OptiPlex 7090",
-      "operatingSystem": "Windows 10",
+      "operatingSystemId": "os-...",
+      "operatingSystemName": "Windows 10",
       "monitorId": null,
       "monitorName": null,
       "averageWatts": 58.5,
@@ -366,13 +397,13 @@ Parâmetros de filtro em `GET /api/v1/consumption-measurements`:
     {
       "targetType": "COMPUTER",
       "equipmentModelId": "aaa-...",
-      "operatingSystem": "Windows 10",
+      "operatingSystemId": "os-...",
       "measurementId": "mmm-..."
     },
     {
       "targetType": "COMBINED",
       "equipmentModelId": "aaa-...",
-      "operatingSystem": "Windows 10",
+      "operatingSystemId": "os-...",
       "monitorId": "bbb-...",
       "measurementId": "nnn-..."
     }
@@ -447,9 +478,9 @@ Campos comuns (todos os tipos):
 - Observações (textarea, opcional)
 
 Campos condicionais:
-- COMPUTER: select de modelo de computador *, select/input de sistema operacional *
+- COMPUTER: select de modelo de computador *, select de sistema operacional *
 - MONITOR: select de monitor *
-- COMBINED: select de modelo *, select/input de sistema operacional *, select de monitor *
+- COMBINED: select de modelo *, select de sistema operacional *, select de monitor *
 
 Ao receber resposta com `outlierAlert` → toast de aviso informativo (não bloqueia).
 
@@ -467,9 +498,9 @@ const consumptionMeasurementBaseSchema = {
 }
 
 export const consumptionMeasurementSchema = z.discriminatedUnion('targetType', [
-  z.object({ targetType: z.literal('COMPUTER'), equipmentModelId: z.string().min(1), operatingSystem: z.string().min(1), ...consumptionMeasurementBaseSchema }),
+  z.object({ targetType: z.literal('COMPUTER'), equipmentModelId: z.string().min(1), operatingSystemId: z.string().min(1), ...consumptionMeasurementBaseSchema }),
   z.object({ targetType: z.literal('MONITOR'), monitorId: z.string().min(1), ...consumptionMeasurementBaseSchema }),
-  z.object({ targetType: z.literal('COMBINED'), configurationId: z.string().min(1), ...consumptionMeasurementBaseSchema }),
+  z.object({ targetType: z.literal('COMBINED'), equipmentModelId: z.string().min(1), operatingSystemId: z.string().min(1), monitorId: z.string().min(1), ...consumptionMeasurementBaseSchema }),
 ])
 ```
 
@@ -497,7 +528,10 @@ export const consumptionMeasurementSchema = z.discriminatedUnion('targetType', [
 
 | Fase | Tarefa | Descrição | Status |
 | ---- | ------ | --------- | ------ |
-| **1 — Banco** | Migration V19 | Criar tabela `consumption_measurement` com RLS, índices e CHECK constraint por tipo de alvo | Pendente |
+| **1 — Banco** | Migration V19 — operating_system | Criar tabela `operating_system` com RLS; refatorar `configuration`: extrair distintos → popular tabela → add FK `operating_system_id` → migrar dados → drop coluna `operating_system` | Pendente |
+| **1 — Banco** | Migration V20 — consumption_measurement | Criar tabela `consumption_measurement` com RLS, índices e CHECK constraint por tipo de alvo | Pendente |
+| **1 — Backend** | Refatorar Configuration | Atualizar entidade `Configuration`, DTOs, services e testes para usar `operatingSystemId` FK em vez de string | Pendente |
+| **1 — Backend** | Entidade OperatingSystem + CRUD | Entidade JPA, repository, service com CRUD simples, controller | Pendente |
 | **2 — Backend** | Entidade JPA | `ConsumptionMeasurement`: campos, FKs nullable, RLS via mesmo padrão de `EquipmentModel` | Pendente |
 | **2 — Backend** | Repository | `ConsumptionMeasurementRepository`: queries por modelo+SO, por monitor, por tipo; suporte a Spring Specification | Pendente |
 | **2 — Backend** | DTOs | `CreateConsumptionMeasurementRequest` (com validação por tipo), `ConsumptionMeasurementDTO` (com `outlierAlert` opcional) | Pendente |
@@ -528,10 +562,10 @@ export const consumptionMeasurementSchema = z.discriminatedUnion('targetType', [
 **CRUD de medições:**
 - Criar medição COMPUTER com campos corretos → 201
 - Criar medição MONITOR com campos corretos → 201
-- Criar medição COMBINED com `configurationId` válido → 201
+- Criar medição COMBINED com `equipmentModelId` + `operatingSystemId` + `monitorId` → 201
 - Criar medição COMPUTER sem `equipmentModelId` → 400
-- Criar medição COMBINED sem `configurationId` → 400
-- Criar medição COMPUTER com `configurationId` preenchido → 400 (campo inválido para o tipo)
+- Criar medição COMBINED sem `monitorId` → 400
+- Criar medição COMPUTER com `monitorId` preenchido → 400 (campo inválido para o tipo)
 - Criar medição com `averageWatts` ≤ 0 → 400
 - Criar medição com `durationMinutes` ≤ 0 → 400
 - Criar 3ª medição que é outlier (50%+ acima da média das 2 anteriores) → 201 com `outlierAlert` populado
@@ -548,7 +582,7 @@ export const consumptionMeasurementSchema = z.discriminatedUnion('targetType', [
 - Só medição COMPUTER → source = "measurement_computer+spec_monitor"
 - Só medição MONITOR → source = "spec_computer+measurement_monitor"
 - Medição COMPUTER + MONITOR → source = "measurement_computer+measurement_monitor"
-- Medição COMBINED para configuration_id → source = "measurement_combined", totalWatts = medição; computerWatts e monitorWatts null
+- Medição COMBINED para (model + OS + monitor) → source = "measurement_combined", totalWatts = medição; computerWatts e monitorWatts null
 - Medição COMBINED + COMPUTER separada para o mesmo (model+OS) → COMBINED tem prioridade
 - 2 medições COMPUTER com estratégia LATEST → usa a com `measurementDate` mais recente
 - 2 medições COMPUTER com estratégia AVERAGE → usa média de `averageWatts`
