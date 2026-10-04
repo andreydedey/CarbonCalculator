@@ -33,7 +33,8 @@ Com este PRD, o cálculo de emissões passa a ter duas fontes possíveis por com
 ### Decisões resolvidas
 
 - **Alvo da medição é o modelo, não a unidade física.** O estudo mediu cada unidade individualmente e encontrou variação de até 3× entre unidades do mesmo modelo. A plataforma permite guardar várias medições para o mesmo alvo — a variação entre unidades fica visível, e o gestor escolhe qual usar no cálculo.
-- **Computador medido sempre em um sistema operacional específico.** Uma medição em um SO não se aplica a outro. O campo `operatingSystem` é obrigatório em medições de tipo COMPUTER e JOINT.
+- **Computador medido sempre em um sistema operacional específico.** Uma medição em um SO não se aplica a outro. O campo `operatingSystem` é obrigatório em medições de tipo COMPUTER.
+- **Medição JOINT referencia uma `Configuration`, não campos avulsos.** A `Configuration` (PRD 03) já representa exatamente a combinação (model + OS + monitor) com integridade referencial. Para JOINT, usar `configuration_id` é mais expressivo e garante que a combinação existe no sistema. COMPUTER não pode usar o mesmo atalho porque uma medição de computador vale para *todas* as configurações que compartilham aquele (model + OS), independentemente do monitor.
 - **Data da medição é para rastreabilidade.** O fator de emissão aplicado depende dos meses do período letivo calculado, não da data da medição.
 - **Medição conjunta não pode ser somada a medições separadas no mesmo cálculo.** Quando ambas existem para a mesma configuração, o gestor escolhe explicitamente qual usar. JOINT tem prioridade no default.
 - **Outlier é alerta, não bloqueio.** Se uma nova medição difere mais de 50% da média das existentes para o mesmo alvo, a plataforma alerta, mas o registro é permitido. O alerta só é gerado quando há pelo menos 2 medições anteriores.
@@ -134,9 +135,10 @@ O motor de cálculo (PRD 06) já existe e funciona, mas usa exclusivamente TDP d
 | `id`                       | `UUID`              | PK, gerado automaticamente                          |
 | `institution_id`           | `UUID`              | FK → institution(id), NOT NULL                       |
 | `target_type`              | `VARCHAR(20)`       | NOT NULL, CHECK IN ('COMPUTER', 'MONITOR', 'JOINT') |
-| `equipment_model_id`       | `UUID`              | FK → equipment_model(id), NULL se target = MONITOR  |
-| `operating_system`         | `VARCHAR(100)`      | NULL se target = MONITOR                             |
-| `monitor_id`               | `UUID`              | FK → monitor(id), NULL se target = COMPUTER         |
+| `equipment_model_id`       | `UUID`              | FK → equipment_model(id), NOT NULL se COMPUTER, NULL caso contrário |
+| `operating_system`         | `VARCHAR(100)`      | NOT NULL se COMPUTER, NULL caso contrário            |
+| `monitor_id`               | `UUID`              | FK → monitor(id), NOT NULL se MONITOR, NULL caso contrário |
+| `configuration_id`         | `UUID`              | FK → configuration(id), NOT NULL se JOINT, NULL caso contrário |
 | `average_watts`            | `NUMERIC(8,2)`      | NOT NULL, CHECK (> 0)                               |
 | `duration_minutes`         | `INTEGER`           | NOT NULL, CHECK (> 0)                               |
 | `reading_interval_minutes` | `INTEGER`           | NULL — opcional                                      |
@@ -153,17 +155,20 @@ CONSTRAINT chk_measurement_target_fields CHECK (
   (target_type = 'COMPUTER'
     AND equipment_model_id IS NOT NULL
     AND operating_system IS NOT NULL
-    AND monitor_id IS NULL)
+    AND monitor_id IS NULL
+    AND configuration_id IS NULL)
   OR
   (target_type = 'MONITOR'
     AND monitor_id IS NOT NULL
     AND equipment_model_id IS NULL
-    AND operating_system IS NULL)
+    AND operating_system IS NULL
+    AND configuration_id IS NULL)
   OR
   (target_type = 'JOINT'
-    AND equipment_model_id IS NOT NULL
-    AND operating_system IS NOT NULL
-    AND monitor_id IS NOT NULL)
+    AND configuration_id IS NOT NULL
+    AND equipment_model_id IS NULL
+    AND operating_system IS NULL
+    AND monitor_id IS NULL)
 )
 ```
 
@@ -172,30 +177,31 @@ CONSTRAINT chk_measurement_target_fields CHECK (
 **Índices:**
 
 - `idx_cm_institution_id` — (institution_id) — listagem geral
-- `idx_cm_computer_target` — (institution_id, equipment_model_id, operating_system) WHERE target_type IN ('COMPUTER', 'JOINT')
-- `idx_cm_monitor_target` — (institution_id, monitor_id) WHERE target_type IN ('MONITOR', 'JOINT')
+- `idx_cm_computer_target` — (institution_id, equipment_model_id, operating_system) WHERE target_type = 'COMPUTER'
+- `idx_cm_monitor_target` — (institution_id, monitor_id) WHERE target_type = 'MONITOR'
+- `idx_cm_joint_target` — (configuration_id) WHERE target_type = 'JOINT'
 
 ### Lógica de resolução de fonte (ConsumptionResolver)
 
 Para cada configuração (equipment_model + operating_system + monitor) no cálculo, a hierarquia de prioridade é:
 
 ```
-1. Medição JOINT para (model + OS + monitor):
+1. Medição JOINT para configuration_id da configuração:
    → totalWatts = average_watts da medição conjunta
    → computerWatts = null, monitorWatts = null (não decompostos)
    → source = "measurement_joint"
 
-2. Medição COMPUTER para (model + OS) + Medição MONITOR para (monitor):
+2. Medição COMPUTER para (equipment_model_id + operating_system) + Medição MONITOR para monitor_id:
    → computerWatts = average_watts da medição COMPUTER
    → monitorWatts = average_watts da medição MONITOR
    → source = "measurement_computer+measurement_monitor"
 
-3. Medição COMPUTER para (model + OS) + Especificação MONITOR (monitor.watts):
+3. Medição COMPUTER para (equipment_model_id + operating_system) + Especificação MONITOR (monitor.watts):
    → computerWatts = average_watts da medição COMPUTER
    → monitorWatts = monitor.watts (spec)
    → source = "measurement_computer+spec_monitor"
 
-4. Especificação COMPUTER (equipment_model.tdp_watts + gpu_tdp_watts) + Medição MONITOR:
+4. Especificação COMPUTER (equipment_model.tdp_watts + gpu_tdp_watts) + Medição MONITOR para monitor_id:
    → computerWatts = tdp_watts + gpu_tdp_watts (spec)
    → monitorWatts = average_watts da medição MONITOR
    → source = "spec_computer+measurement_monitor"
@@ -309,9 +315,7 @@ Parâmetros de filtro em `GET /api/v1/consumption-measurements`:
 // POST /api/v1/consumption-measurements — tipo JOINT
 {
   "targetType": "JOINT",
-  "equipmentModelId": "aaa-...",
-  "operatingSystem": "Windows 10",
-  "monitorId": "bbb-...",
+  "configurationId": "cfg-...",
   "averageWatts": 78.0,
   "durationMinutes": 12,
   "readingIntervalMinutes": 4,
@@ -462,7 +466,7 @@ const consumptionMeasurementBaseSchema = {
 export const consumptionMeasurementSchema = z.discriminatedUnion('targetType', [
   z.object({ targetType: z.literal('COMPUTER'), equipmentModelId: z.string().min(1), operatingSystem: z.string().min(1), ...consumptionMeasurementBaseSchema }),
   z.object({ targetType: z.literal('MONITOR'), monitorId: z.string().min(1), ...consumptionMeasurementBaseSchema }),
-  z.object({ targetType: z.literal('JOINT'), equipmentModelId: z.string().min(1), operatingSystem: z.string().min(1), monitorId: z.string().min(1), ...consumptionMeasurementBaseSchema }),
+  z.object({ targetType: z.literal('JOINT'), configurationId: z.string().min(1), ...consumptionMeasurementBaseSchema }),
 ])
 ```
 
@@ -521,10 +525,10 @@ export const consumptionMeasurementSchema = z.discriminatedUnion('targetType', [
 **CRUD de medições:**
 - Criar medição COMPUTER com campos corretos → 201
 - Criar medição MONITOR com campos corretos → 201
-- Criar medição JOINT com todos os campos → 201
+- Criar medição JOINT com `configurationId` válido → 201
 - Criar medição COMPUTER sem `equipmentModelId` → 400
-- Criar medição JOINT sem `monitorId` → 400
-- Criar medição COMPUTER com `monitorId` preenchido → 400 (campo inválido para o tipo)
+- Criar medição JOINT sem `configurationId` → 400
+- Criar medição COMPUTER com `configurationId` preenchido → 400 (campo inválido para o tipo)
 - Criar medição com `averageWatts` ≤ 0 → 400
 - Criar medição com `durationMinutes` ≤ 0 → 400
 - Criar 3ª medição que é outlier (50%+ acima da média das 2 anteriores) → 201 com `outlierAlert` populado
@@ -541,8 +545,8 @@ export const consumptionMeasurementSchema = z.discriminatedUnion('targetType', [
 - Só medição COMPUTER → source = "measurement_computer+spec_monitor"
 - Só medição MONITOR → source = "spec_computer+measurement_monitor"
 - Medição COMPUTER + MONITOR → source = "measurement_computer+measurement_monitor"
-- Medição JOINT → source = "measurement_joint", totalWatts = medição; computerWatts e monitorWatts null
-- Medição JOINT + COMPUTER separada → JOINT tem prioridade
+- Medição JOINT para configuration_id → source = "measurement_joint", totalWatts = medição; computerWatts e monitorWatts null
+- Medição JOINT + COMPUTER separada para o mesmo (model+OS) → JOINT tem prioridade
 - 2 medições COMPUTER com estratégia LATEST → usa a com `measurementDate` mais recente
 - 2 medições COMPUTER com estratégia AVERAGE → usa média de `averageWatts`
 - 2 medições COMPUTER com estratégia EXPLICIT e ID específico → usa exatamente aquela
