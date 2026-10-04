@@ -34,9 +34,12 @@ Com este PRD, o cálculo de emissões passa a ter duas fontes possíveis por com
 
 - **Alvo da medição é o modelo, não a unidade física.** O estudo mediu cada unidade individualmente e encontrou variação de até 3× entre unidades do mesmo modelo. A plataforma permite guardar várias medições para o mesmo alvo — a variação entre unidades fica visível, e o gestor escolhe qual usar no cálculo.
 - **Computador medido sempre em um sistema operacional específico.** Uma medição em um SO não se aplica a outro. O campo `operatingSystem` é obrigatório em medições de tipo COMPUTER.
-- **Medição JOINT referencia uma `Configuration`, não campos avulsos.** A `Configuration` (PRD 03) já representa exatamente a combinação (model + OS + monitor) com integridade referencial. Para JOINT, usar `configuration_id` é mais expressivo e garante que a combinação existe no sistema. COMPUTER não pode usar o mesmo atalho porque uma medição de computador vale para *todas* as configurações que compartilham aquele (model + OS), independentemente do monitor.
+- **Medição COMPUTER é independente do monitor — fundamentada na metodologia.** Sutton-Parker (2022) e o protocolo Energy Star medem o dispositivo isolado, sem periféricos conectados, para evitar que cargas externas alterem a leitura. O artigo FACOMP exigiu que cada computador fosse o único equipamento ligado ao nobreak durante a medição. O modelo aditivo (Sutton-Parker somou o consumo de um monitor medido separadamente ao consumo dos computadores) confirma que as unidades são independentes. Uma medição COMPUTER, portanto, vale para todas as configurações que compartilham aquele (modelo + SO), independentemente do monitor vinculado.
+- **Medição COMBINED existe para cobrir um edge case real.** Em alguns desktops, ligar ou desligar o monitor altera levemente o consumo da GPU (carga no barramento PCIe/DisplayPort). A medição COMBINED captura esse efeito, que as medições separadas não conseguem detectar. Por isso o tipo existe — não como alternativa de conveniência, mas como solução para ambientes onde o comportamento conjunto é relevante.
+- **Medição COMBINED referencia uma `Configuration`, não campos avulsos.** A `Configuration` (PRD 03) já representa exatamente a combinação (model + OS + monitor) com integridade referencial. Usar `configuration_id` é mais expressivo e garante que a combinação existe no sistema.
+- **Ponto em aberto — artigo FACOMP não explicita se o monitor estava ligado durante as medições.** Isso afeta a interpretação dos 767 kg CO₂ do estudo: se o monitor estava conectado ao nobreak, o consumo já está embutido no valor medido do computador; se não estava, o consumo do monitor foi somado separadamente. A plataforma documenta essa ambiguidade no seed de dados do estudo de referência, mas não a resolve automaticamente.
 - **Data da medição é para rastreabilidade.** O fator de emissão aplicado depende dos meses do período letivo calculado, não da data da medição.
-- **Medição conjunta não pode ser somada a medições separadas no mesmo cálculo.** Quando ambas existem para a mesma configuração, o gestor escolhe explicitamente qual usar. JOINT tem prioridade no default.
+- **Medição conjunta não pode ser somada a medições separadas no mesmo cálculo.** Quando ambas existem para a mesma configuração, o gestor escolhe explicitamente qual usar. COMBINED tem prioridade no default.
 - **Outlier é alerta, não bloqueio.** Se uma nova medição difere mais de 50% da média das existentes para o mesmo alvo, a plataforma alerta, mas o registro é permitido. O alerta só é gerado quando há pelo menos 2 medições anteriores.
 - **A plataforma sugere o protocolo do estudo como padrão.** Ao registrar, os campos de duração (12 min) e intervalo entre leituras (4 min) têm valores sugeridos. O gestor pode informar valores diferentes. A sugestão aumenta a comparabilidade entre instituições.
 - **Brilho do monitor — fora do escopo V1.** Se relevante, documentar em `conditions` (campo de texto livre).
@@ -63,13 +66,13 @@ O motor de cálculo (PRD 06) já existe e funciona, mas usa exclusivamente TDP d
 
 ### Dentro do escopo
 
-- Entidade `ConsumptionMeasurement` com três tipos de alvo: COMPUTER, MONITOR, JOINT
+- Entidade `ConsumptionMeasurement` com três tipos de alvo: COMPUTER, MONITOR, COMBINED
 - CRUD completo de medições (criar, listar, atualizar, excluir)
-- Validação de campos obrigatórios por tipo de alvo: `equipmentModelId` + `operatingSystem` para COMPUTER; `monitorId` para MONITOR; todos os três para JOINT
+- Validação de campos obrigatórios por tipo de alvo: `equipmentModelId` + `operatingSystem` para COMPUTER; `monitorId` para MONITOR; todos os três para COMBINED
 - Detecção de discrepância ao criar ou atualizar: alerta quando nova medição difere mais de 50% da média das existentes para o mesmo alvo (calculado somente com 2+ medições anteriores)
 - Listagem de medições com filtros por tipo, modelo, SO e monitor (paginada)
 - Integração com `EmissionCalculationService`: `ConsumptionResolver` aplica hierarquia de fontes por configuração
-- Hierarquia de fontes: JOINT > (COMPUTER + MONITOR) > combinação mista (uma medição + uma spec) > especificação pura
+- Hierarquia de fontes: COMBINED > (COMPUTER + MONITOR) > combinação mista (uma medição + uma spec) > especificação pura
 - Seleção de medição no cálculo: default = mais recente por data; opção AVERAGE; opção EXPLICIT com ID específico por alvo
 - Campo `consumptionSource` atualizado no resultado do cálculo para refletir a origem real por componente
 - Endpoint POST `/api/v1/academic-periods/{id}/emissions` para cálculo com seleção explícita de medições (GET existente mantido com comportamento default)
@@ -115,7 +118,7 @@ O motor de cálculo (PRD 06) já existe e funciona, mas usa exclusivamente TDP d
 │                                                          │
 │  EmissionCalculationService (atualizado)                 │
 │    → ConsumptionResolver (novo)                          │
-│      Hierarquia: medição JOINT > COMPUTER+MONITOR        │
+│      Hierarquia: medição COMBINED > COMPUTER+MONITOR        │
 │                  > mista > especificação                 │
 └──────────────────────────┬───────────────────────────────┘
                            │ JDBC + RLS
@@ -134,11 +137,11 @@ O motor de cálculo (PRD 06) já existe e funciona, mas usa exclusivamente TDP d
 | -------------------------- | ------------------- | ---------------------------------------------------- |
 | `id`                       | `UUID`              | PK, gerado automaticamente                          |
 | `institution_id`           | `UUID`              | FK → institution(id), NOT NULL                       |
-| `target_type`              | `VARCHAR(20)`       | NOT NULL, CHECK IN ('COMPUTER', 'MONITOR', 'JOINT') |
+| `target_type`              | `VARCHAR(20)`       | NOT NULL, CHECK IN ('COMPUTER', 'MONITOR', 'COMBINED') |
 | `equipment_model_id`       | `UUID`              | FK → equipment_model(id), NOT NULL se COMPUTER, NULL caso contrário |
 | `operating_system`         | `VARCHAR(100)`      | NOT NULL se COMPUTER, NULL caso contrário            |
 | `monitor_id`               | `UUID`              | FK → monitor(id), NOT NULL se MONITOR, NULL caso contrário |
-| `configuration_id`         | `UUID`              | FK → configuration(id), NOT NULL se JOINT, NULL caso contrário |
+| `configuration_id`         | `UUID`              | FK → configuration(id), NOT NULL se COMBINED, NULL caso contrário |
 | `average_watts`            | `NUMERIC(8,2)`      | NOT NULL, CHECK (> 0)                               |
 | `duration_minutes`         | `INTEGER`           | NOT NULL, CHECK (> 0)                               |
 | `reading_interval_minutes` | `INTEGER`           | NULL — opcional                                      |
@@ -164,7 +167,7 @@ CONSTRAINT chk_measurement_target_fields CHECK (
     AND operating_system IS NULL
     AND configuration_id IS NULL)
   OR
-  (target_type = 'JOINT'
+  (target_type = 'COMBINED'
     AND configuration_id IS NOT NULL
     AND equipment_model_id IS NULL
     AND operating_system IS NULL
@@ -179,17 +182,17 @@ CONSTRAINT chk_measurement_target_fields CHECK (
 - `idx_cm_institution_id` — (institution_id) — listagem geral
 - `idx_cm_computer_target` — (institution_id, equipment_model_id, operating_system) WHERE target_type = 'COMPUTER'
 - `idx_cm_monitor_target` — (institution_id, monitor_id) WHERE target_type = 'MONITOR'
-- `idx_cm_joint_target` — (configuration_id) WHERE target_type = 'JOINT'
+- `idx_cm_joint_target` — (configuration_id) WHERE target_type = 'COMBINED'
 
 ### Lógica de resolução de fonte (ConsumptionResolver)
 
 Para cada configuração (equipment_model + operating_system + monitor) no cálculo, a hierarquia de prioridade é:
 
 ```
-1. Medição JOINT para configuration_id da configuração:
+1. Medição COMBINED para configuration_id da configuração:
    → totalWatts = average_watts da medição conjunta
    → computerWatts = null, monitorWatts = null (não decompostos)
-   → source = "measurement_joint"
+   → source = "measurement_combined"
 
 2. Medição COMPUTER para (equipment_model_id + operating_system) + Medição MONITOR para monitor_id:
    → computerWatts = average_watts da medição COMPUTER
@@ -235,7 +238,7 @@ O `ConsumptionResolver` recebe a lista de todas as medições da instituição e
 | DELETE | `/api/v1/consumption-measurements/{id}`   | Excluir medição                               | MANAGER    |
 
 Parâmetros de filtro em `GET /api/v1/consumption-measurements`:
-- `targetType=COMPUTER|MONITOR|JOINT`
+- `targetType=COMPUTER|MONITOR|COMBINED`
 - `equipmentModelId=<uuid>`
 - `monitorId=<uuid>`
 - `operatingSystem=<string>`
@@ -312,9 +315,9 @@ Parâmetros de filtro em `GET /api/v1/consumption-measurements`:
 ```
 
 ```json
-// POST /api/v1/consumption-measurements — tipo JOINT
+// POST /api/v1/consumption-measurements — tipo COMBINED
 {
-  "targetType": "JOINT",
+  "targetType": "COMBINED",
   "configurationId": "cfg-...",
   "averageWatts": 78.0,
   "durationMinutes": 12,
@@ -367,7 +370,7 @@ Parâmetros de filtro em `GET /api/v1/consumption-measurements`:
       "measurementId": "mmm-..."
     },
     {
-      "targetType": "JOINT",
+      "targetType": "COMBINED",
       "equipmentModelId": "aaa-...",
       "operatingSystem": "Windows 10",
       "monitorId": "bbb-...",
@@ -404,7 +407,7 @@ Parâmetros de filtro em `GET /api/v1/consumption-measurements`:
       {
         "configurationId": "...",
         "label": "Dell OptiPlex 7090 + Windows 10 + HP E231 (conjunto)",
-        "source": "measurement_joint",
+        "source": "measurement_combined",
         "computerWatts": null,
         "computerSource": null,
         "monitorWatts": null,
@@ -427,8 +430,8 @@ Parâmetros de filtro em `GET /api/v1/consumption-measurements`:
 
 | Componente                       | Localização                                | Descrição                                                                  |
 | -------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------- |
-| Aba "Medições" em modelos        | `/equipment-models` → detalhe/expandido    | Lista medições COMPUTER e JOINT que referenciam o modelo; botão "Registrar Medição" |
-| Aba "Medições" em monitores      | `/monitors` → detalhe/expandido            | Lista medições MONITOR e JOINT que referenciam o monitor; botão "Registrar Medição" |
+| Aba "Medições" em modelos        | `/equipment-models` → detalhe/expandido    | Lista medições COMPUTER e COMBINED que referenciam o modelo; botão "Registrar Medição" |
+| Aba "Medições" em monitores      | `/monitors` → detalhe/expandido            | Lista medições MONITOR e COMBINED que referenciam o monitor; botão "Registrar Medição" |
 | Dialog "Registrar Medição"       | Compartilhado (modelos e monitores)        | Formulário com campos condicionais por tipo, valores sugeridos de protocolo |
 | Badge de origem no cálculo       | `EmissionsDashboard` → `TransparencyPanel` | Por configuração: ícone/badge distinguindo medição vs. especificação        |
 
@@ -446,7 +449,7 @@ Campos comuns (todos os tipos):
 Campos condicionais:
 - COMPUTER: select de modelo de computador *, select/input de sistema operacional *
 - MONITOR: select de monitor *
-- JOINT: select de modelo *, select/input de sistema operacional *, select de monitor *
+- COMBINED: select de modelo *, select/input de sistema operacional *, select de monitor *
 
 Ao receber resposta com `outlierAlert` → toast de aviso informativo (não bloqueia).
 
@@ -466,7 +469,7 @@ const consumptionMeasurementBaseSchema = {
 export const consumptionMeasurementSchema = z.discriminatedUnion('targetType', [
   z.object({ targetType: z.literal('COMPUTER'), equipmentModelId: z.string().min(1), operatingSystem: z.string().min(1), ...consumptionMeasurementBaseSchema }),
   z.object({ targetType: z.literal('MONITOR'), monitorId: z.string().min(1), ...consumptionMeasurementBaseSchema }),
-  z.object({ targetType: z.literal('JOINT'), configurationId: z.string().min(1), ...consumptionMeasurementBaseSchema }),
+  z.object({ targetType: z.literal('COMBINED'), configurationId: z.string().min(1), ...consumptionMeasurementBaseSchema }),
 ])
 ```
 
@@ -485,7 +488,7 @@ export const consumptionMeasurementSchema = z.discriminatedUnion('targetType', [
 | Outlier com limiar fixo (50%) pode gerar ruído ou falsos alarmes | Baixo | Média | Mostrar média existente e número de medições no alerta para o gestor ter contexto; só calcular com 2+ medições anteriores |
 | Múltiplas medições para o mesmo alvo → usuário confuso sobre qual usar | Médio | Alta | Default claro (mais recente); UI lista medições ordenadas por data com badge de "em uso no cálculo" |
 | `ConsumptionResolver` adiciona queries no caminho crítico do cálculo | Médio | Baixa | Buscar todas as medições da instituição em batch único antes do cálculo; nunca N+1 por configuração |
-| Medição JOINT e medições separadas coexistindo → resultado divergente conforme estratégia | Alto | Média | Hierarquia clara documentada; `TransparencyPanel` exibe exatamente qual medição foi usada por configuração |
+| Medição COMBINED e medições separadas coexistindo → resultado divergente conforme estratégia | Alto | Média | Hierarquia clara documentada; `TransparencyPanel` exibe exatamente qual medição foi usada por configuração |
 | Medição referencia equipamento que foi excluído posteriormente | Médio | Baixa | FKs com `ON DELETE RESTRICT` — modelo/monitor em uso por medição não pode ser excluído; mensagem de erro orientando |
 
 ---
@@ -505,8 +508,8 @@ export const consumptionMeasurementSchema = z.discriminatedUnion('targetType', [
 | **2 — Backend** | Exceções | `MeasurementNotFoundException` (404), `InvalidMeasurementTargetException` (400) — registrar no `GlobalExceptionHandler` | Pendente |
 | **3 — Frontend** | API client | `lib/api/consumption-measurements.ts`: tipos + funções CRUD | Pendente |
 | **3 — Frontend** | Dialog medição | Dialog com campos condicionais por tipo, valores sugeridos, validação Zod, toast de outlier | Pendente |
-| **3 — Frontend** | Aba "Medições" em modelos | Lista de medições COMPUTER/JOINT pelo modelo, botão registrar, ordenação por data | Pendente |
-| **3 — Frontend** | Aba "Medições" em monitores | Lista de medições MONITOR/JOINT pelo monitor, botão registrar | Pendente |
+| **3 — Frontend** | Aba "Medições" em modelos | Lista de medições COMPUTER/COMBINED pelo modelo, botão registrar, ordenação por data | Pendente |
+| **3 — Frontend** | Aba "Medições" em monitores | Lista de medições MONITOR/COMBINED pelo monitor, botão registrar | Pendente |
 | **3 — Frontend** | Dashboard emissões | Atualizar `TransparencyPanel` para exibir origem por componente (medição vs. especificação) com detalhes da medição usada | Pendente |
 | **4 — Testes** | Testes unitários | `ConsumptionResolver` (hierarquia, estratégias), lógica de outlier, validação de tipo de alvo | Pendente |
 | **4 — Testes** | Testes de integração | CRUD de medições, RLS, FK constraints, integração com endpoint de cálculo | Pendente |
@@ -525,16 +528,16 @@ export const consumptionMeasurementSchema = z.discriminatedUnion('targetType', [
 **CRUD de medições:**
 - Criar medição COMPUTER com campos corretos → 201
 - Criar medição MONITOR com campos corretos → 201
-- Criar medição JOINT com `configurationId` válido → 201
+- Criar medição COMBINED com `configurationId` válido → 201
 - Criar medição COMPUTER sem `equipmentModelId` → 400
-- Criar medição JOINT sem `configurationId` → 400
+- Criar medição COMBINED sem `configurationId` → 400
 - Criar medição COMPUTER com `configurationId` preenchido → 400 (campo inválido para o tipo)
 - Criar medição com `averageWatts` ≤ 0 → 400
 - Criar medição com `durationMinutes` ≤ 0 → 400
 - Criar 3ª medição que é outlier (50%+ acima da média das 2 anteriores) → 201 com `outlierAlert` populado
 - Criar 1ª e 2ª medição para o mesmo alvo → 201 sem `outlierAlert` (insuficiente para detectar)
 - Listar medições com `targetType=COMPUTER&equipmentModelId=X` → retorna só medições COMPUTER do modelo X
-- Listar medições com `monitorId=Y` → retorna MONITOR e JOINT que referenciam Y
+- Listar medições com `monitorId=Y` → retorna MONITOR e COMBINED que referenciam Y
 - Atualizar medição → 200 com campos atualizados
 - Excluir medição existente → 204
 - Instituição A não vê medições da instituição B (RLS)
@@ -545,8 +548,8 @@ export const consumptionMeasurementSchema = z.discriminatedUnion('targetType', [
 - Só medição COMPUTER → source = "measurement_computer+spec_monitor"
 - Só medição MONITOR → source = "spec_computer+measurement_monitor"
 - Medição COMPUTER + MONITOR → source = "measurement_computer+measurement_monitor"
-- Medição JOINT para configuration_id → source = "measurement_joint", totalWatts = medição; computerWatts e monitorWatts null
-- Medição JOINT + COMPUTER separada para o mesmo (model+OS) → JOINT tem prioridade
+- Medição COMBINED para configuration_id → source = "measurement_combined", totalWatts = medição; computerWatts e monitorWatts null
+- Medição COMBINED + COMPUTER separada para o mesmo (model+OS) → COMBINED tem prioridade
 - 2 medições COMPUTER com estratégia LATEST → usa a com `measurementDate` mais recente
 - 2 medições COMPUTER com estratégia AVERAGE → usa média de `averageWatts`
 - 2 medições COMPUTER com estratégia EXPLICIT e ID específico → usa exatamente aquela
