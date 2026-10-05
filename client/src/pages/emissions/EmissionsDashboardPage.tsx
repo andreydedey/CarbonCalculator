@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom'
 import { EquivalenceCards } from '@/components/emissions/EquivalenceCards'
 import { ExportButton } from '@/components/emissions/ExportButton'
 import { ReadinessCheck } from '@/components/emissions/ReadinessCheck'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import {
@@ -23,7 +24,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
 import { listAcademicPeriods } from '@/lib/api/academic-periods'
 import { type EmissionResult, getEmissions, getReadiness } from '@/lib/api/emissions'
 import { formatDate } from '@/lib/utils/occupation'
@@ -261,7 +261,9 @@ function LabDetailTable({ result }: { result: EmissionResult }) {
             <TableCell className="font-mono text-[13px] font-bold">
               {formatNumber(result.totalEmissionKg)}
             </TableCell>
-            <TableCell className="text-[13px] font-bold text-primary text-right pr-6">100%</TableCell>
+            <TableCell className="text-[13px] font-bold text-primary text-right pr-6">
+              100%
+            </TableCell>
           </TableRow>
         </TableFooter>
       </Table>

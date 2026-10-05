@@ -1,5 +1,5 @@
-import { api } from './client.ts'
 import type { ShiftType } from './academic-periods'
+import { api } from './client.ts'
 
 // --- Types ---
 

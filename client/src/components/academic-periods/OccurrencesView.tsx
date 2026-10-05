@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight, Plus, Trash2, X } from 'lucide-react'
 import type React from 'react'
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { type Occupancy, SHIFT_META, slotTimes } from '@/components/academic-periods/OccupationGrid'
 import { Badge } from '@/components/ui/badge'
@@ -37,7 +37,14 @@ import {
   usageTier,
 } from '@/lib/utils/occupation'
 
-const DAY_SHORT: Record<number, string> = { 1: 'Seg', 2: 'Ter', 3: 'Qua', 4: 'Qui', 5: 'Sex', 6: 'Sáb' }
+const DAY_SHORT: Record<number, string> = {
+  1: 'Seg',
+  2: 'Ter',
+  3: 'Qua',
+  4: 'Qui',
+  5: 'Sex',
+  6: 'Sáb',
+}
 
 export const STATUS_LABEL: Record<ClassSessionStatus, string> = {
   GRID: 'conforme grade',
@@ -47,7 +54,8 @@ export const STATUS_LABEL: Record<ClassSessionStatus, string> = {
 }
 
 export function StatusBadge({ status }: { status: ClassSessionStatus }) {
-  const variant = status === 'CANCELLED' ? 'destructive' : status === 'GRID' ? 'secondary' : 'default'
+  const variant =
+    status === 'CANCELLED' ? 'destructive' : status === 'GRID' ? 'secondary' : 'default'
   return <Badge variant={variant}>{STATUS_LABEL[status]}</Badge>
 }
 
@@ -82,6 +90,7 @@ function OccurrenceEditor({
   onResetToGrid: () => void
   onClose: () => void
 }) {
+  const inputId = useId()
   const isExtraSlot = gridStations == null
   const initialChoice: Choice =
     current == null ? 'grid' : current.stationsUsed === 0 ? 'cancelled' : 'different'
@@ -90,7 +99,8 @@ function OccurrenceEditor({
     String(current && current.stationsUsed > 0 ? current.stationsUsed : (gridStations ?? capacity)),
   )
   const parsed = Number(value)
-  const validNumber = Number.isInteger(parsed) && parsed >= 1 && (capacity <= 0 || parsed <= capacity)
+  const validNumber =
+    Number.isInteger(parsed) && parsed >= 1 && (capacity <= 0 || parsed <= capacity)
   const canSave = choice !== 'different' || validNumber
 
   const submit = () => {
@@ -128,10 +138,13 @@ function OccurrenceEditor({
       {!isExtraSlot && option('grid', `Conforme a grade (${gridStations} de ${capacity} estações)`)}
       {!isExtraSlot && option('different', 'Estações diferentes')}
       {choice === 'different' && (
-        <label className={`flex flex-col gap-1.5 text-xs font-medium ${isExtraSlot ? '' : 'pl-6'}`}>
-          Estações usadas
+        <div className={`flex flex-col gap-1.5 text-xs ${isExtraSlot ? '' : 'pl-6'}`}>
+          <label htmlFor={inputId} className="font-medium">
+            Estações usadas
+          </label>
           <div className="flex items-center gap-2">
             <Input
+              id={inputId}
               autoFocus
               type="number"
               min={1}
@@ -140,20 +153,28 @@ function OccurrenceEditor({
               onChange={(e) => setValue(e.target.value)}
               className="font-mono"
             />
-            {capacity > 0 && <span className="shrink-0 text-xs text-muted-foreground">de {capacity}</span>}
+            {capacity > 0 && (
+              <span className="shrink-0 text-xs text-muted-foreground">de {capacity}</span>
+            )}
           </div>
           <span className="font-normal text-muted-foreground">
             {isExtraSlot
               ? 'Aula fora da grade, só nesta data.'
               : 'Vale apenas para esta data. As demais semanas seguem a grade.'}
           </span>
-        </label>
+        </div>
       )}
       {!isExtraSlot && option('cancelled', 'Aula cancelada')}
 
       <div className="flex items-center gap-2 border-t pt-3">
         {isExtraSlot && current && (
-          <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={onResetToGrid}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-destructive"
+            onClick={onResetToGrid}
+          >
             Remover aula extra
           </Button>
         )}
@@ -230,7 +251,10 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
 
   const enabledShifts = period.shifts.filter((s) => s.enabled)
   const shiftsById = useMemo(() => new Map(period.shifts.map((s) => [s.id, s])), [period.shifts])
-  const holidayByDate = useMemo(() => new Map(holidays.map((h) => [h.date, h.description])), [holidays])
+  const holidayByDate = useMemo(
+    () => new Map(holidays.map((h) => [h.date, h.description])),
+    [holidays],
+  )
   const occurrenceByKey = useMemo(
     () => new Map(occurrences.map((o) => [`${o.date}|${o.shiftId}|${o.slot}`, o])),
     [occurrences],
@@ -322,7 +346,9 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
             gridStations={gridStations}
             current={occurrence}
             capacity={capacity}
-            onSave={(stationsUsed) => saveMutation.mutate({ shiftId: shift.id, date, slot, stationsUsed })}
+            onSave={(stationsUsed) =>
+              saveMutation.mutate({ shiftId: shift.id, date, slot, stationsUsed })
+            }
             onResetToGrid={() => removeMutation.mutate({ shiftId: shift.id, date, slot })}
             onClose={() => setEditing(null)}
           />
@@ -366,7 +392,8 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
           <div className="flex flex-col">
             <span className="text-sm font-semibold">Ocorrências por data — {laboratoryName}</span>
             <span className="text-xs text-muted-foreground">
-              Sem ajuste, cada aula segue a grade semanal. Clique para registrar o que mudou na data.
+              Sem ajuste, cada aula segue a grade semanal. Clique para registrar o que mudou na
+              data.
             </span>
           </div>
           <div className="flex items-center gap-1">
@@ -394,7 +421,9 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setWeekStart(startOfWeek(clampDate(today, period.startDate, period.endDate)))}
+              onClick={() =>
+                setWeekStart(startOfWeek(clampDate(today, period.startDate, period.endDate)))
+              }
             >
               Hoje
             </Button>
@@ -408,13 +437,18 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
               {days.map(({ day, date }) => {
                 const holiday = holidayByDate.get(date)
                 return (
-                  <th key={day} className={`px-2 py-2 text-center font-medium ${holiday ? 'bg-muted' : ''}`}>
+                  <th
+                    key={day}
+                    className={`px-2 py-2 text-center font-medium ${holiday ? 'bg-muted' : ''}`}
+                  >
                     <div className="flex flex-col">
                       <span>
                         {DAY_SHORT[day]} {formatDayMonth(date)}
                       </span>
                       {holiday ? (
-                        <span className="text-[10px] font-normal text-muted-foreground">{holiday}</span>
+                        <span className="text-[10px] font-normal text-muted-foreground">
+                          {holiday}
+                        </span>
                       ) : date === today ? (
                         <span className="text-[10px] font-semibold text-primary">hoje</span>
                       ) : null}
@@ -462,7 +496,8 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
             <span className="h-3 w-5 rounded-sm bg-primary" /> conforme a grade
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-3 w-5 rounded-sm bg-[#CBE3D5] ring-2 ring-primary ring-inset" /> ajustada
+            <span className="h-3 w-5 rounded-sm bg-[#CBE3D5] ring-2 ring-primary ring-inset" />{' '}
+            ajustada
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span className="h-3 w-5 rounded-sm border border-destructive/60" /> cancelada
@@ -491,7 +526,9 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted hover:bg-muted">
-                <TableHead className="px-6 text-xs tracking-wider text-muted-foreground">DATA</TableHead>
+                <TableHead className="px-6 text-xs tracking-wider text-muted-foreground">
+                  DATA
+                </TableHead>
                 <TableHead className="text-xs tracking-wider text-muted-foreground">AULA</TableHead>
                 <TableHead className="text-xs tracking-wider text-muted-foreground">TIPO</TableHead>
                 <TableHead className="text-xs tracking-wider text-muted-foreground">
@@ -506,7 +543,9 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
                 const t = shift ? slotTimes(shift, o.slot) : null
                 return (
                   <TableRow key={o.id}>
-                    <TableCell className="px-6 font-mono text-[13px]">{formatDate(o.date)}</TableCell>
+                    <TableCell className="px-6 font-mono text-[13px]">
+                      {formatDate(o.date)}
+                    </TableCell>
                     <TableCell className="text-[13px]">
                       {SHIFT_META[o.shiftType].label} · {o.slot}ª aula
                       {t ? ` (${t.start}–${t.end})` : ''}
@@ -524,7 +563,11 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
                           size="icon"
                           aria-label="Remover exceção"
                           onClick={() =>
-                            removeMutation.mutate({ shiftId: o.shiftId, date: o.date, slot: o.slot })
+                            removeMutation.mutate({
+                              shiftId: o.shiftId,
+                              date: o.date,
+                              slot: o.slot,
+                            })
                           }
                         >
                           <Trash2 className="size-4 text-destructive" />

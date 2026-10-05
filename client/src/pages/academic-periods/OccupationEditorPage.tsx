@@ -66,8 +66,12 @@ function occupancyToInputs(occupancy: Occupancy): ScheduleInput[] {
 }
 
 function sameOccupancy(a: Occupancy, b: Occupancy): boolean {
-  const key = (o: Occupancy) => JSON.stringify(occupancyToInputs(o).sort((x, y) =>
-    `${x.shiftId}${x.dayOfWeek}`.localeCompare(`${y.shiftId}${y.dayOfWeek}`)))
+  const key = (o: Occupancy) =>
+    JSON.stringify(
+      occupancyToInputs(o).sort((x, y) =>
+        `${x.shiftId}${x.dayOfWeek}`.localeCompare(`${y.shiftId}${y.dayOfWeek}`),
+      ),
+    )
   return key(a) === key(b)
 }
 
@@ -112,7 +116,9 @@ function ApplyToAllButton({
               onChange={(e) => setValue(e.target.value)}
               className="font-mono"
             />
-            {capacity > 0 && <span className="shrink-0 text-xs text-muted-foreground">de {capacity}</span>}
+            {capacity > 0 && (
+              <span className="shrink-0 text-xs text-muted-foreground">de {capacity}</span>
+            )}
           </div>
           <Button type="submit" size="sm" disabled={!valid}>
             Aplicar
@@ -177,7 +183,10 @@ export const OccupationEditorPage: React.FC = () => {
     setOccupancy(serverOccupancy)
   }
 
-  const dirty = useMemo(() => !sameOccupancy(occupancy, serverOccupancy), [occupancy, serverOccupancy])
+  const dirty = useMemo(
+    () => !sameOccupancy(occupancy, serverOccupancy),
+    [occupancy, serverOccupancy],
+  )
 
   const handleSetStations = useCallback(
     (shiftId: string, dayOfWeek: number, slot: number, stations: number | null) => {
@@ -325,7 +334,10 @@ export const OccupationEditorPage: React.FC = () => {
         </div>
         {mode === 'grid' && canManage && (
           <div className="ml-auto">
-            <Button disabled={!dirty || saveMutation.isPending} onClick={() => saveMutation.mutate()}>
+            <Button
+              disabled={!dirty || saveMutation.isPending}
+              onClick={() => saveMutation.mutate()}
+            >
               <Save className="size-4" />
               Salvar Ocupação
             </Button>
@@ -381,7 +393,9 @@ export const OccupationEditorPage: React.FC = () => {
                 type="button"
                 onClick={() => handleModeChange(value)}
                 className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                  mode === value ? 'bg-background shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                  mode === value
+                    ? 'bg-background shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 <Icon className="size-4" />

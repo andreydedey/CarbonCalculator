@@ -6,8 +6,8 @@ import {
   formatDate,
   formatDayMonth,
   isoDayOfWeek,
-  stationHours,
   startOfWeek,
+  stationHours,
   usageTier,
 } from './occupation.ts'
 

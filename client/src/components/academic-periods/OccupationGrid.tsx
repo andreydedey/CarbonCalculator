@@ -1,6 +1,6 @@
 import { Moon, Sun, Sunset } from 'lucide-react'
 import type React from 'react'
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -102,6 +102,7 @@ function StationsEditor({
   onRemove: () => void
   onClose: () => void
 }) {
+  const inputId = useId()
   const [value, setValue] = useState(String(initial))
   const parsed = Number(value)
   const max = capacity > 0 ? capacity : Number.POSITIVE_INFINITY
@@ -116,10 +117,13 @@ function StationsEditor({
       }}
     >
       <p className="text-sm font-semibold">{title}</p>
-      <label className="flex flex-col gap-1.5 text-xs font-medium">
-        Estações usadas
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={inputId} className="text-xs font-medium">
+          Estações usadas
+        </label>
         <div className="flex items-center gap-2">
           <Input
+            id={inputId}
             autoFocus
             type="number"
             min={1}
@@ -132,11 +136,17 @@ function StationsEditor({
             <span className="shrink-0 text-xs text-muted-foreground">de {capacity}</span>
           )}
         </div>
-      </label>
+      </div>
       <p className="text-[11px] text-muted-foreground">{help}</p>
       <div className="flex items-center gap-2 border-t pt-3">
         {occupied && (
-          <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={onRemove}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-destructive"
+            onClick={onRemove}
+          >
             Remover aula
           </Button>
         )}
@@ -230,7 +240,9 @@ export const OccupationGrid: React.FC<OccupationGridProps> = ({
 
               {Array.from({ length: shift.classesPerDay }, (_, i) => i + 1).flatMap((slot) => {
                 const t = slotTimes(shift, slot)
-                const slotCount = shift.activeDays.filter((day) => shiftOcc[day]?.[slot] != null).length
+                const slotCount = shift.activeDays.filter(
+                  (day) => shiftOcc[day]?.[slot] != null,
+                ).length
 
                 const rows = [
                   <tr key={`s-${slot}`} className="border-b">

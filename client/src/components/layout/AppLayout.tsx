@@ -1,4 +1,14 @@
-import { Building2, Calendar, Cpu, FlaskConical, Leaf, LogOut, Percent, Users } from 'lucide-react'
+import {
+  Building2,
+  Calendar,
+  Cpu,
+  FlaskConical,
+  LayoutDashboard,
+  Leaf,
+  LogOut,
+  Percent,
+  Users,
+} from 'lucide-react'
 import type React from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -34,6 +44,10 @@ type NavGroup = {
 }
 
 const NAV_GROUPS: NavGroup[] = [
+  {
+    label: 'Visão geral',
+    items: [{ label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }],
+  },
   {
     label: 'Cadastro',
     items: [
