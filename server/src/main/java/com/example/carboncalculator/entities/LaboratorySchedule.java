@@ -50,6 +50,11 @@ public class LaboratorySchedule {
     @Column(name = "occupied_slots", nullable = false, columnDefinition = "smallint[]")
     private short[] occupiedSlots;
 
+    // Stations used by each occupied slot, aligned by index with occupiedSlots
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "stations_used", nullable = false, columnDefinition = "smallint[]")
+    private short[] stationsUsed;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
