@@ -7,8 +7,14 @@ export type EmissionResult = {
   periodName: string
   startDate: string
   endDate: string
+  // Last closed day included in the realized values; null before the period starts
+  realizedUntil: string | null
+  schoolDaysElapsed: number
+  schoolDaysTotal: number
   totalEmissionKg: number
   totalEnergyKwh: number
+  projectedEmissionKg: number
+  projectedEnergyKwh: number
   equivalentCarKm: number
   equivalentTreesNeeded: number
   byMonth: MonthEmission[]
@@ -42,6 +48,11 @@ export type LaboratoryEmission = {
   energyKwh: number
   emissionKg: number
   stationCount: number
+  stationHours: number
+  averageUsagePct: number
+  cancelledClasses: number
+  adjustedClasses: number
+  extraClasses: number
   configurations: ConfigurationEmission[]
 }
 
