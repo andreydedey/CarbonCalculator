@@ -1,5 +1,7 @@
 # PRD 08 — Acompanhamento entre períodos letivos
 
+> Nota de 2026-10-05 (ADR-007): o consumo diário é derivado sob demanda da grade, das exceções e do cadastro, e não gravado por um job. A imutabilidade pedida aqui continua sendo responsabilidade do instantâneo por período letivo.
+
 ## Contexto
 
 A limitação mais estrutural do estudo de referência não foi metodológica, foi temporal: a análise aconteceu uma única vez. Não há como saber se as emissões da FACOMP subiram ou caíram depois, nem se as recomendações feitas surtiram efeito, porque não existe segundo ponto de comparação.
