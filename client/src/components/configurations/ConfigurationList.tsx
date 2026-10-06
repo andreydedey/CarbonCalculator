@@ -115,7 +115,13 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
                           ? config.monitor.name
                           : '—'}
                     </td>
-                    <td className="px-4 py-2 text-xs text-muted-foreground">
+                    <td
+                      className={`px-4 py-2 text-xs ${
+                        config.usageLabCount > 0
+                          ? 'font-medium text-primary'
+                          : 'text-muted-foreground'
+                      }`}
+                    >
                       {usageLabel(config)}
                     </td>
                     <td className="px-4 py-2 text-right">

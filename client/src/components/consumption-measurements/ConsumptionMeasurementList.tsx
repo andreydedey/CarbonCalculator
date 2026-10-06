@@ -114,7 +114,7 @@ export const ConsumptionMeasurementList: React.FC<ConsumptionMeasurementListProp
                       </Badge>
                     </td>
                     <td className="px-4 py-2 font-medium">{targetLabel(m)}</td>
-                    <td className="px-4 py-2 text-right font-mono text-xs">
+                    <td className="px-4 py-2 text-right font-mono text-xs font-semibold text-primary">
                       {m.averageWatts.toFixed(1)} W
                     </td>
                     <td className="px-4 py-2 text-right text-xs text-muted-foreground">
