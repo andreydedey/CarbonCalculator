@@ -192,6 +192,7 @@ public class EmissionCalculationService {
                 int qty = le.getQuantity();
                 labStationCount += qty;
 
+                EquipmentModel model = config.getEquipmentModel();
                 Monitor monitor = config.getMonitor();
 
                 // Track input consumptions (deduplicated)
