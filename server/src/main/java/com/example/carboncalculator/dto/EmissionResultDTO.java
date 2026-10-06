@@ -20,7 +20,6 @@ public record EmissionResultDTO(
         double totalEmissionKg,
         double totalEnergyKwh,
         double projectedEmissionKg,
-        double projectedEnergyKwh,
         long equivalentCarKm,
         double equivalentTreesNeeded,
         List<MonthEmission> byMonth,

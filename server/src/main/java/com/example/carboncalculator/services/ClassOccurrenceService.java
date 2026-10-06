@@ -2,7 +2,6 @@ package com.example.carboncalculator.services;
 
 import java.time.Clock;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -25,12 +24,12 @@ import com.example.carboncalculator.entities.AcademicPeriod;
 import com.example.carboncalculator.entities.AcademicPeriodHoliday;
 import com.example.carboncalculator.entities.AcademicPeriodShift;
 import com.example.carboncalculator.entities.ClassOccurrence;
-import com.example.carboncalculator.entities.ClassSessionStatus;
 import com.example.carboncalculator.entities.Laboratory;
 import com.example.carboncalculator.entities.LaboratorySchedule;
 import com.example.carboncalculator.exceptions.LaboratoryNotFoundException;
 import com.example.carboncalculator.exceptions.OccurrenceValidationException;
 import com.example.carboncalculator.exceptions.PeriodNotFoundException;
+import com.example.carboncalculator.mappers.ClassOccurrenceMapper;
 import com.example.carboncalculator.repositories.AcademicPeriodRepository;
 import com.example.carboncalculator.repositories.ClassOccurrenceRepository;
 import com.example.carboncalculator.repositories.InstitutionRepository;
@@ -45,7 +44,6 @@ import lombok.RequiredArgsConstructor;
 public class ClassOccurrenceService {
 
     private static final Logger log = LoggerFactory.getLogger(ClassOccurrenceService.class);
-    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
     private final AcademicPeriodRepository periodRepository;
     private final LaboratoryRepository laboratoryRepository;
@@ -68,7 +66,7 @@ public class ClassOccurrenceService {
                 .sorted(Comparator.comparing(ClassOccurrence::getDate).reversed()
                         .thenComparing(o -> o.getShift().getShiftType())
                         .thenComparing(ClassOccurrence::getSlot))
-                .map(o -> toDTO(o, grid.get(gridKey(o.getLaboratory().getId(), o.getShift().getId(),
+                .map(o -> ClassOccurrenceMapper.toDTO(o, grid.get(gridKey(o.getLaboratory().getId(), o.getShift().getId(),
                         o.getDate().getDayOfWeek().getValue(), o.getSlot()))))
                 .toList();
     }
@@ -113,7 +111,7 @@ public class ClassOccurrenceService {
         log.info("Occurrence saved: lab={}, shift={}, date={}, slot={}, stations={}",
                 laboratoryId, shift.getId(), request.date(), request.slot(), request.stationsUsed());
 
-        return Optional.of(toDTO(occurrence, gridStations));
+        return Optional.of(ClassOccurrenceMapper.toDTO(occurrence, gridStations));
     }
 
     @Transactional
@@ -158,18 +156,8 @@ public class ClassOccurrenceService {
                 .filter(s -> labsById.containsKey(s.laboratoryId()))
                 .sorted(Comparator.comparing((ClassSessionExpander.Session s) -> s.startTime())
                         .thenComparing(s -> labsById.get(s.laboratoryId()).getName()))
-                .map(s -> new DayClassesDTO.DayClass(
-                        s.laboratoryId(),
-                        labsById.get(s.laboratoryId()).getName(),
-                        capacity.computeIfAbsent(s.laboratoryId(), labEquipmentRepository::sumQuantityByLaboratoryId),
-                        s.shift().getId(),
-                        s.shift().getShiftType(),
-                        s.slot(),
-                        s.startTime().format(TIME_FMT),
-                        s.endTime().format(TIME_FMT),
-                        s.gridStations(),
-                        s.stationsUsed(),
-                        s.status()))
+                .map(s -> ClassOccurrenceMapper.toDayClass(s, labsById.get(s.laboratoryId()),
+                        capacity.computeIfAbsent(s.laboratoryId(), labEquipmentRepository::sumQuantityByLaboratoryId)))
                 .toList();
 
         return new DayClassesDTO(date, period.getId(), period.getName(), schoolDay, holidayName, classes);
@@ -229,19 +217,5 @@ public class ClassOccurrenceService {
 
     private static String gridKey(UUID labId, UUID shiftId, int dayOfWeek, int slot) {
         return labId + "|" + shiftId + "|" + dayOfWeek + "|" + slot;
-    }
-
-    private static ClassOccurrenceDTO toDTO(ClassOccurrence o, Integer gridStations) {
-        return new ClassOccurrenceDTO(
-                o.getId(),
-                o.getLaboratory().getId(),
-                o.getLaboratory().getName(),
-                o.getShift().getId(),
-                o.getShift().getShiftType(),
-                o.getDate(),
-                o.getSlot(),
-                gridStations,
-                o.getStationsUsed(),
-                ClassSessionStatus.of(gridStations, o.getStationsUsed()));
     }
 }

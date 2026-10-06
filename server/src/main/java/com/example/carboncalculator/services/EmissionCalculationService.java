@@ -295,7 +295,7 @@ public class EmissionCalculationService {
                 anyRealized ? realizedEnd.toString() : null,
                 schoolDaysElapsed, schoolDaysTotal,
                 round2(realized.emissionKg), round2(realized.energyKwh),
-                round2(projected.emissionKg), round2(projected.energyKwh),
+                round2(projected.emissionKg),
                 carKm, treesNeeded,
                 byMonth, byLaboratory, byShift, byDayOfWeek,
                 byEquipmentModel, byMonitorModel, byOS,
