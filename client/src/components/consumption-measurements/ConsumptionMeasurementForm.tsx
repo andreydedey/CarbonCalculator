@@ -5,6 +5,7 @@ import type React from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { DatePicker } from '@/components/ui/date-picker'
 import {
   Dialog,
   DialogContent,
@@ -206,9 +207,19 @@ export const ConsumptionMeasurementForm: React.FC<ConsumptionMeasurementFormProp
                 />
                 <FieldError message={errors.targetType?.message} />
               </div>
-              <div className="flex w-40 flex-col gap-1.5">
+              <div className="flex w-56 flex-col gap-1.5">
                 <Label>Data da medição *</Label>
-                <Input type="date" {...register('measurementDate')} />
+                <Controller
+                  control={control}
+                  name="measurementDate"
+                  render={({ field }) => (
+                    <DatePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      maxDate={new Date().toISOString().slice(0, 10)}
+                    />
+                  )}
+                />
                 <FieldError message={errors.measurementDate?.message} />
               </div>
             </div>
