@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { AlertTriangle } from 'lucide-react'
 import type React from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
@@ -86,8 +86,7 @@ export const ConsumptionMeasurementForm: React.FC<ConsumptionMeasurementFormProp
     handleSubmit,
     reset,
     register,
-    watch,
-    setValue,
+    control,
     formState: { errors, isDirty },
   } = useForm<ConsumptionMeasurementFormValues>({
     resolver: zodResolver(consumptionMeasurementFormSchema),
@@ -118,7 +117,7 @@ export const ConsumptionMeasurementForm: React.FC<ConsumptionMeasurementFormProp
         },
   })
 
-  const targetType = watch('targetType')
+  const targetType = useWatch({ control, name: 'targetType' })
   const showComputer = targetType === 'COMPUTER' || targetType === 'COMBINED'
   const showMonitor = targetType === 'MONITOR' || targetType === 'COMBINED'
 
@@ -137,10 +136,9 @@ export const ConsumptionMeasurementForm: React.FC<ConsumptionMeasurementFormProp
       monitorId: showMonitor ? values.monitorId || null : null,
       averageWatts: values.averageWatts,
       durationMinutes: values.durationMinutes,
-      readingIntervalMinutes:
-        values.readingIntervalMinutes && values.readingIntervalMinutes !== ''
-          ? Number(values.readingIntervalMinutes)
-          : null,
+      readingIntervalMinutes: values.readingIntervalMinutes
+        ? Number(values.readingIntervalMinutes)
+        : null,
       measurementDate: values.measurementDate,
       conditions: values.conditions || null,
       notes: values.notes || null,
@@ -190,23 +188,24 @@ export const ConsumptionMeasurementForm: React.FC<ConsumptionMeasurementFormProp
           <div className="flex flex-col gap-4 px-7 pb-6">
             <div className="flex flex-col gap-1.5">
               <Label>Tipo de alvo *</Label>
-              <Select
-                value={targetType}
-                onValueChange={(v) =>
-                  setValue('targetType', v as 'COMPUTER' | 'MONITOR' | 'COMBINED')
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecionar..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {TARGET_TYPE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                control={control}
+                name="targetType"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecionar..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TARGET_TYPE_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
               <FieldError message={errors.targetType?.message} />
             </div>
 
@@ -214,40 +213,46 @@ export const ConsumptionMeasurementForm: React.FC<ConsumptionMeasurementFormProp
               <div className="flex gap-4">
                 <div className="flex flex-1 flex-col gap-1.5">
                   <Label>Computador *</Label>
-                  <Select
-                    value={watch('equipmentModelId')}
-                    onValueChange={(v) => setValue('equipmentModelId', v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecionar..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {models.map((m) => (
-                        <SelectItem key={m.id} value={m.id}>
-                          {m.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Controller
+                    control={control}
+                    name="equipmentModelId"
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecionar..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {models.map((m) => (
+                            <SelectItem key={m.id} value={m.id}>
+                              {m.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                   <FieldError message={errors.equipmentModelId?.message} />
                 </div>
                 <div className="flex flex-1 flex-col gap-1.5">
                   <Label>Sistema Operacional *</Label>
-                  <Select
-                    value={watch('operatingSystemId')}
-                    onValueChange={(v) => setValue('operatingSystemId', v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecionar..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {operatingSystems.map((os) => (
-                        <SelectItem key={os.id} value={os.id}>
-                          {os.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Controller
+                    control={control}
+                    name="operatingSystemId"
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecionar..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {operatingSystems.map((os) => (
+                            <SelectItem key={os.id} value={os.id}>
+                              {os.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                   <FieldError message={errors.operatingSystemId?.message} />
                 </div>
               </div>
@@ -256,19 +261,25 @@ export const ConsumptionMeasurementForm: React.FC<ConsumptionMeasurementFormProp
             {showMonitor && (
               <div className="flex flex-col gap-1.5">
                 <Label>Monitor *</Label>
-                <Select value={watch('monitorId')} onValueChange={(v) => setValue('monitorId', v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {monitors.map((mon) => (
-                      <SelectItem key={mon.id} value={mon.id}>
-                        {mon.name}
-                        {mon.watts ? ` (${mon.watts}W)` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Controller
+                  control={control}
+                  name="monitorId"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {monitors.map((mon) => (
+                          <SelectItem key={mon.id} value={mon.id}>
+                            {mon.name}
+                            {mon.watts ? ` (${mon.watts}W)` : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
                 <FieldError message={errors.monitorId?.message} />
               </div>
             )}
