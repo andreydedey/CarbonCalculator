@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -26,7 +27,6 @@ public class GlobalExceptionHandler {
             MissingEquipmentModelNameException.class,
             MissingMonitorNameException.class,
             MissingOperatingSystemNameException.class,
-            InvalidMeasurementTargetException.class,
             GpuTdpRequiredException.class,
             InvalidQuantityException.class,
             CannotModifySelfException.class,
@@ -39,6 +39,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException ex, HttpServletRequest request) {
         log.warn("Bad request on {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
+    // Bean Validation on @Valid request bodies: report the first violated constraint
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidBody(MethodArgumentNotValidException ex,
+                                                           HttpServletRequest request) {
+        String message = ex.getBindingResult().getAllErrors().stream()
+                .map(error -> error.getDefaultMessage())
+                .findFirst()
+                .orElse("Requisição inválida");
+        log.warn("Bad request on {} {}: {}", request.getMethod(), request.getRequestURI(), message);
+        return buildResponse(HttpStatus.BAD_REQUEST, message, request);
     }
 
     // --- 401 Unauthorized ---

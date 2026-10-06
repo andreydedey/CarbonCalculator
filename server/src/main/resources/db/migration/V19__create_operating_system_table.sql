@@ -47,8 +47,9 @@ ALTER TABLE configuration
     DROP COLUMN operating_system;
 
 -- 7. Update unique constraint to use operating_system_id instead of operating_system
+-- (dropping the operating_system column in step 6 already removed the old constraint)
 ALTER TABLE configuration
-    DROP CONSTRAINT uq_configuration;
+    DROP CONSTRAINT IF EXISTS uq_configuration;
 
 ALTER TABLE configuration
     ADD CONSTRAINT uq_configuration UNIQUE NULLS NOT DISTINCT (institution_id, equipment_model_id, operating_system_id, monitor_id);

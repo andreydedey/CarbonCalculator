@@ -25,6 +25,8 @@ import com.example.carboncalculator.dto.PageResponse;
 import com.example.carboncalculator.entities.TargetType;
 import com.example.carboncalculator.services.ConsumptionMeasurementService;
 
+import jakarta.validation.Valid;
+
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -37,7 +39,7 @@ public class ConsumptionMeasurementController {
     @PostMapping
     @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<ConsumptionMeasurementResponse> create(
-            @RequestBody CreateConsumptionMeasurementRequest request) {
+            @Valid @RequestBody CreateConsumptionMeasurementRequest request) {
         ConsumptionMeasurementResponse response = service.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -63,7 +65,7 @@ public class ConsumptionMeasurementController {
     @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<ConsumptionMeasurementResponse> update(
             @PathVariable UUID id,
-            @RequestBody CreateConsumptionMeasurementRequest request) {
+            @Valid @RequestBody CreateConsumptionMeasurementRequest request) {
         return ResponseEntity.ok(service.update(id, request));
     }
 

@@ -23,7 +23,6 @@ import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.Monitor;
 import com.example.carboncalculator.entities.OperatingSystem;
 import com.example.carboncalculator.entities.TargetType;
-import com.example.carboncalculator.exceptions.InvalidMeasurementTargetException;
 import com.example.carboncalculator.exceptions.MeasurementNotFoundException;
 import com.example.carboncalculator.mappers.ConsumptionMeasurementMapper;
 import com.example.carboncalculator.repositories.ConsumptionMeasurementRepository;
@@ -47,7 +46,6 @@ public class ConsumptionMeasurementService {
 
     @Transactional
     public ConsumptionMeasurementResponse create(CreateConsumptionMeasurementRequest request) {
-        validateRequest(request);
 
         Institution institution = institutionRepository.getReferenceById(currentInstitutionId());
         ConsumptionMeasurement measurement = buildMeasurement(request, institution);
@@ -88,7 +86,6 @@ public class ConsumptionMeasurementService {
 
     @Transactional
     public ConsumptionMeasurementResponse update(UUID id, CreateConsumptionMeasurementRequest request) {
-        validateRequest(request);
         ConsumptionMeasurement measurement = getOrThrow(id);
 
         EquipmentModel model = resolveModel(request);
@@ -124,57 +121,6 @@ public class ConsumptionMeasurementService {
     private ConsumptionMeasurement getOrThrow(UUID id) {
         return measurementRepository.findById(id)
                 .orElseThrow(() -> new MeasurementNotFoundException(id));
-    }
-
-    private void validateRequest(CreateConsumptionMeasurementRequest request) {
-        if (request.targetType() == null) {
-            throw new InvalidMeasurementTargetException("Tipo de alvo é obrigatório");
-        }
-        if (request.averageWatts() == null || request.averageWatts().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InvalidMeasurementTargetException("Consumo médio deve ser maior que zero");
-        }
-        if (request.durationMinutes() == null || request.durationMinutes() <= 0) {
-            throw new InvalidMeasurementTargetException("Duração deve ser maior que zero");
-        }
-        if (request.measurementDate() == null) {
-            throw new InvalidMeasurementTargetException("Data da medição é obrigatória");
-        }
-
-        switch (request.targetType()) {
-            case COMPUTER -> {
-                if (request.equipmentModelId() == null) {
-                    throw new InvalidMeasurementTargetException("Modelo de equipamento é obrigatório para medição COMPUTER");
-                }
-                if (request.operatingSystemId() == null) {
-                    throw new InvalidMeasurementTargetException("Sistema operacional é obrigatório para medição COMPUTER");
-                }
-                if (request.monitorId() != null) {
-                    throw new InvalidMeasurementTargetException("Monitor não deve ser informado para medição COMPUTER");
-                }
-            }
-            case MONITOR -> {
-                if (request.monitorId() == null) {
-                    throw new InvalidMeasurementTargetException("Monitor é obrigatório para medição MONITOR");
-                }
-                if (request.equipmentModelId() != null) {
-                    throw new InvalidMeasurementTargetException("Modelo de equipamento não deve ser informado para medição MONITOR");
-                }
-                if (request.operatingSystemId() != null) {
-                    throw new InvalidMeasurementTargetException("Sistema operacional não deve ser informado para medição MONITOR");
-                }
-            }
-            case COMBINED -> {
-                if (request.equipmentModelId() == null) {
-                    throw new InvalidMeasurementTargetException("Modelo de equipamento é obrigatório para medição COMBINED");
-                }
-                if (request.operatingSystemId() == null) {
-                    throw new InvalidMeasurementTargetException("Sistema operacional é obrigatório para medição COMBINED");
-                }
-                if (request.monitorId() == null) {
-                    throw new InvalidMeasurementTargetException("Monitor é obrigatório para medição COMBINED");
-                }
-            }
-        }
     }
 
     private ConsumptionMeasurement buildMeasurement(CreateConsumptionMeasurementRequest request, Institution institution) {
