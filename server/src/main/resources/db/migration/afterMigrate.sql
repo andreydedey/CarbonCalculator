@@ -265,7 +265,19 @@ BEGIN
      'cccccccc-0001-0001-0001-000000000002', 5, '{1,2,3}', '{15,22,25}')
   ;
 
-  -- LABIA: no schedule (AC-064 — zero hours)
+  -- Schedule: LABIA (15 stations) — Tarde ter/qui slots 1-4, Manhã qua slots 1-2
+  INSERT INTO laboratory_schedule (id, shift_id, laboratory_id, day_of_week, occupied_slots, stations_used)
+  VALUES
+    ('cccc0001-0001-0001-0001-000000000021',
+     '55550001-0001-0001-0001-000000000002',
+     'cccccccc-0001-0001-0001-000000000003', 2, '{1,2,3,4}', '{12,15,10,8}'),
+    ('cccc0001-0001-0001-0001-000000000022',
+     '55550001-0001-0001-0001-000000000002',
+     'cccccccc-0001-0001-0001-000000000003', 4, '{1,2,3,4}', '{15,12,12,10}'),
+    ('cccc0001-0001-0001-0001-000000000023',
+     '55550001-0001-0001-0001-000000000001',
+     'cccccccc-0001-0001-0001-000000000003', 3, '{1,2}', '{9,14}')
+  ;
 
   -- Academic Period: 2026.2 (in progress — feeds the realized vs. projected views)
   INSERT INTO academic_period (id, institution_id, name, start_date, end_date)
