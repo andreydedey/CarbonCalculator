@@ -40,6 +40,7 @@ import {
   consumptionMeasurementFormSchema,
   TARGET_TYPE_OPTIONS,
 } from '@/lib/schemas/consumptionMeasurementSchema'
+import { toIsoDate } from '@/lib/utils/occupation'
 
 interface ConsumptionMeasurementFormProps {
   measurement?: ConsumptionMeasurement
@@ -111,7 +112,7 @@ export const ConsumptionMeasurementForm: React.FC<ConsumptionMeasurementFormProp
           averageWatts: 0,
           durationMinutes: 12,
           readingIntervalMinutes: 4,
-          measurementDate: new Date().toISOString().slice(0, 10),
+          measurementDate: toIsoDate(new Date()),
           conditions: '',
         },
   })
@@ -216,7 +217,7 @@ export const ConsumptionMeasurementForm: React.FC<ConsumptionMeasurementFormProp
                     <DatePicker
                       value={field.value}
                       onChange={field.onChange}
-                      maxDate={new Date().toISOString().slice(0, 10)}
+                      maxDate={toIsoDate(new Date())}
                     />
                   )}
                 />
