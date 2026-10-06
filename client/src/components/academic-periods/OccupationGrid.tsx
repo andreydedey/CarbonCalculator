@@ -63,7 +63,7 @@ function breakTimes(shift: Shift, afterSlot: number) {
 }
 
 function formatStationHours(hours: number): string {
-  return `${Math.round(hours).toLocaleString('pt-BR')} est.-h`
+  return `${Math.round(hours).toLocaleString('pt-BR')} estações-hora`
 }
 
 function StationsEditor({
