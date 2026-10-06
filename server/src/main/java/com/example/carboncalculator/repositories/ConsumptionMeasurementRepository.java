@@ -19,7 +19,7 @@ public interface ConsumptionMeasurementRepository extends JpaRepository<Consumpt
             WHERE m.targetType = 'COMPUTER'
               AND m.equipmentModel.id = :modelId
               AND m.operatingSystem.id = :osId
-            ORDER BY m.measurementDate DESC
+            ORDER BY m.measurementDate DESC, m.createdAt DESC
             """)
     List<ConsumptionMeasurement> findComputerMeasurements(
             @Param("modelId") UUID equipmentModelId,
@@ -29,7 +29,7 @@ public interface ConsumptionMeasurementRepository extends JpaRepository<Consumpt
             SELECT m FROM ConsumptionMeasurement m
             WHERE m.targetType = 'MONITOR'
               AND m.monitor.id = :monitorId
-            ORDER BY m.measurementDate DESC
+            ORDER BY m.measurementDate DESC, m.createdAt DESC
             """)
     List<ConsumptionMeasurement> findMonitorMeasurements(
             @Param("monitorId") UUID monitorId);
@@ -40,7 +40,7 @@ public interface ConsumptionMeasurementRepository extends JpaRepository<Consumpt
               AND m.equipmentModel.id = :modelId
               AND m.operatingSystem.id = :osId
               AND m.monitor.id = :monitorId
-            ORDER BY m.measurementDate DESC
+            ORDER BY m.measurementDate DESC, m.createdAt DESC
             """)
     List<ConsumptionMeasurement> findCombinedMeasurements(
             @Param("modelId") UUID equipmentModelId,
