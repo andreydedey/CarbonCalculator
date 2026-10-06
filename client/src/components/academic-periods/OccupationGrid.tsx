@@ -1,43 +1,26 @@
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Moon, Sun, Sunset } from 'lucide-react'
 import type React from 'react'
-import { useId, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { StationsField } from '@/components/academic-periods/StationsField'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { DAY_FULL_LABELS, DAY_SHORT_LABELS, SHIFT_LABELS } from '@/lib/academic-period-constants'
 import type { Shift, ShiftType } from '@/lib/api/academic-periods'
+import { type StationsFormValues, stationsFormSchema } from '@/lib/schemas/occupationSchema'
 import { USAGE_TIER_CLASSES, usageTier } from '@/lib/utils/occupation'
 
 export const SHIFT_META: Record<ShiftType, { label: string; icon: typeof Sun; color: string }> = {
-  MORNING: { label: 'Manhã', icon: Sun, color: 'text-amber-500' },
-  AFTERNOON: { label: 'Tarde', icon: Sunset, color: 'text-orange-500' },
-  EVENING: { label: 'Noite', icon: Moon, color: 'text-indigo-500' },
+  MORNING: { label: SHIFT_LABELS.MORNING, icon: Sun, color: 'text-amber-500' },
+  AFTERNOON: { label: SHIFT_LABELS.AFTERNOON, icon: Sunset, color: 'text-orange-500' },
+  EVENING: { label: SHIFT_LABELS.EVENING, icon: Moon, color: 'text-indigo-500' },
 }
 
-const DAY_LABELS: Record<number, string> = {
-  1: 'Seg',
-  2: 'Ter',
-  3: 'Qua',
-  4: 'Qui',
-  5: 'Sex',
-  6: 'Sáb',
-}
-
-const DAY_FULL: Record<number, string> = {
-  1: 'Segunda',
-  2: 'Terça',
-  3: 'Quarta',
-  4: 'Quinta',
-  5: 'Sexta',
-  6: 'Sábado',
-}
-
-const EVERY_DAY: Record<number, string> = {
-  1: 'todas as segundas',
-  2: 'todas as terças',
-  3: 'todas as quartas',
-  4: 'todas as quintas',
-  5: 'todas as sextas',
-  6: 'todos os sábados',
+/** "todas as quintas" / "todos os sábados" */
+function everyDay(day: number): string {
+  const plural = `${DAY_FULL_LABELS[day].toLowerCase()}s`
+  return day >= 6 ? `todos os ${plural}` : `todas as ${plural}`
 }
 
 const EMPTY_DAY: Record<number, number> = {}
@@ -102,42 +85,25 @@ function StationsEditor({
   onRemove: () => void
   onClose: () => void
 }) {
-  const inputId = useId()
-  const [value, setValue] = useState(String(initial))
-  const parsed = Number(value)
-  const max = capacity > 0 ? capacity : Number.POSITIVE_INFINITY
-  const valid = Number.isInteger(parsed) && parsed >= 1 && parsed <= max
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<StationsFormValues>({
+    resolver: zodResolver(stationsFormSchema(capacity)),
+    defaultValues: { stations: initial },
+  })
 
   return (
-    <form
-      className="flex flex-col gap-3"
-      onSubmit={(e) => {
-        e.preventDefault()
-        if (valid) onSave(parsed)
-      }}
-    >
+    <form className="flex flex-col gap-3" onSubmit={handleSubmit((v) => onSave(v.stations))}>
       <p className="text-sm font-semibold">{title}</p>
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor={inputId} className="text-xs font-medium">
-          Estações usadas
-        </label>
-        <div className="flex items-center gap-2">
-          <Input
-            id={inputId}
-            autoFocus
-            type="number"
-            min={1}
-            max={capacity > 0 ? capacity : undefined}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            className="font-mono"
-          />
-          {capacity > 0 && (
-            <span className="shrink-0 text-xs text-muted-foreground">de {capacity}</span>
-          )}
-        </div>
-      </div>
-      <p className="text-[11px] text-muted-foreground">{help}</p>
+      <StationsField
+        autoFocus
+        registration={register('stations')}
+        capacity={capacity}
+        error={errors.stations?.message}
+        hint={help}
+      />
       <div className="flex items-center gap-2 border-t pt-3">
         {occupied && (
           <Button
@@ -154,7 +120,7 @@ function StationsEditor({
           <Button type="button" variant="outline" size="sm" onClick={onClose}>
             Cancelar
           </Button>
-          <Button type="submit" size="sm" disabled={!valid}>
+          <Button type="submit" size="sm">
             Salvar
           </Button>
         </div>
@@ -203,7 +169,7 @@ export const OccupationGrid: React.FC<OccupationGridProps> = ({
             <th className="px-4 py-2 text-left font-medium min-w-[180px]">Aula</th>
             {allDays.map((d) => (
               <th key={d} className="px-2 py-2 text-center font-medium">
-                {DAY_LABELS[d]}
+                {DAY_SHORT_LABELS[d]}
               </th>
             ))}
             <th className="px-3 py-2 text-center font-medium w-16">Total</th>
@@ -270,7 +236,7 @@ export const OccupationGrid: React.FC<OccupationGridProps> = ({
                               ? USAGE_TIER_CLASSES[usageTier(stations, capacity)]
                               : 'border bg-card hover:bg-muted'
                           }`}
-                          aria-label={`${DAY_FULL[day]}, ${slot}ª aula`}
+                          aria-label={`${DAY_FULL_LABELS[day]}, ${slot}ª aula`}
                         >
                           {stations != null ? `${stations}/${capacity}` : ''}
                         </button>
@@ -287,8 +253,8 @@ export const OccupationGrid: React.FC<OccupationGridProps> = ({
                               <PopoverTrigger asChild>{cell}</PopoverTrigger>
                               <PopoverContent className="w-80">
                                 <StationsEditor
-                                  title={`${DAY_FULL[day]} · ${meta.label} · ${slot}ª aula (${t.start}–${t.end})`}
-                                  help={`Vale para ${EVERY_DAY[day]} do período.`}
+                                  title={`${DAY_FULL_LABELS[day]} · ${meta.label} · ${slot}ª aula (${t.start}–${t.end})`}
+                                  help={`Vale para ${everyDay(day)} do período.`}
                                   initial={stations ?? lastValue ?? Math.max(capacity, 1)}
                                   capacity={capacity}
                                   occupied={stations != null}

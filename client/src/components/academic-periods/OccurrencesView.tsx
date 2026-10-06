@@ -1,13 +1,16 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight, Plus, Trash2, X } from 'lucide-react'
 import type React from 'react'
-import { useId, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { type Occupancy, SHIFT_META, slotTimes } from '@/components/academic-periods/OccupationGrid'
+import { StationsField } from '@/components/academic-periods/StationsField'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   Table,
@@ -17,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { DAY_SHORT_LABELS } from '@/lib/academic-period-constants'
 import { type AcademicPeriod, getHolidays, type Shift } from '@/lib/api/academic-periods'
 import { isApiError } from '@/lib/api/client'
 import {
@@ -27,6 +31,11 @@ import {
   upsertOccurrence,
 } from '@/lib/api/occupation'
 import {
+  type OccurrenceChoice,
+  type OccurrenceFormValues,
+  occurrenceFormSchema,
+} from '@/lib/schemas/occupationSchema'
+import {
   addDays,
   clampDate,
   formatDate,
@@ -36,15 +45,6 @@ import {
   USAGE_TIER_CLASSES,
   usageTier,
 } from '@/lib/utils/occupation'
-
-const DAY_SHORT: Record<number, string> = {
-  1: 'Seg',
-  2: 'Ter',
-  3: 'Qua',
-  4: 'Qui',
-  5: 'Sex',
-  6: 'Sáb',
-}
 
 export const STATUS_LABEL: Record<ClassSessionStatus, string> = {
   GRID: 'conforme grade',
@@ -69,8 +69,6 @@ interface OccurrencesViewProps {
   hasUnsavedGrid: boolean
 }
 
-type Choice = 'grid' | 'different' | 'cancelled'
-
 function OccurrenceEditor({
   title,
   subtitle,
@@ -90,46 +88,44 @@ function OccurrenceEditor({
   onResetToGrid: () => void
   onClose: () => void
 }) {
-  const inputId = useId()
   const isExtraSlot = gridStations == null
-  const initialChoice: Choice =
-    current == null ? 'grid' : current.stationsUsed === 0 ? 'cancelled' : 'different'
-  const [choice, setChoice] = useState<Choice>(isExtraSlot ? 'different' : initialChoice)
-  const [value, setValue] = useState(
-    String(current && current.stationsUsed > 0 ? current.stationsUsed : (gridStations ?? capacity)),
-  )
-  const parsed = Number(value)
-  const validNumber =
-    Number.isInteger(parsed) && parsed >= 1 && (capacity <= 0 || parsed <= capacity)
-  const canSave = choice !== 'different' || validNumber
+  const initialChoice: OccurrenceChoice = isExtraSlot
+    ? 'different'
+    : current == null
+      ? 'grid'
+      : current.stationsUsed === 0
+        ? 'cancelled'
+        : 'different'
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<OccurrenceFormValues>({
+    resolver: zodResolver(occurrenceFormSchema(capacity)),
+    defaultValues: {
+      choice: initialChoice,
+      stations:
+        current && current.stationsUsed > 0 ? current.stationsUsed : (gridStations ?? capacity),
+    },
+  })
+  const choice = watch('choice')
 
-  const submit = () => {
-    if (choice === 'grid') onResetToGrid()
-    else if (choice === 'cancelled') onSave(0)
-    else onSave(parsed)
+  function onSubmit(values: OccurrenceFormValues) {
+    if (values.choice === 'grid') onResetToGrid()
+    else if (values.choice === 'cancelled') onSave(0)
+    else onSave(values.stations)
   }
 
-  const option = (value: Choice, label: string) => (
+  const option = (value: OccurrenceChoice, label: string) => (
     <label className="flex cursor-pointer items-center gap-2 text-sm">
-      <input
-        type="radio"
-        name="occurrence-choice"
-        className="accent-primary"
-        checked={choice === value}
-        onChange={() => setChoice(value)}
-      />
+      <input type="radio" value={value} className="accent-primary" {...register('choice')} />
       {label}
     </label>
   )
 
   return (
-    <form
-      className="flex flex-col gap-3"
-      onSubmit={(e) => {
-        e.preventDefault()
-        if (canSave) submit()
-      }}
-    >
+    <form className="flex flex-col gap-3" onSubmit={handleSubmit(onSubmit)}>
       <div className="flex flex-col gap-0.5">
         <p className="text-sm font-semibold">{title}</p>
         <p className="text-xs text-muted-foreground">{subtitle}</p>
@@ -138,30 +134,18 @@ function OccurrenceEditor({
       {!isExtraSlot && option('grid', `Conforme a grade (${gridStations} de ${capacity} estações)`)}
       {!isExtraSlot && option('different', 'Estações diferentes')}
       {choice === 'different' && (
-        <div className={`flex flex-col gap-1.5 text-xs ${isExtraSlot ? '' : 'pl-6'}`}>
-          <label htmlFor={inputId} className="font-medium">
-            Estações usadas
-          </label>
-          <div className="flex items-center gap-2">
-            <Input
-              id={inputId}
-              autoFocus
-              type="number"
-              min={1}
-              max={capacity > 0 ? capacity : undefined}
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              className="font-mono"
-            />
-            {capacity > 0 && (
-              <span className="shrink-0 text-xs text-muted-foreground">de {capacity}</span>
-            )}
-          </div>
-          <span className="font-normal text-muted-foreground">
-            {isExtraSlot
-              ? 'Aula fora da grade, só nesta data.'
-              : 'Vale apenas para esta data. As demais semanas seguem a grade.'}
-          </span>
+        <div className={isExtraSlot ? '' : 'pl-6'}>
+          <StationsField
+            autoFocus
+            registration={register('stations')}
+            capacity={capacity}
+            error={errors.stations?.message}
+            hint={
+              isExtraSlot
+                ? 'Aula fora da grade, só nesta data.'
+                : 'Vale apenas para esta data. As demais semanas seguem a grade.'
+            }
+          />
         </div>
       )}
       {!isExtraSlot && option('cancelled', 'Aula cancelada')}
@@ -182,7 +166,7 @@ function OccurrenceEditor({
           <Button type="button" variant="outline" size="sm" onClick={onClose}>
             Cancelar
           </Button>
-          <Button type="submit" size="sm" disabled={!canSave}>
+          <Button type="submit" size="sm">
             Salvar
           </Button>
         </div>
@@ -200,11 +184,22 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
   canEdit,
   hasUnsavedGrid,
 }) => {
-  const queryClient = useQueryClient()
   const today = toIsoDate(new Date())
-  const [weekStart, setWeekStart] = useState(() =>
-    startOfWeek(clampDate(today, period.startDate, period.endDate)),
+  const [searchParams, setSearchParams] = useSearchParams()
+  const weekParam = searchParams.get('week')
+  const weekStart = startOfWeek(
+    clampDate(
+      weekParam && /^\d{4}-\d{2}-\d{2}$/.test(weekParam) ? weekParam : today,
+      period.startDate,
+      period.endDate,
+    ),
   )
+  const setWeekStart = (week: string) =>
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.set('week', week)
+      return next
+    })
   const [editing, setEditing] = useState<string | null>(null)
 
   const { data: holidays = [] } = useQuery({
@@ -212,17 +207,10 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
     queryFn: () => getHolidays(period.id),
   })
 
-  const occurrencesKey = ['occurrences', period.id, laboratoryId]
-  const { data: occurrences = [] } = useQuery({
-    queryKey: occurrencesKey,
+  const { data: occurrences = [], refetch: refetchOccurrences } = useQuery({
+    queryKey: ['occurrences', period.id, laboratoryId],
     queryFn: () => listOccurrences(period.id, { laboratoryId }),
   })
-
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ['occurrences', period.id] })
-    queryClient.invalidateQueries({ queryKey: ['emissions'] })
-    queryClient.invalidateQueries({ queryKey: ['day-classes'] })
-  }
 
   const onError = (error: unknown) =>
     toast.error(isApiError(error) ? error.message : 'Não foi possível salvar a ocorrência.')
@@ -231,7 +219,7 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
     mutationFn: (payload: { shiftId: string; date: string; slot: number; stationsUsed: number }) =>
       upsertOccurrence(period.id, laboratoryId, payload),
     onSuccess: () => {
-      invalidate()
+      refetchOccurrences()
       setEditing(null)
       toast.success('Ocorrência salva.')
     },
@@ -242,7 +230,7 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
     mutationFn: (params: { shiftId: string; date: string; slot: number }) =>
       deleteOccurrence(period.id, laboratoryId, params),
     onSuccess: () => {
-      invalidate()
+      refetchOccurrences()
       setEditing(null)
       toast.success('A aula voltou a seguir a grade.')
     },
@@ -337,7 +325,7 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
         <PopoverTrigger asChild>{button}</PopoverTrigger>
         <PopoverContent className="w-80">
           <OccurrenceEditor
-            title={`${DAY_SHORT[day]} ${formatDayMonth(date)} · ${meta.label} · ${slot}ª aula (${t.start}–${t.end})`}
+            title={`${DAY_SHORT_LABELS[day]} ${formatDayMonth(date)} · ${meta.label} · ${slot}ª aula (${t.start}–${t.end})`}
             subtitle={
               gridStations != null
                 ? `${laboratoryName} · Padrão da grade: ${gridStations} de ${capacity} estações`
@@ -443,7 +431,7 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
                   >
                     <div className="flex flex-col">
                       <span>
-                        {DAY_SHORT[day]} {formatDayMonth(date)}
+                        {DAY_SHORT_LABELS[day]} {formatDayMonth(date)}
                       </span>
                       {holiday ? (
                         <span className="text-[10px] font-normal text-muted-foreground">

@@ -70,7 +70,7 @@ export function DashboardPage() {
   })
   const laboratories = labsPage?.content ?? []
 
-  const { data: result } = useQuery({
+  const { data: result, refetch: refetchEmissions } = useQuery({
     queryKey: ['emissions', period?.id],
     queryFn: () => getEmissions((period as AcademicPeriod).id),
     enabled: !!period,
@@ -143,7 +143,12 @@ export function DashboardPage() {
             />
           </div>
 
-          <TodayClassesCard period={period} laboratories={laboratories} canEdit={canManage} />
+          <TodayClassesCard
+            period={period}
+            laboratories={laboratories}
+            canEdit={canManage}
+            onChanged={() => refetchEmissions()}
+          />
 
           {result && result.byLaboratory.length > 0 && (
             <div className="flex flex-col gap-4">

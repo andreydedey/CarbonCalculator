@@ -1,14 +1,16 @@
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, BookOpen, CalendarDays, Clock, Layers, Percent, Save } from 'lucide-react'
 import type React from 'react'
 import { useCallback, useMemo, useRef, useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { type Occupancy, OccupationGrid } from '@/components/academic-periods/OccupationGrid'
 import { OccurrencesView } from '@/components/academic-periods/OccurrencesView'
+import { StationsField } from '@/components/academic-periods/StationsField'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Progress } from '@/components/ui/progress'
 import {
@@ -29,6 +31,7 @@ import {
 } from '@/lib/api/academic-periods'
 import { isApiError } from '@/lib/api/client'
 import { listLaboratories } from '@/lib/api/laboratories'
+import { type StationsFormValues, stationsFormSchema } from '@/lib/schemas/occupationSchema'
 
 type Mode = 'grid' | 'occurrences'
 
@@ -83,12 +86,23 @@ function ApplyToAllButton({
   onApply: (stations: number) => void
 }) {
   const [open, setOpen] = useState(false)
-  const [value, setValue] = useState(String(capacity || 1))
-  const parsed = Number(value)
-  const valid = Number.isInteger(parsed) && parsed >= 1 && (capacity <= 0 || parsed <= capacity)
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<StationsFormValues>({
+    resolver: zodResolver(stationsFormSchema(capacity)),
+    values: { stations: capacity || 1 },
+  })
+
+  function handleOpenChange(next: boolean) {
+    if (!next) reset()
+    setOpen(next)
+  }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="sm">
           <Layers className="size-4" />
@@ -98,29 +112,19 @@ function ApplyToAllButton({
       <PopoverContent className="w-72">
         <form
           className="flex flex-col gap-3"
-          onSubmit={(e) => {
-            e.preventDefault()
-            if (!valid) return
-            onApply(parsed)
-            setOpen(false)
-          }}
+          onSubmit={handleSubmit((values) => {
+            onApply(values.stations)
+            handleOpenChange(false)
+          })}
         >
           <p className="text-sm font-semibold">Estações em todas as aulas ocupadas</p>
-          <div className="flex items-center gap-2">
-            <Input
-              autoFocus
-              type="number"
-              min={1}
-              max={capacity > 0 ? capacity : undefined}
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              className="font-mono"
-            />
-            {capacity > 0 && (
-              <span className="shrink-0 text-xs text-muted-foreground">de {capacity}</span>
-            )}
-          </div>
-          <Button type="submit" size="sm" disabled={!valid}>
+          <StationsField
+            autoFocus
+            registration={register('stations')}
+            capacity={capacity}
+            error={errors.stations?.message}
+          />
+          <Button type="submit" size="sm">
             Aplicar
           </Button>
         </form>
@@ -272,7 +276,6 @@ export const OccupationEditorPage: React.FC = () => {
     onSuccess: () => {
       refetchSchedule()
       queryClient.invalidateQueries({ queryKey: ['period-summary', id] })
-      queryClient.invalidateQueries({ queryKey: ['emissions'] })
       toast.success('Ocupação salva.')
     },
     onError: (error) => {

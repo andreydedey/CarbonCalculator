@@ -14,7 +14,6 @@ export type EmissionResult = {
   totalEmissionKg: number
   totalEnergyKwh: number
   projectedEmissionKg: number
-  projectedEnergyKwh: number
   equivalentCarKm: number
   equivalentTreesNeeded: number
   byMonth: MonthEmission[]

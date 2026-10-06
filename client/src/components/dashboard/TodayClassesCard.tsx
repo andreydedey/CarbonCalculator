@@ -1,13 +1,15 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight, Plus, RotateCcw, X } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { SHIFT_META } from '@/components/academic-periods/OccupationGrid'
 import { StatusBadge } from '@/components/academic-periods/OccurrencesView'
+import { StationsField } from '@/components/academic-periods/StationsField'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+import { FieldError } from '@/components/ui/field-error'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   Select,
@@ -16,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { DAY_SHORT_LABELS, SHIFT_LABELS } from '@/lib/academic-period-constants'
 import type { AcademicPeriod } from '@/lib/api/academic-periods'
 import { isApiError } from '@/lib/api/client'
 import type { Laboratory } from '@/lib/api/laboratories'
@@ -25,17 +28,13 @@ import {
   getDayClasses,
   upsertOccurrence,
 } from '@/lib/api/occupation'
+import {
+  type ExtraClassFormValues,
+  extraClassFormSchema,
+  type StationsFormValues,
+  stationsFormSchema,
+} from '@/lib/schemas/occupationSchema'
 import { addDays, formatDayMonth, isoDayOfWeek, toIsoDate } from '@/lib/utils/occupation'
-
-const DAY_SHORT: Record<number, string> = {
-  1: 'Seg',
-  2: 'Ter',
-  3: 'Qua',
-  4: 'Qui',
-  5: 'Sex',
-  6: 'Sáb',
-  7: 'Dom',
-}
 
 const ALL_LABS = 'all'
 
@@ -52,27 +51,25 @@ function StationsInput({
   disabled: boolean
   onCommit: (stations: number) => void
 }) {
-  const [draft, setDraft] = useState(String(value))
-  const [synced, setSynced] = useState(value)
-  // Reset the draft when the server value changes (no useEffect)
-  if (synced !== value) {
-    setSynced(value)
-    setDraft(String(value))
-  }
+  // `values` keeps the field in sync when the server value changes
+  const { register, handleSubmit, reset } = useForm<StationsFormValues>({
+    resolver: zodResolver(stationsFormSchema(capacity)),
+    values: { stations: value },
+  })
 
-  const commit = () => {
-    const parsed = Number(draft)
-    const valid = Number.isInteger(parsed) && parsed >= 1 && (capacity <= 0 || parsed <= capacity)
-    if (!valid) {
-      setDraft(String(value))
-      if (draft !== String(value)) toast.error(`Informe de 1 a ${capacity} estações.`)
-      return
-    }
-    if (parsed !== value) onCommit(parsed)
-  }
+  const commit = handleSubmit(
+    (values) => {
+      if (values.stations !== value) onCommit(values.stations)
+    },
+    (errors) => {
+      toast.error(errors.stations?.message ?? 'Número de estações inválido.')
+      reset({ stations: value })
+    },
+  )
 
   return (
-    <div
+    <form
+      onSubmit={commit}
       className={`flex h-8 w-32 items-center gap-1.5 rounded-md border bg-background px-2 ${
         highlighted ? 'border-primary ring-1 ring-primary' : ''
       }`}
@@ -82,17 +79,12 @@ function StationsInput({
         min={1}
         max={capacity > 0 ? capacity : undefined}
         disabled={disabled}
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') e.currentTarget.blur()
-        }}
         className="w-full bg-transparent font-mono text-[13px] font-semibold outline-none disabled:opacity-60"
         aria-label="Estações usadas"
+        {...register('stations', { onBlur: () => commit() })}
       />
       <span className="shrink-0 text-xs text-muted-foreground">de {capacity}</span>
-    </div>
+    </form>
   )
 }
 
@@ -103,34 +95,31 @@ function ExtraClassForm({
 }: {
   period: AcademicPeriod
   laboratories: Laboratory[]
-  onSubmit: (labId: string, shiftId: string, slot: number, stations: number) => void
+  onSubmit: (values: ExtraClassFormValues) => void
 }) {
   const shifts = period.shifts.filter((s) => s.enabled)
-  const [labId, setLabId] = useState(laboratories[0]?.id ?? '')
-  const [shiftId, setShiftId] = useState(shifts[0]?.id ?? '')
-  const [slot, setSlot] = useState('1')
-  const lab = laboratories.find((l) => l.id === labId)
-  const shift = shifts.find((s) => s.id === shiftId)
-  const [stations, setStations] = useState(String(lab?.totalStations ?? 1))
-  const parsed = Number(stations)
-  const capacity = lab?.totalStations ?? 0
-  const valid =
-    !!lab &&
-    !!shift &&
-    Number.isInteger(parsed) &&
-    parsed >= 1 &&
-    (capacity <= 0 || parsed <= capacity)
+  const capacityByLab = Object.fromEntries(laboratories.map((l) => [l.id, l.totalStations]))
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<ExtraClassFormValues>({
+    resolver: zodResolver(extraClassFormSchema(capacityByLab)),
+    defaultValues: {
+      laboratoryId: laboratories[0]?.id ?? '',
+      shiftId: shifts[0]?.id ?? '',
+      slot: 1,
+      stations: laboratories[0]?.totalStations ?? 1,
+    },
+  })
+  const shift = shifts.find((s) => s.id === watch('shiftId'))
 
   return (
-    <form
-      className="flex flex-col gap-3"
-      onSubmit={(e) => {
-        e.preventDefault()
-        if (valid) onSubmit(labId, shiftId, Number(slot), parsed)
-      }}
-    >
+    <form className="flex flex-col gap-3" onSubmit={handleSubmit(onSubmit)}>
       <p className="text-sm font-semibold">Registrar aula extra</p>
-      <Select value={labId} onValueChange={setLabId}>
+      <Select value={watch('laboratoryId')} onValueChange={(v) => setValue('laboratoryId', v)}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Laboratório" />
         </SelectTrigger>
@@ -142,20 +131,21 @@ function ExtraClassForm({
           ))}
         </SelectContent>
       </Select>
+      <FieldError message={errors.laboratoryId?.message} />
       <div className="flex gap-2">
-        <Select value={shiftId} onValueChange={setShiftId}>
+        <Select value={watch('shiftId')} onValueChange={(v) => setValue('shiftId', v)}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Turno" />
           </SelectTrigger>
           <SelectContent>
             {shifts.map((s) => (
               <SelectItem key={s.id} value={s.id}>
-                {SHIFT_META[s.shiftType].label}
+                {SHIFT_LABELS[s.shiftType]}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <Select value={slot} onValueChange={setSlot}>
+        <Select value={String(watch('slot'))} onValueChange={(v) => setValue('slot', Number(v))}>
           <SelectTrigger className="w-28">
             <SelectValue placeholder="Aula" />
           </SelectTrigger>
@@ -168,19 +158,12 @@ function ExtraClassForm({
           </SelectContent>
         </Select>
       </div>
-      <div className="flex items-center gap-2">
-        <Input
-          type="number"
-          min={1}
-          max={capacity > 0 ? capacity : undefined}
-          value={stations}
-          onChange={(e) => setStations(e.target.value)}
-          className="font-mono"
-          aria-label="Estações usadas"
-        />
-        <span className="shrink-0 text-xs text-muted-foreground">de {capacity} estações</span>
-      </div>
-      <Button type="submit" size="sm" disabled={!valid}>
+      <StationsField
+        registration={register('stations')}
+        capacity={capacityByLab[watch('laboratoryId')] ?? 0}
+        error={errors.stations?.message}
+      />
+      <Button type="submit" size="sm">
         Registrar
       </Button>
     </form>
@@ -191,26 +174,39 @@ export function TodayClassesCard({
   period,
   laboratories,
   canEdit,
+  onChanged,
 }: {
   period: AcademicPeriod | null
   laboratories: Laboratory[]
   canEdit: boolean
+  // Lets the page refresh what depends on the registered classes (e.g. realized emissions)
+  onChanged?: () => void
 }) {
-  const queryClient = useQueryClient()
   const today = toIsoDate(new Date())
-  const [date, setDate] = useState(today)
-  const [labFilter, setLabFilter] = useState(ALL_LABS)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const dateParam = searchParams.get('date')
+  const date = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : today
+  const labFilter = searchParams.get('lab') ?? ALL_LABS
   const [extraOpen, setExtraOpen] = useState(false)
 
-  const { data, isLoading } = useQuery({
+  const setParam = (key: string, value: string | null) =>
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      if (value == null) next.delete(key)
+      else next.set(key, value)
+      return next
+    })
+  const setDate = (value: string) => setParam('date', value === today ? null : value)
+  const setLabFilter = (value: string) => setParam('lab', value === ALL_LABS ? null : value)
+
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['day-classes', date],
     queryFn: () => getDayClasses(date),
   })
 
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ['day-classes'] })
-    queryClient.invalidateQueries({ queryKey: ['occurrences'] })
-    queryClient.invalidateQueries({ queryKey: ['emissions'] })
+  const onSaved = () => {
+    refetch()
+    onChanged?.()
   }
   const onError = (error: unknown) =>
     toast.error(isApiError(error) ? error.message : 'Não foi possível salvar a alteração.')
@@ -225,7 +221,7 @@ export function TodayClassesCard({
         slot: p.slot,
         stationsUsed: p.stationsUsed,
       }),
-    onSuccess: invalidate,
+    onSuccess: onSaved,
     onError,
   })
 
@@ -236,7 +232,7 @@ export function TodayClassesCard({
         date,
         slot: c.slot,
       }),
-    onSuccess: invalidate,
+    onSuccess: onSaved,
     onError,
   })
 
@@ -244,7 +240,7 @@ export function TodayClassesCard({
     (c) => labFilter === ALL_LABS || c.laboratoryId === labFilter,
   )
   const editable = canEdit && !!periodId
-  const dayLabel = `${DAY_SHORT[isoDayOfWeek(date)]} ${formatDayMonth(date)}`
+  const dayLabel = `${DAY_SHORT_LABELS[isoDayOfWeek(date)]} ${formatDayMonth(date)}`
   const title = date === today ? `Aulas de hoje — ${dayLabel}` : `Aulas de ${dayLabel}`
   const labsOfPeriod = laboratories.filter((l) => l.active)
 
@@ -332,7 +328,7 @@ export function TodayClassesCard({
               >
                 <td className="px-1 text-[13px] font-semibold">{c.laboratoryName}</td>
                 <td className="text-[13px]">
-                  {SHIFT_META[c.shiftType].label} · {c.slot}ª aula
+                  {SHIFT_LABELS[c.shiftType]} · {c.slot}ª aula
                 </td>
                 <td className="font-mono text-xs text-muted-foreground">
                   {c.startTime}–{c.endTime}
@@ -415,9 +411,14 @@ export function TodayClassesCard({
                 <ExtraClassForm
                   period={period}
                   laboratories={labsOfPeriod}
-                  onSubmit={(labId, shiftId, slot, stationsUsed) =>
+                  onSubmit={(values) =>
                     saveMutation.mutate(
-                      { labId, shiftId, slot, stationsUsed },
+                      {
+                        labId: values.laboratoryId,
+                        shiftId: values.shiftId,
+                        slot: values.slot,
+                        stationsUsed: values.stations,
+                      },
                       { onSuccess: () => setExtraOpen(false) },
                     )
                   }
