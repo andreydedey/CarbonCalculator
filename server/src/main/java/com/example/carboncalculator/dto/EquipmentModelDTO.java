@@ -1,6 +1,5 @@
 package com.example.carboncalculator.dto;
 
-import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public record EquipmentModelDTO(
@@ -14,6 +13,5 @@ public record EquipmentModelDTO(
         String gpuModel,
         Integer gpuTdpWatts,
         boolean hasIntegratedScreen,
-        String description,
-        OffsetDateTime createdAt) {
+        String description) {
 }

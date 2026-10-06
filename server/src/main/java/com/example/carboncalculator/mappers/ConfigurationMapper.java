@@ -25,7 +25,6 @@ public final class ConfigurationMapper {
                 entity.getOperatingSystem(),
                 MonitorMapper.toDTO(entity.getMonitor()),
                 labCount,
-                stationCount,
-                entity.getCreatedAt());
+                stationCount);
     }
 }

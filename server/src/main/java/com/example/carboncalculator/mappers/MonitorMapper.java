@@ -15,7 +15,6 @@ public final class MonitorMapper {
         return new MonitorDTO(
                 entity.getId(),
                 entity.getName(),
-                entity.getWatts(),
-                entity.getCreatedAt());
+                entity.getWatts());
     }
 }

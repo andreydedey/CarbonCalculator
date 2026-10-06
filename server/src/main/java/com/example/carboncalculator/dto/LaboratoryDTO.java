@@ -1,6 +1,5 @@
 package com.example.carboncalculator.dto;
 
-import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public record LaboratoryDTO(
@@ -9,6 +8,5 @@ public record LaboratoryDTO(
         String description,
         boolean active,
         long configurationCount,
-        long totalStations,
-        OffsetDateTime createdAt) {
+        long totalStations) {
 }
