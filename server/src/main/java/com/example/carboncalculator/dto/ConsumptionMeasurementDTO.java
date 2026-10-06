@@ -18,7 +18,6 @@ public record ConsumptionMeasurementDTO(
         Integer readingIntervalMinutes,
         LocalDate measurementDate,
         String conditions,
-        String notes,
         OffsetDateTime createdAt) {
 
     public record EquipmentModelSummary(UUID id, String name) {

@@ -42,7 +42,7 @@ class CreateConsumptionMeasurementRequestTest {
 
     private static CreateConsumptionMeasurementRequest request(TargetType type, UUID model, UUID os, UUID monitor) {
         return new CreateConsumptionMeasurementRequest(type, model, os, monitor,
-                new BigDecimal("45.5"), 30, 1, LocalDate.of(2026, 9, 1), null, null);
+                new BigDecimal("45.5"), 30, 1, LocalDate.of(2026, 9, 1), null);
     }
 
     private static Set<String> violations(CreateConsumptionMeasurementRequest request) {
@@ -69,7 +69,7 @@ class CreateConsumptionMeasurementRequestTest {
     @Test
     void deveRejeitarCamposObrigatoriosAusentesOuNaoPositivos() {
         CreateConsumptionMeasurementRequest invalid = new CreateConsumptionMeasurementRequest(
-                null, null, null, null, BigDecimal.ZERO, 0, null, null, null, null);
+                null, null, null, null, BigDecimal.ZERO, 0, null, null, null);
 
         Set<String> messages = violations(invalid);
         assertTrue(messages.contains("Tipo de alvo é obrigatório"));

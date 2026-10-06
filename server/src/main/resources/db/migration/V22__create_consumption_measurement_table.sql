@@ -12,7 +12,6 @@ CREATE TABLE consumption_measurement (
     reading_interval_minutes INTEGER,
     measurement_date DATE NOT NULL,
     conditions TEXT,
-    notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
 

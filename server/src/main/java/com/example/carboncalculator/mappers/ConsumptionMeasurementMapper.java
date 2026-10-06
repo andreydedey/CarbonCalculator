@@ -26,7 +26,6 @@ public final class ConsumptionMeasurementMapper {
                 entity.getReadingIntervalMinutes(),
                 entity.getMeasurementDate(),
                 entity.getConditions(),
-                entity.getNotes(),
                 entity.getCreatedAt());
     }
 }

@@ -72,9 +72,6 @@ public class ConsumptionMeasurement {
     @Column(columnDefinition = "TEXT")
     private String conditions;
 
-    @Column(columnDefinition = "TEXT")
-    private String notes;
-
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 

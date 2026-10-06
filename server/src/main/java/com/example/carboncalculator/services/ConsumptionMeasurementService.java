@@ -101,7 +101,6 @@ public class ConsumptionMeasurementService {
         measurement.setReadingIntervalMinutes(request.readingIntervalMinutes());
         measurement.setMeasurementDate(request.measurementDate());
         measurement.setConditions(request.conditions());
-        measurement.setNotes(request.notes());
 
         measurement = measurementRepository.save(measurement);
         OutlierWarningDTO warning = checkOutlier(measurement);
@@ -135,7 +134,6 @@ public class ConsumptionMeasurementService {
                 .readingIntervalMinutes(request.readingIntervalMinutes())
                 .measurementDate(request.measurementDate())
                 .conditions(request.conditions())
-                .notes(request.notes())
                 .build();
     }
 

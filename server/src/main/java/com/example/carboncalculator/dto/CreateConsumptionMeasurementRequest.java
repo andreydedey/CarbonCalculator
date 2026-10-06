@@ -26,8 +26,7 @@ public record CreateConsumptionMeasurementRequest(
         Integer readingIntervalMinutes,
         @NotNull(message = "Data da medição é obrigatória")
         LocalDate measurementDate,
-        String conditions,
-        String notes) {
+        String conditions) {
 
     // Which parts identify the measured target depends on the target type:
     // COMPUTER = model + OS, MONITOR = monitor, COMBINED = model + OS + monitor
