@@ -32,7 +32,7 @@ Sem esta funcionalidade, a plataforma seria só mais uma calculadora. Com ela, o
 - **Dado** que houve aula num horário livre da grade, **quando** registro a aula extra com o número de estações, **então** ela gera consumo apenas naquela data.
 - **Dado** que uma data é feriado, está fora do período ou não é dia ativo do turno, **quando** tento registrar uma exceção nela, **então** o registro não é aceito.
 - **Dado** que desfaço uma exceção, **então** a data volta a seguir a grade.
-- **Dado** que um laboratório não tem ocupação definida, **quando** tento calcular suas emissões, **então** o cálculo não é executado e a pendência é indicada.
+- **Dado** que um laboratório não tem ocupação definida, **quando** calculo as emissões do período, **então** ele não entra no cálculo (emissão zero), a pendência é indicada como aviso e os demais laboratórios são calculados normalmente. O cálculo só deixa de ser executado quando nenhum laboratório tem ocupação definida.
 - **Dado** que vejo o resultado por mês, **quando** um mês tem número de dias letivos muito menor que os demais, **então** essa informação é apresentada junto do valor, para evitar leitura equivocada.
 - **Dado** que dois laboratórios têm ocupações diferentes no mesmo período, **quando** comparo seus resultados, **então** a diferença de ocupação está visível como parte da explicação.
 - **Dado** que copio o calendário de um período anterior, **quando** confirmo, **então** um novo período é criado com as mesmas datas relativas e ocupações, pronto para edição.

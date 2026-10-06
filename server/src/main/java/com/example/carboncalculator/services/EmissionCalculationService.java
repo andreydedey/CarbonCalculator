@@ -121,7 +121,10 @@ public class EmissionCalculationService {
             }
         }
 
-        boolean ready = missingFactors.isEmpty() && labsWithoutSchedule.isEmpty();
+        // A lab without a grid just adds zero; only block when no lab can be calculated at all
+        boolean anyLabWithSchedule = labs.stream().anyMatch(lab -> labsWithSchedule.contains(lab.getId())
+                && !labsWithoutEquipment.contains(lab.getName()));
+        boolean ready = missingFactors.isEmpty() && anyLabWithSchedule;
 
         return new ReadinessDTO(ready, missingFactors, labsWithoutEquipment,
                 labsWithoutSchedule, configsWithoutMonitor);

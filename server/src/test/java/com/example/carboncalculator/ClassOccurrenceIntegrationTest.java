@@ -57,6 +57,7 @@ import com.example.carboncalculator.dto.InstitutionDTO;
 import com.example.carboncalculator.dto.LaboratoryDTO;
 import com.example.carboncalculator.dto.LoginRequest;
 import com.example.carboncalculator.dto.MonitorDTO;
+import com.example.carboncalculator.dto.ReadinessDTO;
 import com.example.carboncalculator.dto.ReplaceHolidaysRequest;
 import com.example.carboncalculator.dto.ReplaceScheduleRequest;
 import com.example.carboncalculator.dto.ReplaceShiftsRequest;
@@ -265,6 +266,24 @@ class ClassOccurrenceIntegrationTest {
         assertTrue(result.totalEmissionKg() > 0);
         assertTrue(result.projectedEmissionKg() > result.totalEmissionKg());
         assertTrue(result.schoolDaysElapsed() < result.schoolDaysTotal());
+    }
+
+    @Test
+    void deveCalcularMesmoComLaboratorioSemGrade() {
+        setupStandardScenario(LocalDate.of(2025, 3, 1), LocalDate.of(2025, 3, 31));
+        UUID labWithoutGrid = createLab("LAB-SEM-GRADE-" + System.nanoTime());
+        UUID modelId = createEquipmentModel("Desktop-" + System.nanoTime(), 65);
+        assignEquipment(labWithoutGrid, createConfiguration(modelId, "Linux", null), 5);
+
+        ResponseEntity<ReadinessDTO> readiness = restTemplate.exchange(
+                "/academic-periods/" + periodId + "/emissions/readiness", HttpMethod.GET,
+                new HttpEntity<>(headers()), ReadinessDTO.class);
+        assertTrue(readiness.getBody().ready());
+        assertTrue(readiness.getBody().laboratoriesWithoutSchedule().stream()
+                .anyMatch(name -> name.startsWith("LAB-SEM-GRADE")));
+
+        EmissionResultDTO result = getEmissions();
+        assertEquals(80 * CLASS_KWH, result.totalEnergyKwh(), 0.02);
     }
 
     // ========================= DAY VIEW =========================
