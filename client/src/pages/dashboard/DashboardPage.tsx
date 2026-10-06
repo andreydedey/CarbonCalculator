@@ -11,7 +11,7 @@ import { useCanManage } from '@/hooks/useCanManage'
 import { type AcademicPeriod, listAcademicPeriods } from '@/lib/api/academic-periods'
 import { getEmissions } from '@/lib/api/emissions'
 import { listLaboratories } from '@/lib/api/laboratories'
-import { formatDate, formatDayMonth, toIsoDate } from '@/lib/utils/occupation'
+import { currentPeriod, formatDate, formatDayMonth, toIsoDate } from '@/lib/utils/occupation'
 
 function formatNumber(n: number): string {
   return Math.round(n).toLocaleString('pt-BR')
@@ -39,15 +39,6 @@ function Metric({
       <span className="font-mono text-[22px] font-semibold">{value}</span>
       <span className="text-[11px] text-muted-foreground">{subtitle}</span>
     </Card>
-  )
-}
-
-/** The period that contains today, otherwise the most recent one. */
-function currentPeriod(periods: AcademicPeriod[], today: string): AcademicPeriod | null {
-  return (
-    periods.find((p) => p.startDate <= today && today <= p.endDate) ??
-    [...periods].sort((a, b) => b.startDate.localeCompare(a.startDate))[0] ??
-    null
   )
 }
 

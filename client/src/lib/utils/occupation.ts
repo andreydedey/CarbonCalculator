@@ -71,3 +71,15 @@ export function clampDate(iso: string, min: string, max: string): string {
 export function stationHours(stations: number[], classDurationMinutes: number): number {
   return (stations.reduce((sum, s) => sum + s, 0) * classDurationMinutes) / 60
 }
+
+/** The period that contains {@code today}, otherwise the one that started most recently. */
+export function currentPeriod<T extends { startDate: string; endDate: string }>(
+  periods: T[],
+  today: string,
+): T | null {
+  return (
+    periods.find((p) => p.startDate <= today && today <= p.endDate) ??
+    [...periods].sort((a, b) => b.startDate.localeCompare(a.startDate))[0] ??
+    null
+  )
+}

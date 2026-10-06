@@ -30,6 +30,7 @@ import {
   type LabStatusFilter,
   listLaboratories,
 } from '@/lib/api/laboratories'
+import { currentPeriod, formatDate, toIsoDate } from '@/lib/utils/occupation'
 
 const STATUS_OPTIONS: { value: LabStatusFilter; label: string }[] = [
   { value: 'all', label: 'Status: Todos' },
@@ -82,11 +83,12 @@ export const LaboratoryList: React.FC = () => {
   })
 
   const { data: periodsPage } = useQuery({
-    queryKey: ['academic-periods', 'latest-for-labs'],
-    queryFn: () => listAcademicPeriods(0, 1),
+    queryKey: ['academic-periods', 'all-for-labs'],
+    queryFn: () => listAcademicPeriods(0, 100),
   })
 
-  const latestPeriodId = periodsPage?.content[0]?.id ?? null
+  const period = currentPeriod(periodsPage?.content ?? [], toIsoDate(new Date()))
+  const latestPeriodId = period?.id ?? null
 
   const { data: readiness } = useQuery({
     queryKey: ['emissions-readiness', latestPeriodId],
@@ -201,7 +203,11 @@ export const LaboratoryList: React.FC = () => {
               ? `${Math.round(emissionResult.totalEmissionKg).toLocaleString('pt-BR')} kg`
               : '-'
           }
-          label="Emissão Total do Período"
+          label={
+            emissionResult?.realizedUntil
+              ? `Emissão realizada · ${period?.name} até ${formatDate(emissionResult.realizedUntil)}`
+              : 'Emissão realizada'
+          }
           icon={<Leaf className="size-[18px] text-primary-foreground" />}
         />
       </div>

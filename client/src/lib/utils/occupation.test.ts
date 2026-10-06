@@ -3,6 +3,7 @@ import { describe, test } from 'node:test'
 import {
   addDays,
   clampDate,
+  currentPeriod,
   formatDate,
   formatDayMonth,
   isoDayOfWeek,
@@ -57,5 +58,25 @@ describe('stationHours', () => {
   test('sums stations times class duration', () => {
     assert.equal(stationHours([12, 18], 50), 25)
     assert.equal(stationHours([], 50), 0)
+  })
+})
+
+describe('currentPeriod', () => {
+  const periods = [
+    { startDate: '2026-08-03', endDate: '2026-12-11' },
+    { startDate: '2027-03-01', endDate: '2027-07-15' },
+    { startDate: '2026-02-23', endDate: '2026-07-03' },
+  ]
+
+  test('picks the period that contains today', () => {
+    assert.equal(currentPeriod(periods, '2026-10-05'), periods[0])
+  })
+
+  test('falls back to the most recent start when today is between periods', () => {
+    assert.equal(currentPeriod(periods, '2026-12-20'), periods[1])
+  })
+
+  test('returns null without periods', () => {
+    assert.equal(currentPeriod([], '2026-10-05'), null)
   })
 })
