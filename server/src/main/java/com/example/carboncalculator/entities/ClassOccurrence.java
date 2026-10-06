@@ -1,5 +1,6 @@
 package com.example.carboncalculator.entities;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -11,27 +12,32 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Per-date exception to the weekly grid for one class (shift + slot) of a laboratory.
+ * {@code stationsUsed = 0} cancels the class; a slot that is free in the grid is an extra class.
+ */
 @Entity
-@Table(name = "laboratory_schedule")
+@Table(name = "class_occurrence")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class LaboratorySchedule {
+public class ClassOccurrence {
 
     @Id
     @GeneratedValue
     private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "institution_id", nullable = false)
+    private Institution institution;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "shift_id", nullable = false)
@@ -41,15 +47,12 @@ public class LaboratorySchedule {
     @JoinColumn(name = "laboratory_id", nullable = false)
     private Laboratory laboratory;
 
-    @Column(name = "day_of_week", nullable = false)
-    private short dayOfWeek;
+    @Column(nullable = false)
+    private LocalDate date;
 
-    @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "occupied_slots", nullable = false, columnDefinition = "smallint[]")
-    private short[] occupiedSlots;
+    @Column(nullable = false)
+    private short slot;
 
-    // Stations used by each occupied slot, aligned by index with occupiedSlots
-    @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "stations_used", nullable = false, columnDefinition = "smallint[]")
-    private short[] stationsUsed;
+    @Column(name = "stations_used", nullable = false)
+    private short stationsUsed;
 }

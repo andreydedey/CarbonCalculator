@@ -33,6 +33,7 @@ public class GlobalExceptionHandler {
             LastManagerException.class,
             HolidayOutOfRangeException.class,
             ShiftValidationException.class,
+            OccurrenceValidationException.class,
             InvalidEmissionFactorException.class,
             IllegalArgumentException.class
     })
