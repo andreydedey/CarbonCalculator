@@ -22,7 +22,7 @@ import {
 import { useInstitution } from '@/context/InstitutionContext'
 import { useDialog } from '@/hooks/use-dialog'
 import { listAcademicPeriods } from '@/lib/api/academic-periods'
-import { getEmissions, getReadiness } from '@/lib/api/emissions'
+import { getEmissions } from '@/lib/api/emissions'
 import { getInstitution } from '@/lib/api/institutions'
 import {
   activateLaboratory,
@@ -90,16 +90,10 @@ export const LaboratoryList: React.FC = () => {
   const period = currentPeriod(periodsPage?.content ?? [], toIsoDate(new Date()))
   const latestPeriodId = period?.id ?? null
 
-  const { data: readiness } = useQuery({
-    queryKey: ['emissions-readiness', latestPeriodId],
-    queryFn: () => getReadiness(latestPeriodId as string),
-    enabled: !!latestPeriodId,
-  })
-
   const { data: emissionResult } = useQuery({
     queryKey: ['emissions', latestPeriodId],
     queryFn: () => getEmissions(latestPeriodId as string),
-    enabled: !!latestPeriodId && readiness?.ready === true,
+    enabled: !!latestPeriodId,
   })
 
   const emissionByLab = useMemo(() => {
