@@ -15,7 +15,6 @@ export type ConsumptionMeasurement = {
   readingIntervalMinutes: number | null
   measurementDate: string
   conditions: string | null
-  notes: string | null
   createdAt: string
 }
 
@@ -40,7 +39,6 @@ export type CreateConsumptionMeasurementPayload = {
   readingIntervalMinutes?: number | null
   measurementDate: string
   conditions?: string | null
-  notes?: string | null
 }
 
 export type ListConsumptionMeasurementsOptions = {

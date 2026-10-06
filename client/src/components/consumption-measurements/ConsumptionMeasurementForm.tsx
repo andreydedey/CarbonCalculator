@@ -101,7 +101,6 @@ export const ConsumptionMeasurementForm: React.FC<ConsumptionMeasurementFormProp
           readingIntervalMinutes: measurement.readingIntervalMinutes ?? '',
           measurementDate: measurement.measurementDate,
           conditions: measurement.conditions ?? '',
-          notes: measurement.notes ?? '',
         }
       : {
           targetType: defaultTargetType ?? 'COMPUTER',
@@ -113,7 +112,6 @@ export const ConsumptionMeasurementForm: React.FC<ConsumptionMeasurementFormProp
           readingIntervalMinutes: 4,
           measurementDate: new Date().toISOString().slice(0, 10),
           conditions: '',
-          notes: '',
         },
   })
 
@@ -141,7 +139,6 @@ export const ConsumptionMeasurementForm: React.FC<ConsumptionMeasurementFormProp
         : null,
       measurementDate: values.measurementDate,
       conditions: values.conditions || null,
-      notes: values.notes || null,
     }
 
     try {
@@ -185,104 +182,123 @@ export const ConsumptionMeasurementForm: React.FC<ConsumptionMeasurementFormProp
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="flex flex-col gap-4 px-7 pb-6">
-            <div className="flex flex-col gap-1.5">
-              <Label>Tipo de alvo *</Label>
-              <Controller
-                control={control}
-                name="targetType"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecionar..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TARGET_TYPE_OPTIONS.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              <FieldError message={errors.targetType?.message} />
-            </div>
-
-            {showComputer && (
-              <div className="flex gap-4">
-                <div className="flex flex-1 flex-col gap-1.5">
-                  <Label>Computador *</Label>
-                  <Controller
-                    control={control}
-                    name="equipmentModelId"
-                    render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecionar..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {models.map((m) => (
-                            <SelectItem key={m.id} value={m.id}>
-                              {m.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                  <FieldError message={errors.equipmentModelId?.message} />
-                </div>
-                <div className="flex flex-1 flex-col gap-1.5">
-                  <Label>Sistema Operacional *</Label>
-                  <Controller
-                    control={control}
-                    name="operatingSystemId"
-                    render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecionar..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {operatingSystems.map((os) => (
-                            <SelectItem key={os.id} value={os.id}>
-                              {os.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                  <FieldError message={errors.operatingSystemId?.message} />
-                </div>
-              </div>
-            )}
-
-            {showMonitor && (
-              <div className="flex flex-col gap-1.5">
-                <Label>Monitor *</Label>
+          <div className="flex flex-col gap-5 px-7 pb-6">
+            <div className="flex gap-4">
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Label>Tipo de alvo *</Label>
                 <Controller
                   control={control}
-                  name="monitorId"
+                  name="targetType"
                   render={({ field }) => (
                     <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Selecionar..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {monitors.map((mon) => (
-                          <SelectItem key={mon.id} value={mon.id}>
-                            {mon.name}
-                            {mon.watts ? ` (${mon.watts}W)` : ''}
+                        {TARGET_TYPE_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   )}
                 />
-                <FieldError message={errors.monitorId?.message} />
+                <FieldError message={errors.targetType?.message} />
               </div>
-            )}
+              <div className="flex w-40 flex-col gap-1.5">
+                <Label>Data da medição *</Label>
+                <Input type="date" {...register('measurementDate')} />
+                <FieldError message={errors.measurementDate?.message} />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              {showComputer && (
+                <div className="flex gap-4">
+                  <div className="flex flex-1 flex-col gap-1.5">
+                    <Label>Computador *</Label>
+                    <Controller
+                      control={control}
+                      name="equipmentModelId"
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Selecionar..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {models.map((m) => (
+                              <SelectItem key={m.id} value={m.id}>
+                                {m.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    <FieldError message={errors.equipmentModelId?.message} />
+                  </div>
+                  <div className="flex w-40 flex-col gap-1.5">
+                    <Label>Sistema operacional *</Label>
+                    <Controller
+                      control={control}
+                      name="operatingSystemId"
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Selecionar..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {operatingSystems.map((os) => (
+                              <SelectItem key={os.id} value={os.id}>
+                                {os.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    <FieldError message={errors.operatingSystemId?.message} />
+                  </div>
+                </div>
+              )}
+
+              {showMonitor && (
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <Label>Monitor *</Label>
+                  <Controller
+                    control={control}
+                    name="monitorId"
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Selecionar..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {monitors.map((mon) => (
+                            <SelectItem key={mon.id} value={mon.id}>
+                              {mon.name}
+                              {mon.watts ? ` (${mon.watts}W)` : ''}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  <FieldError message={errors.monitorId?.message} />
+                </div>
+              )}
+
+              {targetType === 'COMBINED' && (
+                <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3">
+                  <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
+                  <p className="text-xs text-amber-800">
+                    A medição conjunta captura computador e monitor na mesma tomada. Use quando o
+                    monitor está conectado e influencia o consumo da GPU.
+                  </p>
+                </div>
+              )}
+            </div>
 
             <div className="flex gap-4">
               <div className="flex flex-1 flex-col gap-1.5">
@@ -291,21 +307,18 @@ export const ConsumptionMeasurementForm: React.FC<ConsumptionMeasurementFormProp
                 <FieldError message={errors.averageWatts?.message} />
               </div>
               <div className="flex flex-1 flex-col gap-1.5">
-                <Label>Data da medição *</Label>
-                <Input type="date" {...register('measurementDate')} />
-                <FieldError message={errors.measurementDate?.message} />
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="flex flex-1 flex-col gap-1.5">
                 <Label>Duração (min) *</Label>
                 <Input type="number" min="1" {...register('durationMinutes')} />
                 <FieldError message={errors.durationMinutes?.message} />
               </div>
               <div className="flex flex-1 flex-col gap-1.5">
-                <Label>Intervalo entre leituras (min)</Label>
-                <Input type="number" min="1" {...register('readingIntervalMinutes')} />
+                <Label>Intervalo (min)</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  title="Intervalo entre leituras do wattímetro"
+                  {...register('readingIntervalMinutes')}
+                />
                 <FieldError message={errors.readingIntervalMinutes?.message} />
               </div>
             </div>
@@ -318,21 +331,6 @@ export const ConsumptionMeasurementForm: React.FC<ConsumptionMeasurementFormProp
                 {...register('conditions')}
               />
             </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label>Observações</Label>
-              <Textarea rows={2} placeholder="Observações adicionais..." {...register('notes')} />
-            </div>
-
-            {targetType === 'COMBINED' && (
-              <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3">
-                <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
-                <p className="text-xs text-amber-800">
-                  A medição conjunta captura computador e monitor na mesma tomada. Use quando o
-                  monitor está conectado e influencia o consumo da GPU.
-                </p>
-              </div>
-            )}
           </div>
 
           <DialogFooter className="mx-0 mb-0">

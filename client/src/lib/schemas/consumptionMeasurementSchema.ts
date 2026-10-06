@@ -19,7 +19,6 @@ export const consumptionMeasurementFormSchema = z
     readingIntervalMinutes: z.coerce.number().int().positive().optional().or(z.literal('')),
     measurementDate: z.string().min(1, 'Data é obrigatória'),
     conditions: z.string().optional().default(''),
-    notes: z.string().optional().default(''),
   })
   .superRefine((data, ctx) => {
     if (data.targetType === 'COMPUTER' || data.targetType === 'COMBINED') {
