@@ -34,7 +34,6 @@ public final class EquipmentModelMapper {
                 entity.getGpuModel(),
                 entity.getGpuTdpWatts(),
                 entity.isHasIntegratedScreen(),
-                entity.getDescription(),
-                entity.getCreatedAt());
+                entity.getDescription());
     }
 }

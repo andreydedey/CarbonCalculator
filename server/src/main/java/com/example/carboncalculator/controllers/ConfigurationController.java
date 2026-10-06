@@ -41,7 +41,7 @@ public class ConfigurationController {
     @GetMapping
     @PreAuthorize("hasRole('RESEARCHER')")
     public PageResponse<ConfigurationDTO> list(
-            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(sort = "equipmentModel.name", direction = Sort.Direction.ASC) Pageable pageable) {
         return PageResponse.from(configurationService.list(pageable));
     }
 

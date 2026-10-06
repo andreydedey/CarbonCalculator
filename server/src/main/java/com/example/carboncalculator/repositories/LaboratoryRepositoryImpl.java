@@ -54,8 +54,7 @@ public class LaboratoryRepositoryImpl implements LaboratoryRepositoryCustom {
                 root.get("description"),
                 root.get("active"),
                 configCountSq,
-                totalStationsSq,
-                root.get("createdAt")));
+                totalStationsSq));
 
         Predicate predicate = spec.toPredicate(root, cq, cb);
         if (predicate != null) {

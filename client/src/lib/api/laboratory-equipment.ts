@@ -18,7 +18,6 @@ export type LaboratoryEquipment = {
   operatingSystem: string
   monitor: Monitor | null
   quantity: number
-  createdAt?: string
 }
 
 export type LaboratoryComposition = {

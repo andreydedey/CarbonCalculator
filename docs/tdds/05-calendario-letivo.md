@@ -118,8 +118,6 @@ O sistema consegue calcular o consumo instantâneo de um laboratório (soma dos 
 | `name`           | `VARCHAR(100)`      | NOT NULL (ex: "2024.1", "2024/2º semestre")   |
 | `start_date`     | `DATE`              | NOT NULL                                      |
 | `end_date`       | `DATE`              | NOT NULL, CHECK (end_date > start_date)       |
-| `created_at`     | `TIMESTAMP WITH TZ` | NOT NULL                                      |
-| `updated_at`     | `TIMESTAMP WITH TZ` | NOT NULL                                      |
 
 **Constraints:**
 - CHECK: `end_date > start_date`
@@ -160,8 +158,6 @@ Representa um turno de aula do período letivo. Cada período tem até 3 turnos 
 | `break_duration_minutes`  | `SMALLINT`          | NOT NULL, CHECK (>= 0) (ex: 10)                               |
 | `active_days`             | `SMALLINT[]`        | NOT NULL (ex: {1,2,3,4,5} para Seg–Sex)                      |
 | `enabled`                 | `BOOLEAN`           | NOT NULL, DEFAULT true                                       |
-| `created_at`              | `TIMESTAMP WITH TZ` | NOT NULL                                                     |
-| `updated_at`              | `TIMESTAMP WITH TZ` | NOT NULL                                                     |
 
 **Constraints:**
 - CHECK: `end_time > start_time`
@@ -187,7 +183,6 @@ Representa a ocupação de um laboratório em um turno num dia da semana. Cada l
 | `laboratory_id`      | `UUID`              | FK → laboratory(id) ON DELETE CASCADE                        |
 | `day_of_week`        | `SMALLINT`          | NOT NULL, CHECK (1..7), 1=segunda, 7=domingo                 |
 | `occupied_slots`     | `SMALLINT[]`        | NOT NULL — array dos números dos slots ocupados (1-indexed)   |
-| `created_at`         | `TIMESTAMP WITH TZ` | NOT NULL                                                     |
 
 **Constraints:**
 - CHECK: `day_of_week BETWEEN 1 AND 7`
@@ -277,8 +272,7 @@ Esses cálculos são feitos no service e retornados pela API como dados derivado
   "startDate": "2025-03-10",
   "endDate": "2025-07-18",
   "holidayCount": 0,
-  "shifts": [],
-  "createdAt": "2026-09-25T10:00:00Z"
+  "shifts": []
 }
 ```
 

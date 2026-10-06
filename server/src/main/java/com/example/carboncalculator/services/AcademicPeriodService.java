@@ -229,8 +229,7 @@ public class AcademicPeriodService {
                 period.getStartDate(),
                 period.getEndDate(),
                 period.getHolidays().size(),
-                period.getShifts().stream().map(shiftService::toDTO).toList(),
-                period.getCreatedAt());
+                period.getShifts().stream().map(shiftService::toDTO).toList());
     }
 
     private UUID currentInstitutionId() {

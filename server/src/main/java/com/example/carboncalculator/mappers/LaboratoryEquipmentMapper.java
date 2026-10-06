@@ -27,7 +27,6 @@ public final class LaboratoryEquipmentMapper {
                         model.isHasIntegratedScreen()),
                 config.getOperatingSystem(),
                 MonitorMapper.toDTO(config.getMonitor()),
-                entity.getQuantity(),
-                entity.getCreatedAt());
+                entity.getQuantity());
     }
 }
