@@ -6,7 +6,7 @@ import { ConsumptionMeasurementForm } from '@/components/consumption-measurement
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
-import { useDialog } from '@/hooks/use-dialog'
+import { useFormDialog } from '@/hooks/use-dialog'
 import { isApiError } from '@/lib/api/client'
 import {
   type ConsumptionMeasurement,
@@ -44,7 +44,10 @@ export const ConsumptionMeasurementList: React.FC<ConsumptionMeasurementListProp
   formOpen,
   onFormOpenChange,
 }) => {
-  const editDialog = useDialog<ConsumptionMeasurement>()
+  const formDialog = useFormDialog<ConsumptionMeasurement>({
+    createOpen: formOpen,
+    onCreateOpenChange: onFormOpenChange,
+  })
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
     useInfiniteQuery({
@@ -68,19 +71,8 @@ export const ConsumptionMeasurementList: React.FC<ConsumptionMeasurementListProp
     },
   })
 
-  const isCreateFormOpen = formOpen ?? false
-  const isFormOpen = isCreateFormOpen || editDialog.open
-
-  function handleFormOpenChange(open: boolean) {
-    if (!open) {
-      onFormOpenChange?.(false)
-      editDialog.closeDialog()
-    }
-  }
-
   function handleSaved() {
-    onFormOpenChange?.(false)
-    editDialog.closeDialog()
+    formDialog.close()
     refetch()
   }
 
@@ -89,9 +81,9 @@ export const ConsumptionMeasurementList: React.FC<ConsumptionMeasurementListProp
   return (
     <div className="flex flex-col gap-6">
       <ConsumptionMeasurementForm
-        measurement={editDialog.data ?? undefined}
-        open={isFormOpen}
-        onOpenChange={handleFormOpenChange}
+        measurement={formDialog.editing ?? undefined}
+        open={formDialog.open}
+        onOpenChange={formDialog.onOpenChange}
         onSaved={handleSaved}
       />
 
@@ -137,7 +129,7 @@ export const ConsumptionMeasurementList: React.FC<ConsumptionMeasurementListProp
                           variant="ghost"
                           size="icon"
                           className="size-7"
-                          onClick={() => editDialog.openDialog(m)}
+                          onClick={() => formDialog.openEdit(m)}
                           title="Editar medição"
                         >
                           <Pencil className="size-3.5" />

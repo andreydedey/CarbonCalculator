@@ -6,7 +6,7 @@ import { ConfigurationForm } from '@/components/configurations/ConfigurationForm
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
-import { useDialog } from '@/hooks/use-dialog'
+import { useFormDialog } from '@/hooks/use-dialog'
 import { isApiError } from '@/lib/api/client'
 import {
   type Configuration,
@@ -31,7 +31,10 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
   formOpen,
   onFormOpenChange,
 }) => {
-  const editDialog = useDialog<Configuration>()
+  const formDialog = useFormDialog<Configuration>({
+    createOpen: formOpen,
+    onCreateOpenChange: onFormOpenChange,
+  })
 
   const {
     data: configurationsData,
@@ -61,19 +64,8 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
     },
   })
 
-  const isCreateFormOpen = formOpen ?? false
-  const isFormOpen = isCreateFormOpen || editDialog.open
-
-  function handleFormOpenChange(open: boolean) {
-    if (!open) {
-      onFormOpenChange?.(false)
-      editDialog.closeDialog()
-    }
-  }
-
   function handleSaved() {
-    onFormOpenChange?.(false)
-    editDialog.closeDialog()
+    formDialog.close()
     refetch()
   }
 
@@ -86,9 +78,9 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
   return (
     <div className="flex flex-col gap-6">
       <ConfigurationForm
-        configuration={editDialog.data ?? undefined}
-        open={isFormOpen}
-        onOpenChange={handleFormOpenChange}
+        configuration={formDialog.editing ?? undefined}
+        open={formDialog.open}
+        onOpenChange={formDialog.onOpenChange}
         onSaved={handleSaved}
       />
 
@@ -132,7 +124,7 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
                           variant="ghost"
                           size="icon"
                           className="size-7"
-                          onClick={() => editDialog.openDialog(config)}
+                          onClick={() => formDialog.openEdit(config)}
                           title="Editar configuração"
                         >
                           <Pencil className="size-3.5" />
