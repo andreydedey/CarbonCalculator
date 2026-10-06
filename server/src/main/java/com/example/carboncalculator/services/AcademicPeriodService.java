@@ -188,6 +188,7 @@ public class AcademicPeriodService {
                         .laboratory(s.getLaboratory())
                         .dayOfWeek(s.getDayOfWeek())
                         .occupiedSlots(s.getOccupiedSlots().clone())
+                        .stationsUsed(s.getStationsUsed().clone())
                         .build();
                 scheduleRepository.save(copy);
             }

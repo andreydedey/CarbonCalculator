@@ -2,11 +2,12 @@ package com.example.carboncalculator.services;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.DayOfWeek;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,8 +23,6 @@ import com.example.carboncalculator.dto.EmissionResultDTO.*;
 import com.example.carboncalculator.dto.PeriodSummaryDTO;
 import com.example.carboncalculator.dto.ReadinessDTO;
 import com.example.carboncalculator.entities.AcademicPeriod;
-import com.example.carboncalculator.entities.AcademicPeriodHoliday;
-import com.example.carboncalculator.entities.AcademicPeriodShift;
 import com.example.carboncalculator.entities.Configuration;
 import com.example.carboncalculator.entities.EmissionFactor;
 import com.example.carboncalculator.entities.EquipmentModel;
@@ -33,6 +32,7 @@ import com.example.carboncalculator.entities.LaboratorySchedule;
 import com.example.carboncalculator.entities.Monitor;
 import com.example.carboncalculator.exceptions.PeriodNotFoundException;
 import com.example.carboncalculator.repositories.AcademicPeriodRepository;
+import com.example.carboncalculator.repositories.ClassOccurrenceRepository;
 import com.example.carboncalculator.repositories.EmissionFactorRepository;
 import com.example.carboncalculator.repositories.LaboratoryEquipmentRepository;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
@@ -56,8 +56,10 @@ public class EmissionCalculationService {
     private final LaboratoryRepository laboratoryRepository;
     private final LaboratoryEquipmentRepository labEquipmentRepository;
     private final LaboratoryScheduleRepository scheduleRepository;
+    private final ClassOccurrenceRepository occurrenceRepository;
     private final EmissionFactorRepository emissionFactorRepository;
     private final PeriodSummaryService periodSummaryService;
+    private final Clock clock;
 
     @Transactional(readOnly = true)
     public ReadinessDTO checkReadiness(UUID periodId) {
@@ -65,7 +67,7 @@ public class EmissionCalculationService {
         List<YearMonth> months = getMonthRange(period.getStartDate(), period.getEndDate());
 
         // Missing emission factors
-        Map<String, EmissionFactor> factorsByMonth = loadFactorsByMonth(months);
+        Map<String, EmissionFactor> factorsByMonth = loadFactorsByMonth();
         List<String> missingFactors = months.stream()
                 .map(ym -> ym.format(MONTH_FMT))
                 .filter(m -> !factorsByMonth.containsKey(m))
@@ -119,45 +121,46 @@ public class EmissionCalculationService {
             }
         }
 
-        boolean ready = missingFactors.isEmpty() && labsWithoutSchedule.isEmpty();
+        // A lab without a grid just adds zero; only block when no lab can be calculated at all
+        boolean anyLabWithSchedule = labs.stream().anyMatch(lab -> labsWithSchedule.contains(lab.getId())
+                && !labsWithoutEquipment.contains(lab.getName()));
+        boolean ready = missingFactors.isEmpty() && anyLabWithSchedule;
 
         return new ReadinessDTO(ready, missingFactors, labsWithoutEquipment,
                 labsWithoutSchedule, configsWithoutMonitor);
     }
 
+    /**
+     * Realized emissions (closed days, up to yesterday) broken down by every dimension,
+     * plus the projection for the whole period (realized + remaining days by the grid).
+     */
     @Transactional(readOnly = true)
     public EmissionResultDTO calculate(UUID periodId) {
         AcademicPeriod period = getPeriod(periodId);
         List<YearMonth> months = getMonthRange(period.getStartDate(), period.getEndDate());
+        Map<String, EmissionFactor> factorsByMonth = loadFactorsByMonth();
         PeriodSummaryDTO summary = periodSummaryService.getSummary(periodId);
-
-        // Load emission factors
-        Map<String, EmissionFactor> factorsByMonth = loadFactorsByMonth(months);
-
-        // School days per month from summary
         Map<String, Integer> schoolDaysByMonth = summary.schoolDaysPerMonth().stream()
                 .collect(Collectors.toMap(PeriodSummaryDTO.MonthSchoolDays::month,
                         PeriodSummaryDTO.MonthSchoolDays::schoolDays));
 
-        // Hours per month per lab from summary
-        Map<UUID, Map<String, Double>> hoursByLabMonth = new LinkedHashMap<>();
-        for (PeriodSummaryDTO.LaboratorySummary labSum : summary.laboratorySummaries()) {
-            Map<String, Double> monthHours = labSum.hoursPerMonth().stream()
-                    .collect(Collectors.toMap(PeriodSummaryDTO.MonthHours::month,
-                            PeriodSummaryDTO.MonthHours::hours));
-            hoursByLabMonth.put(labSum.laboratoryId(), monthHours);
+        LocalDate yesterday = LocalDate.now(clock).minusDays(1);
+        LocalDate realizedEnd = yesterday.isBefore(period.getEndDate()) ? yesterday : period.getEndDate();
+
+        List<ClassSessionExpander.Session> sessions = ClassSessionExpander.expand(period,
+                scheduleRepository.findByPeriodId(periodId),
+                occurrenceRepository.findByPeriodId(periodId),
+                period.getStartDate(), period.getEndDate());
+
+        List<Laboratory> labs = laboratoryRepository.findAll();
+        Map<UUID, LabAccumulator> labAcc = new LinkedHashMap<>();
+        for (Laboratory lab : labs) {
+            labAcc.put(lab.getId(), new LabAccumulator(lab, labEquipmentRepository.findByLaboratoryId(lab.getId())));
         }
 
-        // Shift proportions for decomposition
-        Map<String, Double> shiftHourTotals = calculateShiftProportions(period, summary);
-        Map<Integer, Double> dowHourTotals = calculateDowProportions(period, summary);
-
-        // Iterate labs and calculate
-        List<Laboratory> labs = laboratoryRepository.findAll();
-        List<LaboratoryEmission> labEmissions = new ArrayList<>();
-
-        // Aggregation accumulators
-        Map<String, double[]> monthAgg = new LinkedHashMap<>(); // month -> [energy, emission]
+        Totals realized = new Totals();
+        Totals projected = new Totals();
+        Map<String, double[]> monthAgg = new LinkedHashMap<>();
         Map<String, double[]> shiftAgg = new LinkedHashMap<>();
         Map<Integer, double[]> dowAgg = new LinkedHashMap<>();
         Map<UUID, double[]> equipModelAgg = new LinkedHashMap<>();
@@ -166,150 +169,99 @@ public class EmissionCalculationService {
         Map<UUID, String> equipModelNames = new LinkedHashMap<>();
         Map<UUID, String> monitorModelNames = new LinkedHashMap<>();
 
-        List<InputConsumption> inputConsumptions = new ArrayList<>();
-        Set<UUID> seenConfigs = new java.util.HashSet<>();
+        for (ClassSessionExpander.Session session : sessions) {
+            LabAccumulator lab = labAcc.get(session.laboratoryId());
+            if (lab == null) continue;
+            boolean isRealized = !session.date().isAfter(realizedEnd);
+            if (isRealized) lab.countStatus(session);
 
-        double totalEnergy = 0;
-        double totalEmission = 0;
+            int capacity = lab.capacity();
+            if (session.stationsUsed() <= 0 || capacity <= 0) continue;
+            EmissionFactor factor = factorsByMonth.get(YearMonth.from(session.date()).format(MONTH_FMT));
+            if (factor == null) continue;
+            double factorValue = factor.getValue().doubleValue();
 
-        for (Laboratory lab : labs) {
-            List<LaboratoryEquipment> equipment = labEquipmentRepository.findByLaboratoryId(lab.getId());
-            Map<String, Double> labHours = hoursByLabMonth.getOrDefault(lab.getId(), Map.of());
+            int stations = Math.min(session.stationsUsed(), capacity);
+            double hours = session.hours();
+            if (isRealized) lab.addUsage(stations, capacity, hours);
 
-            double labEnergy = 0;
-            double labEmission = 0;
-            int labStationCount = 0;
-            List<ConfigurationEmission> labConfigs = new ArrayList<>();
-
-            for (LaboratoryEquipment le : equipment) {
+            for (LaboratoryEquipment le : lab.equipment) {
                 Configuration config = le.getConfiguration();
+                Watts watts = Watts.of(config);
+                // Stations used are split across configurations in proportion to their quantity
+                double share = (double) le.getQuantity() * stations / capacity;
+                double energyKwh = watts.total() * share * hours / 1000.0;
+                double emissionKg = energyKwh * factorValue;
+
+                projected.add(energyKwh, emissionKg);
+                if (!isRealized) continue;
+
+                realized.add(energyKwh, emissionKg);
+                lab.addConfig(le, energyKwh, emissionKg);
+                add(monthAgg, YearMonth.from(session.date()).format(MONTH_FMT), energyKwh, emissionKg);
+                add(shiftAgg, session.shift().getShiftType().name(), energyKwh, emissionKg);
+                add(dowAgg, session.date().getDayOfWeek().getValue(), energyKwh, emissionKg);
+                add(osAgg, config.getOperatingSystem(), 0, emissionKg);
+
                 EquipmentModel model = config.getEquipmentModel();
+                add(equipModelAgg, model.getId(), 0, watts.computer() * share * hours / 1000.0 * factorValue);
+                equipModelNames.putIfAbsent(model.getId(), model.getName());
                 Monitor monitor = config.getMonitor();
-
-                int computerWatts = (model.getTdpWatts() != null ? model.getTdpWatts() : 0)
-                        + (model.getGpuTdpWatts() != null ? model.getGpuTdpWatts() : 0);
-                int monitorWatts = (monitor != null && monitor.getWatts() != null) ? monitor.getWatts() : 0;
-                int totalWatts = computerWatts + monitorWatts;
-                int qty = le.getQuantity();
-                labStationCount += qty;
-
-                // Track input consumptions (deduplicated)
-                if (seenConfigs.add(config.getId())) {
-                    inputConsumptions.add(new InputConsumption(
-                            config.getId(), configLabel(config),
-                            computerWatts, monitorWatts, totalWatts));
+                if (monitor != null) {
+                    add(monitorModelAgg, monitor.getId(), 0, watts.monitor() * share * hours / 1000.0 * factorValue);
+                    monitorModelNames.putIfAbsent(monitor.getId(), monitor.getName());
                 }
-
-                double configEnergy = 0;
-                double configEmission = 0;
-
-                for (YearMonth ym : months) {
-                    String monthKey = ym.format(MONTH_FMT);
-                    double hours = labHours.getOrDefault(monthKey, 0.0);
-                    EmissionFactor factor = factorsByMonth.get(monthKey);
-                    if (hours <= 0 || factor == null) continue;
-
-                    double energyKwh = totalWatts * hours * qty / 1000.0;
-                    double emissionKg = energyKwh * factor.getValue().doubleValue();
-
-                    configEnergy += energyKwh;
-                    configEmission += emissionKg;
-
-                    // Global month aggregation
-                    monthAgg.computeIfAbsent(monthKey, k -> new double[2]);
-                    monthAgg.get(monthKey)[0] += energyKwh;
-                    monthAgg.get(monthKey)[1] += emissionKg;
-
-                    // Equipment model aggregation
-                    double computerEnergyKwh = computerWatts * hours * qty / 1000.0;
-                    equipModelAgg.computeIfAbsent(model.getId(), k -> new double[1]);
-                    equipModelAgg.get(model.getId())[0] += computerEnergyKwh * factor.getValue().doubleValue();
-                    equipModelNames.putIfAbsent(model.getId(), model.getName());
-
-                    // Monitor model aggregation
-                    if (monitor != null) {
-                        double monitorEnergyKwh = monitorWatts * hours * qty / 1000.0;
-                        monitorModelAgg.computeIfAbsent(monitor.getId(), k -> new double[1]);
-                        monitorModelAgg.get(monitor.getId())[0] += monitorEnergyKwh * factor.getValue().doubleValue();
-                        monitorModelNames.putIfAbsent(monitor.getId(), monitor.getName());
-                    }
-
-                    // OS aggregation
-                    osAgg.computeIfAbsent(config.getOperatingSystem(), k -> new double[1]);
-                    osAgg.get(config.getOperatingSystem())[0] += emissionKg;
-                }
-
-                labEnergy += configEnergy;
-                labEmission += configEmission;
-
-                labConfigs.add(new ConfigurationEmission(
-                        config.getId(), configLabel(config), qty,
-                        totalWatts, round2(configEnergy), round2(configEmission)));
             }
-
-            totalEnergy += labEnergy;
-            totalEmission += labEmission;
-
-            labEmissions.add(new LaboratoryEmission(
-                    lab.getId(), lab.getName(),
-                    round2(labEnergy), round2(labEmission), labStationCount,
-                    labConfigs));
         }
 
-        // Build global by-month
-        List<MonthEmission> byMonth = new ArrayList<>();
-        for (YearMonth ym : months) {
-            String monthKey = ym.format(MONTH_FMT);
-            double[] vals = monthAgg.getOrDefault(monthKey, new double[2]);
-            EmissionFactor factor = factorsByMonth.get(monthKey);
-            byMonth.add(new MonthEmission(monthKey, round2(vals[0]), round2(vals[1]),
-                    factor != null ? factor.getValue() : null,
-                    schoolDaysByMonth.getOrDefault(monthKey, 0)));
-        }
+        List<MonthEmission> byMonth = months.stream()
+                .map(ym -> ym.format(MONTH_FMT))
+                .map(m -> {
+                    double[] vals = monthAgg.getOrDefault(m, new double[2]);
+                    EmissionFactor factor = factorsByMonth.get(m);
+                    return new MonthEmission(m, round2(vals[0]), round2(vals[1]),
+                            factor != null ? factor.getValue() : null,
+                            schoolDaysByMonth.getOrDefault(m, 0));
+                })
+                .toList();
 
-        // Capture final values for lambdas
-        final double finalTotalEnergy = totalEnergy;
-        final double finalTotalEmission = totalEmission;
+        List<ShiftEmission> byShift = shiftAgg.entrySet().stream()
+                .map(e -> new ShiftEmission(e.getKey(), round2(e.getValue()[0]), round2(e.getValue()[1])))
+                .toList();
 
-        // Build by-shift (proportional from total energy)
-        List<ShiftEmission> byShift = buildShiftEmissions(shiftHourTotals, finalTotalEnergy, finalTotalEmission);
+        List<DayOfWeekEmission> byDayOfWeek = dowAgg.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> new DayOfWeekEmission(e.getKey(), DAY_LABELS[e.getKey()],
+                        round2(e.getValue()[0]), round2(e.getValue()[1])))
+                .toList();
 
-        // Build by-day-of-week (proportional)
-        List<DayOfWeekEmission> byDayOfWeek = buildDowEmissions(dowHourTotals, finalTotalEnergy, finalTotalEmission);
-
-        // Build by-equipment-model
+        double total = realized.emissionKg;
         List<EquipmentModelEmission> byEquipmentModel = equipModelAgg.entrySet().stream()
                 .map(e -> new EquipmentModelEmission(e.getKey(), equipModelNames.get(e.getKey()),
-                        round2(e.getValue()[0]),
-                        finalTotalEmission > 0 ? round1(e.getValue()[0] / finalTotalEmission * 100) : 0))
-                .sorted((a, b) -> Double.compare(b.emissionKg(), a.emissionKg()))
+                        round2(e.getValue()[1]), pct(e.getValue()[1], total)))
+                .sorted(Comparator.comparingDouble(EquipmentModelEmission::emissionKg).reversed())
                 .toList();
 
-        // Build by-monitor-model
         List<MonitorModelEmission> byMonitorModel = monitorModelAgg.entrySet().stream()
                 .map(e -> new MonitorModelEmission(e.getKey(), monitorModelNames.get(e.getKey()),
-                        round2(e.getValue()[0]),
-                        finalTotalEmission > 0 ? round1(e.getValue()[0] / finalTotalEmission * 100) : 0))
-                .sorted((a, b) -> Double.compare(b.emissionKg(), a.emissionKg()))
+                        round2(e.getValue()[1]), pct(e.getValue()[1], total)))
+                .sorted(Comparator.comparingDouble(MonitorModelEmission::emissionKg).reversed())
                 .toList();
 
-        // Build by-OS
         List<OperatingSystemEmission> byOS = osAgg.entrySet().stream()
-                .map(e -> new OperatingSystemEmission(e.getKey(),
-                        round2(e.getValue()[0]),
-                        finalTotalEmission > 0 ? round1(e.getValue()[0] / finalTotalEmission * 100) : 0))
-                .sorted((a, b) -> Double.compare(b.emissionKg(), a.emissionKg()))
+                .map(e -> new OperatingSystemEmission(e.getKey(), round2(e.getValue()[1]), pct(e.getValue()[1], total)))
+                .sorted(Comparator.comparingDouble(OperatingSystemEmission::emissionKg).reversed())
                 .toList();
 
-        // Equivalences
-        long carKm = finalTotalEmission > 0
-                ? BigDecimal.valueOf(finalTotalEmission).divide(CAR_KM_FACTOR, 0, RoundingMode.HALF_UP).longValue()
+        List<LaboratoryEmission> byLaboratory = labAcc.values().stream().map(LabAccumulator::toDTO).toList();
+
+        long carKm = total > 0
+                ? BigDecimal.valueOf(total).divide(CAR_KM_FACTOR, 0, RoundingMode.HALF_UP).longValue()
                 : 0;
-        double treesNeeded = finalTotalEmission > 0
-                ? BigDecimal.valueOf(finalTotalEmission).divide(TREE_FACTOR, 2, RoundingMode.HALF_UP).doubleValue()
+        double treesNeeded = total > 0
+                ? BigDecimal.valueOf(total).divide(TREE_FACTOR, 2, RoundingMode.HALF_UP).doubleValue()
                 : 0;
 
-        // Inputs
         List<InputFactor> inputFactors = months.stream()
                 .map(ym -> ym.format(MONTH_FMT))
                 .filter(factorsByMonth::containsKey)
@@ -319,15 +271,38 @@ public class EmissionCalculationService {
                 })
                 .toList();
 
+        Map<UUID, InputConsumption> inputConsumptions = new LinkedHashMap<>();
+        for (LabAccumulator lab : labAcc.values()) {
+            for (LaboratoryEquipment le : lab.equipment) {
+                Configuration config = le.getConfiguration();
+                Watts w = Watts.of(config);
+                inputConsumptions.putIfAbsent(config.getId(), new InputConsumption(
+                        config.getId(), configLabel(config), w.computer(), w.monitor(), w.total()));
+            }
+        }
+
+        int schoolDaysTotal = 0;
+        int schoolDaysElapsed = 0;
+        for (LocalDate d = period.getStartDate(); !d.isAfter(period.getEndDate()); d = d.plusDays(1)) {
+            LocalDate date = d;
+            if (period.getShifts().stream().anyMatch(s -> ClassSessionExpander.isSchoolDayForShift(period, s, date))) {
+                schoolDaysTotal++;
+                if (!date.isAfter(realizedEnd)) schoolDaysElapsed++;
+            }
+        }
+        boolean anyRealized = !realizedEnd.isBefore(period.getStartDate());
+
         return new EmissionResultDTO(
                 period.getId(), period.getName(),
                 period.getStartDate().toString(), period.getEndDate().toString(),
-                round2(finalTotalEmission),
-                round2(finalTotalEnergy),
+                anyRealized ? realizedEnd.toString() : null,
+                schoolDaysElapsed, schoolDaysTotal,
+                round2(realized.emissionKg), round2(realized.energyKwh),
+                round2(projected.emissionKg),
                 carKm, treesNeeded,
-                byMonth, labEmissions, byShift, byDayOfWeek,
+                byMonth, byLaboratory, byShift, byDayOfWeek,
                 byEquipmentModel, byMonitorModel, byOS,
-                inputFactors, inputConsumptions);
+                inputFactors, List.copyOf(inputConsumptions.values()));
     }
 
     public String exportCsv(UUID periodId) {
@@ -355,7 +330,98 @@ public class EmissionCalculationService {
         return sb.toString();
     }
 
+    // --- accumulators ---
+
+    private record Watts(int computer, int monitor) {
+        static Watts of(Configuration config) {
+            EquipmentModel model = config.getEquipmentModel();
+            Monitor monitor = config.getMonitor();
+            int computer = (model.getTdpWatts() != null ? model.getTdpWatts() : 0)
+                    + (model.getGpuTdpWatts() != null ? model.getGpuTdpWatts() : 0);
+            int monitorWatts = (monitor != null && monitor.getWatts() != null) ? monitor.getWatts() : 0;
+            return new Watts(computer, monitorWatts);
+        }
+
+        int total() {
+            return computer + monitor;
+        }
+    }
+
+    private static final class Totals {
+        double energyKwh;
+        double emissionKg;
+
+        void add(double energy, double emission) {
+            energyKwh += energy;
+            emissionKg += emission;
+        }
+    }
+
+    private final class LabAccumulator {
+        final Laboratory lab;
+        final List<LaboratoryEquipment> equipment;
+        final Map<UUID, double[]> configAgg = new LinkedHashMap<>();
+        double energyKwh;
+        double emissionKg;
+        double stationHours;
+        double capacityHours;
+        int cancelled;
+        int adjusted;
+        int extra;
+
+        LabAccumulator(Laboratory lab, List<LaboratoryEquipment> equipment) {
+            this.lab = lab;
+            this.equipment = equipment;
+        }
+
+        int capacity() {
+            return equipment.stream().mapToInt(LaboratoryEquipment::getQuantity).sum();
+        }
+
+        void countStatus(ClassSessionExpander.Session session) {
+            switch (session.status()) {
+                case CANCELLED -> cancelled++;
+                case ADJUSTED -> adjusted++;
+                case EXTRA -> extra++;
+                default -> { }
+            }
+        }
+
+        void addUsage(int stations, int capacity, double hours) {
+            stationHours += stations * hours;
+            capacityHours += capacity * hours;
+        }
+
+        void addConfig(LaboratoryEquipment le, double energy, double emission) {
+            double[] vals = configAgg.computeIfAbsent(le.getId(), k -> new double[2]);
+            vals[0] += energy;
+            vals[1] += emission;
+            energyKwh += energy;
+            emissionKg += emission;
+        }
+
+        LaboratoryEmission toDTO() {
+            List<ConfigurationEmission> configs = equipment.stream()
+                    .map(le -> {
+                        double[] vals = configAgg.getOrDefault(le.getId(), new double[2]);
+                        Configuration config = le.getConfiguration();
+                        return new ConfigurationEmission(config.getId(), configLabel(config), le.getQuantity(),
+                                Watts.of(config).total(), round2(vals[0]), round2(vals[1]));
+                    })
+                    .toList();
+            double usagePct = capacityHours > 0 ? round1(stationHours / capacityHours * 100) : 0;
+            return new LaboratoryEmission(lab.getId(), lab.getName(), round2(energyKwh), round2(emissionKg),
+                    capacity(), round1(stationHours), usagePct, cancelled, adjusted, extra, configs);
+        }
+    }
+
     // --- helpers ---
+
+    private static <K> void add(Map<K, double[]> agg, K key, double energy, double emission) {
+        double[] vals = agg.computeIfAbsent(key, k -> new double[2]);
+        vals[0] += energy;
+        vals[1] += emission;
+    }
 
     private AcademicPeriod getPeriod(UUID periodId) {
         return periodRepository.findById(periodId)
@@ -373,110 +439,12 @@ public class EmissionCalculationService {
         return months;
     }
 
-    private Map<String, EmissionFactor> loadFactorsByMonth(List<YearMonth> months) {
-        List<EmissionFactor> factors = emissionFactorRepository.findAll();
+    private Map<String, EmissionFactor> loadFactorsByMonth() {
         Map<String, EmissionFactor> map = new LinkedHashMap<>();
-        for (EmissionFactor f : factors) {
-            String key = f.getReferenceMonth().format(MONTH_FMT);
-            map.put(key, f);
+        for (EmissionFactor f : emissionFactorRepository.findAll()) {
+            map.put(f.getReferenceMonth().format(MONTH_FMT), f);
         }
         return map;
-    }
-
-    private Map<String, Double> calculateShiftProportions(AcademicPeriod period, PeriodSummaryDTO summary) {
-        Map<String, Double> shiftHours = new LinkedHashMap<>();
-        List<AcademicPeriodShift> enabledShifts = period.getShifts().stream()
-                .filter(AcademicPeriodShift::isEnabled).toList();
-
-        Set<LocalDate> holidays = period.getHolidays().stream()
-                .map(AcademicPeriodHoliday::getDate).collect(Collectors.toSet());
-
-        List<LaboratorySchedule> allSchedules = scheduleRepository.findByPeriodId(period.getId());
-
-        for (AcademicPeriodShift shift : enabledShifts) {
-            double totalHours = 0;
-            List<LaboratorySchedule> shiftSchedules = allSchedules.stream()
-                    .filter(s -> s.getShift().getId().equals(shift.getId())).toList();
-
-            for (LaboratorySchedule schedule : shiftSchedules) {
-                DayOfWeek dow = DayOfWeek.of(schedule.getDayOfWeek());
-                int schoolDays = countSchoolDays(period.getStartDate(), period.getEndDate(), holidays, dow);
-                int slotCount = schedule.getOccupiedSlots() != null ? schedule.getOccupiedSlots().length : 0;
-                totalHours += slotCount * shift.getClassDurationMinutes() * schoolDays / 60.0;
-            }
-
-            shiftHours.merge(shift.getShiftType().name(), totalHours, Double::sum);
-        }
-        return shiftHours;
-    }
-
-    private Map<Integer, Double> calculateDowProportions(AcademicPeriod period, PeriodSummaryDTO summary) {
-        Map<Integer, Double> dowHours = new LinkedHashMap<>();
-        List<AcademicPeriodShift> enabledShifts = period.getShifts().stream()
-                .filter(AcademicPeriodShift::isEnabled).toList();
-
-        Set<LocalDate> holidays = period.getHolidays().stream()
-                .map(AcademicPeriodHoliday::getDate).collect(Collectors.toSet());
-
-        List<LaboratorySchedule> allSchedules = scheduleRepository.findByPeriodId(period.getId());
-
-        for (AcademicPeriodShift shift : enabledShifts) {
-            List<LaboratorySchedule> shiftSchedules = allSchedules.stream()
-                    .filter(s -> s.getShift().getId().equals(shift.getId())).toList();
-
-            for (LaboratorySchedule schedule : shiftSchedules) {
-                DayOfWeek dow = DayOfWeek.of(schedule.getDayOfWeek());
-                int schoolDays = countSchoolDays(period.getStartDate(), period.getEndDate(), holidays, dow);
-                int slotCount = schedule.getOccupiedSlots() != null ? schedule.getOccupiedSlots().length : 0;
-                double hours = slotCount * shift.getClassDurationMinutes() * schoolDays / 60.0;
-                dowHours.merge((int) schedule.getDayOfWeek(), hours, Double::sum);
-            }
-        }
-        return dowHours;
-    }
-
-    private int countSchoolDays(LocalDate start, LocalDate end, Set<LocalDate> holidays, DayOfWeek dow) {
-        int count = 0;
-        LocalDate current = start;
-        while (!current.isAfter(end)) {
-            if (current.getDayOfWeek() == dow && !holidays.contains(current)) {
-                count++;
-            }
-            current = current.plusDays(1);
-        }
-        return count;
-    }
-
-    private List<ShiftEmission> buildShiftEmissions(Map<String, Double> shiftHours,
-                                                     double totalEnergy, double totalEmission) {
-        double totalShiftHours = shiftHours.values().stream().mapToDouble(Double::doubleValue).sum();
-        if (totalShiftHours <= 0) return List.of();
-
-        return shiftHours.entrySet().stream()
-                .map(e -> {
-                    double proportion = e.getValue() / totalShiftHours;
-                    return new ShiftEmission(e.getKey(),
-                            round2(totalEnergy * proportion),
-                            round2(totalEmission * proportion));
-                })
-                .toList();
-    }
-
-    private List<DayOfWeekEmission> buildDowEmissions(Map<Integer, Double> dowHours,
-                                                       double totalEnergy, double totalEmission) {
-        double totalDowHours = dowHours.values().stream().mapToDouble(Double::doubleValue).sum();
-        if (totalDowHours <= 0) return List.of();
-
-        return dowHours.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(e -> {
-                    double proportion = e.getValue() / totalDowHours;
-                    return new DayOfWeekEmission(e.getKey(),
-                            e.getKey() >= 1 && e.getKey() <= 7 ? DAY_LABELS[e.getKey()] : "",
-                            round2(totalEnergy * proportion),
-                            round2(totalEmission * proportion));
-                })
-                .toList();
     }
 
     private String configLabel(Configuration config) {
@@ -493,6 +461,10 @@ public class EmissionCalculationService {
             return "\"" + value.replace("\"", "\"\"") + "\"";
         }
         return value;
+    }
+
+    private static double pct(double part, double total) {
+        return total > 0 ? round1(part / total * 100) : 0;
     }
 
     private static double round2(double value) {

@@ -1,8 +1,11 @@
 package com.example.carboncalculator.services;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -22,6 +25,7 @@ import com.example.carboncalculator.exceptions.PeriodNotFoundException;
 import com.example.carboncalculator.exceptions.ShiftValidationException;
 import com.example.carboncalculator.repositories.AcademicPeriodRepository;
 import com.example.carboncalculator.repositories.AcademicPeriodShiftRepository;
+import com.example.carboncalculator.repositories.LaboratoryEquipmentRepository;
 import com.example.carboncalculator.repositories.LaboratoryRepository;
 import com.example.carboncalculator.repositories.LaboratoryScheduleRepository;
 
@@ -37,6 +41,7 @@ public class LaboratoryScheduleService {
     private final AcademicPeriodRepository periodRepository;
     private final AcademicPeriodShiftRepository shiftRepository;
     private final LaboratoryRepository laboratoryRepository;
+    private final LaboratoryEquipmentRepository labEquipmentRepository;
 
     @Transactional(readOnly = true)
     public List<ScheduleEntryDTO> getSchedule(UUID periodId, UUID laboratoryId) {
@@ -62,7 +67,8 @@ public class LaboratoryScheduleService {
                 .stream()
                 .collect(Collectors.toMap(AcademicPeriodShift::getId, Function.identity()));
 
-        validateEntries(request.entries(), shiftsById);
+        int capacity = labEquipmentRepository.sumQuantityByLaboratoryId(laboratoryId);
+        validateEntries(request.entries(), shiftsById, capacity);
 
         // Delete old schedule for this lab in this period
         List<LaboratorySchedule> existing = scheduleRepository.findByPeriodIdAndLaboratoryId(periodId, laboratoryId);
@@ -75,6 +81,7 @@ public class LaboratoryScheduleService {
                         .laboratory(laboratory)
                         .dayOfWeek((short) entry.dayOfWeek())
                         .occupiedSlots(toShortArray(entry.occupiedSlots()))
+                        .stationsUsed(resolveStations(entry, capacity))
                         .build())
                 .toList();
 
@@ -84,7 +91,8 @@ public class LaboratoryScheduleService {
         return newSchedules.stream().map(this::toDTO).toList();
     }
 
-    private void validateEntries(List<ReplaceScheduleRequest.ScheduleInput> entries, Map<UUID, AcademicPeriodShift> shiftsById) {
+    private void validateEntries(List<ReplaceScheduleRequest.ScheduleInput> entries,
+                                 Map<UUID, AcademicPeriodShift> shiftsById, int capacity) {
         for (ReplaceScheduleRequest.ScheduleInput entry : entries) {
             AcademicPeriodShift shift = shiftsById.get(entry.shiftId());
             if (shift == null) {
@@ -105,14 +113,49 @@ public class LaboratoryScheduleService {
                         "Dia " + entry.dayOfWeek() + " não está nos dias ativos do turno " + shift.getShiftType());
             }
 
-            // Validate each slot is within [1, classesPerDay]
+            // Validate each slot is within [1, classesPerDay] and appears once
+            Set<Integer> seen = new HashSet<>();
             for (int slot : entry.occupiedSlots()) {
                 if (slot < 1 || slot > shift.getClassesPerDay()) {
                     throw new ShiftValidationException(
                             "Slot " + slot + " fora do range [1, " + shift.getClassesPerDay() + "] para o turno " + shift.getShiftType());
                 }
+                if (!seen.add(slot)) {
+                    throw new ShiftValidationException("Slot " + slot + " repetido no dia " + entry.dayOfWeek());
+                }
+            }
+
+            validateStations(entry, capacity);
+        }
+    }
+
+    private void validateStations(ReplaceScheduleRequest.ScheduleInput entry, int capacity) {
+        if (entry.stationsUsed() == null) {
+            return;
+        }
+        if (entry.stationsUsed().size() != entry.occupiedSlots().size()) {
+            throw new ShiftValidationException(
+                    "Informe o número de estações usadas para cada aula ocupada do dia " + entry.dayOfWeek());
+        }
+        for (Integer stations : entry.stationsUsed()) {
+            if (stations == null || stations < 1) {
+                throw new ShiftValidationException("Cada aula ocupada deve usar ao menos 1 estação");
+            }
+            if (capacity > 0 && stations > capacity) {
+                throw new ShiftValidationException(
+                        "O laboratório tem " + capacity + " estações; não é possível usar " + stations);
             }
         }
+    }
+
+    // Omitted stations default to the full laboratory, matching the original assumption
+    private short[] resolveStations(ReplaceScheduleRequest.ScheduleInput entry, int capacity) {
+        if (entry.stationsUsed() != null) {
+            return toShortArray(entry.stationsUsed());
+        }
+        short[] stations = new short[entry.occupiedSlots().size()];
+        Arrays.fill(stations, (short) Math.max(1, capacity));
+        return stations;
     }
 
     private ScheduleEntryDTO toDTO(LaboratorySchedule schedule) {
@@ -120,7 +163,8 @@ public class LaboratoryScheduleService {
                 schedule.getShift().getId(),
                 schedule.getShift().getShiftType(),
                 schedule.getDayOfWeek(),
-                toIntList(schedule.getOccupiedSlots()));
+                toIntList(schedule.getOccupiedSlots()),
+                toIntList(schedule.getStationsUsed()));
     }
 
     private List<Integer> toIntList(short[] arr) {

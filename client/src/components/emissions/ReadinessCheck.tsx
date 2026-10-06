@@ -6,9 +6,14 @@ interface ReadinessCheckProps {
 }
 
 export function ReadinessCheck({ readiness }: ReadinessCheckProps) {
-  if (readiness.ready && readiness.configurationsWithoutMonitor.length === 0) return null
+  const hasWarnings =
+    readiness.laboratoriesWithoutSchedule.length > 0 ||
+    readiness.laboratoriesWithoutEquipment.length > 0 ||
+    readiness.configurationsWithoutMonitor.length > 0
+  if (readiness.ready && !hasWarnings) return null
 
   const isBlocking = !readiness.ready
+  const noLabCalculable = isBlocking && readiness.missingEmissionFactors.length === 0
 
   return (
     <div
@@ -39,15 +44,18 @@ export function ReadinessCheck({ readiness }: ReadinessCheckProps) {
             <strong>{readiness.missingEmissionFactors.join(', ')}</strong>
           </li>
         )}
+        {noLabCalculable && (
+          <li>Nenhum laboratório tem equipamentos e grade de ocupação definidos.</li>
+        )}
         {readiness.laboratoriesWithoutEquipment.length > 0 && (
           <li>
-            Laboratórios sem equipamentos:{' '}
+            Laboratórios sem equipamentos (não entram no cálculo):{' '}
             <strong>{readiness.laboratoriesWithoutEquipment.join(', ')}</strong>
           </li>
         )}
         {readiness.laboratoriesWithoutSchedule.length > 0 && (
           <li>
-            Laboratórios sem grade de ocupação:{' '}
+            Laboratórios sem grade de ocupação (não entram no cálculo):{' '}
             <strong>{readiness.laboratoriesWithoutSchedule.join(', ')}</strong>
           </li>
         )}
