@@ -1,0 +1,26 @@
+# Tasks: Medições de consumo
+
+> feature: medicoes-de-consumo
+
+## T-055 — Sistemas operacionais por instituição [concluida]
+- Refs: US-043, AC-135
+- Arquivos: server/src/main/java/com/example/carboncalculator/entities/OperatingSystem.java, server/src/main/java/com/example/carboncalculator/repositories/OperatingSystemRepository.java, server/src/main/java/com/example/carboncalculator/services/OperatingSystemService.java, server/src/main/java/com/example/carboncalculator/controllers/OperatingSystemController.java, server/src/main/java/com/example/carboncalculator/dto/OperatingSystemDTO.java, server/src/main/java/com/example/carboncalculator/dto/CreateOperatingSystemRequest.java, server/src/main/java/com/example/carboncalculator/mappers/OperatingSystemMapper.java, server/src/main/java/com/example/carboncalculator/exceptions/DuplicateOperatingSystemException.java, server/src/main/java/com/example/carboncalculator/exceptions/MissingOperatingSystemNameException.java, server/src/main/java/com/example/carboncalculator/exceptions/OperatingSystemHasDependentsException.java, server/src/main/java/com/example/carboncalculator/exceptions/OperatingSystemNotFoundException.java, server/src/main/resources/db/migration/V19__create_operating_system_table.sql, server/src/main/java/com/example/carboncalculator/entities/Configuration.java, server/src/main/java/com/example/carboncalculator/dto/ConfigurationDTO.java, server/src/main/java/com/example/carboncalculator/dto/CreateConfigurationRequest.java, server/src/main/java/com/example/carboncalculator/mappers/ConfigurationMapper.java, server/src/main/java/com/example/carboncalculator/repositories/ConfigurationRepository.java, server/src/main/java/com/example/carboncalculator/services/ConfigurationService.java, client/src/lib/api/operating-systems.ts, client/src/lib/api/configurations.ts, client/src/lib/schemas/configurationSchema.ts, client/src/components/configurations/ConfigurationForm.tsx
+- Notas: substitui o texto livre de sistema operacional na configuração por uma tabela por instituição (RLS). Tela de cadastro adiada (Q-011).
+
+## T-056 — Cadastro de medições de consumo [concluida]
+- Refs: US-036, US-039, US-042, US-043, AC-119, AC-120, AC-124, AC-125, AC-132, AC-133, AC-134
+- Arquivos: server/src/main/java/com/example/carboncalculator/entities/ConsumptionMeasurement.java, server/src/main/java/com/example/carboncalculator/entities/TargetType.java, server/src/main/java/com/example/carboncalculator/repositories/ConsumptionMeasurementRepository.java, server/src/main/java/com/example/carboncalculator/services/ConsumptionMeasurementService.java, server/src/main/java/com/example/carboncalculator/controllers/ConsumptionMeasurementController.java, server/src/main/java/com/example/carboncalculator/dto/ConsumptionMeasurementDTO.java, server/src/main/java/com/example/carboncalculator/dto/ConsumptionMeasurementResponse.java, server/src/main/java/com/example/carboncalculator/dto/CreateConsumptionMeasurementRequest.java, server/src/main/java/com/example/carboncalculator/dto/OutlierWarningDTO.java, server/src/main/java/com/example/carboncalculator/mappers/ConsumptionMeasurementMapper.java, server/src/main/java/com/example/carboncalculator/exceptions/MeasurementNotFoundException.java, server/src/main/java/com/example/carboncalculator/exceptions/GlobalExceptionHandler.java, server/src/main/resources/db/migration/V22__create_consumption_measurement_table.sql, client/src/lib/api/consumption-measurements.ts, client/src/lib/schemas/consumptionMeasurementSchema.ts, client/src/components/consumption-measurements/ConsumptionMeasurementForm.tsx, client/src/components/consumption-measurements/ConsumptionMeasurementList.tsx, client/src/pages/equipment-models/EquipmentModelsPage.tsx
+- Notas: validação do request com Bean Validation (regras por tipo de alvo em @AssertTrue); alerta de discrepância com 2+ medições anteriores e desvio > 50%.
+
+## T-057 — Resolução da fonte de consumo no cálculo [concluida]
+- Refs: US-037, US-038, US-040, US-041, AC-121, AC-122, AC-123, AC-126, AC-127, AC-128, AC-130, AC-132
+- Arquivos: server/src/main/java/com/example/carboncalculator/services/ConsumptionResolver.java, server/src/main/java/com/example/carboncalculator/services/EmissionCalculationService.java, server/src/main/java/com/example/carboncalculator/dto/EmissionResultDTO.java, client/src/lib/api/emissions.ts
+- Notas: hierarquia conjunta > computador + monitor medidos > mista > especificação; uma resolução por configuração por requisição. Sem monitor, a origem não menciona monitor.
+
+## T-058 — Bloquear o cálculo quando falta dado de potência [concluida]
+- Refs: US-040, AC-129
+- Arquivos: server/src/main/java/com/example/carboncalculator/services/ConsumptionResolver.java, server/src/main/java/com/example/carboncalculator/services/EmissionCalculationService.java, server/src/main/java/com/example/carboncalculator/dto/ReadinessDTO.java, client/src/lib/api/emissions.ts, client/src/components/emissions/ReadinessCheck.tsx
+
+## T-059 — Mostrar a origem do consumo na tela de Emissões [concluida]
+- Refs: US-041, AC-131
+- Arquivos: client/src/lib/utils/consumption-source.ts, client/src/components/emissions/ConsumptionSources.tsx, client/src/pages/emissions/EmissionsDashboardPage.tsx
