@@ -7,8 +7,13 @@ export type EmissionResult = {
   periodName: string
   startDate: string
   endDate: string
+  // Last closed day included in the realized values; null before the period starts
+  realizedUntil: string | null
+  schoolDaysElapsed: number
+  schoolDaysTotal: number
   totalEmissionKg: number
   totalEnergyKwh: number
+  projectedEmissionKg: number
   equivalentCarKm: number
   equivalentTreesNeeded: number
   byMonth: MonthEmission[]
@@ -25,6 +30,7 @@ export type EmissionResult = {
     computerWatts: number
     monitorWatts: number
     totalWatts: number
+    consumptionSource: string
   }[]
 }
 
@@ -42,6 +48,11 @@ export type LaboratoryEmission = {
   energyKwh: number
   emissionKg: number
   stationCount: number
+  stationHours: number
+  averageUsagePct: number
+  cancelledClasses: number
+  adjustedClasses: number
+  extraClasses: number
   configurations: ConfigurationEmission[]
 }
 
@@ -95,6 +106,13 @@ export type ReadinessResult = {
   configurationsWithoutMonitor: {
     configurationId: string
     label: string
+    laboratoryNames: string[]
+  }[]
+  // Configurations whose computer and/or monitor has no measurement and no specified power
+  configurationsWithoutConsumption: {
+    configurationId: string
+    label: string
+    missingParts: string[]
     laboratoryNames: string[]
   }[]
 }

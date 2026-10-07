@@ -110,7 +110,6 @@ public class EmissionFactorService {
                 factor.getId(),
                 factor.getReferenceMonth(),
                 factor.getValue(),
-                factor.getSource(),
-                factor.getCreatedAt());
+                factor.getSource());
     }
 }

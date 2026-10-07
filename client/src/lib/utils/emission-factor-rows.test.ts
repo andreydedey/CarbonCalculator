@@ -8,7 +8,6 @@ function makeFactor(referenceMonth: string, value = 0.05): EmissionFactor {
     referenceMonth,
     value,
     source: 'MCTI — SIN',
-    createdAt: '2025-01-01T00:00:00Z',
   }
 }
 

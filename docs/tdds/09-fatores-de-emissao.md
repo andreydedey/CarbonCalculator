@@ -25,7 +25,7 @@ O branch `main` contém:
 - `EmissionFactorRepository` — queries para existência por mês, listagem filtrada por intervalo de YearMonth
 - `EmissionFactorService` — CRUD com validações: mês obrigatório, valor > 0, fonte obrigatória, duplicata bloqueada (409)
 - `EmissionFactorController` — POST/PUT/DELETE com `@PreAuthorize("hasRole('ADMIN')")`, GET público, rota base `/emission-factors`
-- DTOs: `CreateEmissionFactorRequest(referenceMonth, value, source)` e `EmissionFactorDTO(id, referenceMonth, value, source, createdAt)`
+- DTOs: `CreateEmissionFactorRequest(referenceMonth, value, source)` e `EmissionFactorDTO(id, referenceMonth, value, source)`
 - V16: tabela original global (year + month columns). V18: refatoração para `reference_month DATE`, adição de `institution_id` com RLS, novo UNIQUE `(institution_id, reference_month)`
 - Frontend `EmissionFactorsPage.tsx`: tabela com formulário inline (CRUD), filtro por ano, colunas Ano/Mês/Valor/Fonte/Ações
 - `client/src/lib/api/emission-factors.ts`: funções `listEmissionFactors`, `createEmissionFactor`, `updateEmissionFactor`, `deleteEmissionFactor`
@@ -122,8 +122,6 @@ O administrador precisa conferir mês a mês manualmente se falta algum fator pa
 | `value`            | `NUMERIC(10, 6)`     | NOT NULL                                    |
 | `source`           | `VARCHAR(500)`       | NOT NULL                                    |
 | `institution_id`   | `UUID`               | FK → institution(id), NOT NULL              |
-| `created_at`       | `TIMESTAMP WITH TZ`  | NOT NULL                                    |
-| `updated_at`       | `TIMESTAMP WITH TZ`  | NOT NULL                                    |
 
 **Constraints:**
 - `UNIQUE (institution_id, reference_month)` — um fator por mês por instituição
@@ -163,8 +161,7 @@ O administrador precisa conferir mês a mês manualmente se falta algum fator pa
   "id": "aaa-...",
   "referenceMonth": "2025-06",
   "value": 0.048012,
-  "source": "MCTI — Fatores de Emissão de CO₂ do SIN, ciclo 2025",
-  "createdAt": "2026-10-01T14:30:00Z"
+  "source": "MCTI — Fatores de Emissão de CO₂ do SIN, ciclo 2025"
 }
 ```
 
@@ -179,7 +176,7 @@ O administrador precisa conferir mês a mês manualmente se falta algum fator pa
 
 ### Backend — Entidades e repositórios
 
-**`EmissionFactor`** — não requer alterações. Campos atuais: `id`, `referenceMonth` (YearMonth com `YearMonthAttributeConverter`), `value`, `source`, `institution` (ManyToOne LAZY), `createdAt`, `updatedAt`.
+**`EmissionFactor`** — não requer alterações. Campos atuais: `id`, `referenceMonth` (YearMonth com `YearMonthAttributeConverter`), `value`, `source`, `institution` (ManyToOne LAZY).
 
 **`EmissionFactorRepository`** — não requer alterações. Métodos atuais:
 

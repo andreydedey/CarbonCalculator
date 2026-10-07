@@ -32,8 +32,10 @@ import com.example.carboncalculator.dto.AuthResponse;
 import com.example.carboncalculator.dto.CreateConfigurationRequest;
 import com.example.carboncalculator.dto.CreateEquipmentModelRequest;
 import com.example.carboncalculator.dto.CreateInstitutionRequest;
+import com.example.carboncalculator.dto.CreateOperatingSystemRequest;
 import com.example.carboncalculator.dto.EquipmentModelDTO;
 import com.example.carboncalculator.dto.LoginRequest;
+import com.example.carboncalculator.dto.OperatingSystemDTO;
 
 /**
  * Integration tests for EquipmentModel (US-012..US-014) against a real
@@ -131,7 +133,12 @@ class EquipmentModelControllerIntegrationTest {
     }
 
     private UUID createConfigurationForModel(UUID institutionId, UUID modelId, String os) {
-        CreateConfigurationRequest request = new CreateConfigurationRequest(modelId, os, null);
+        ResponseEntity<OperatingSystemDTO> osResponse = restTemplate.exchange("/operating-systems", HttpMethod.POST,
+                new HttpEntity<>(new CreateOperatingSystemRequest(os), headersFor(institutionId)),
+                OperatingSystemDTO.class);
+        assertEquals(HttpStatus.CREATED, osResponse.getStatusCode());
+        CreateConfigurationRequest request =
+                new CreateConfigurationRequest(modelId, osResponse.getBody().id(), null);
         ResponseEntity<String> response = restTemplate.exchange("/configurations", HttpMethod.POST,
                 new HttpEntity<>(request, headersFor(institutionId)), String.class);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());

@@ -1,12 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
-import { Calculator, CircleCheck } from 'lucide-react'
+import { CircleCheck } from 'lucide-react'
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { ConsumptionSources } from '@/components/emissions/ConsumptionSources'
 import { EquivalenceCards } from '@/components/emissions/EquivalenceCards'
 import { ExportButton } from '@/components/emissions/ExportButton'
 import { ReadinessCheck } from '@/components/emissions/ReadinessCheck'
-import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
+import { Progress } from '@/components/ui/progress'
 import {
   Select,
   SelectContent,
@@ -25,6 +27,7 @@ import {
 } from '@/components/ui/table'
 import { listAcademicPeriods } from '@/lib/api/academic-periods'
 import { type EmissionResult, getEmissions, getReadiness } from '@/lib/api/emissions'
+import { formatDate } from '@/lib/utils/occupation'
 
 function MethodologyCard() {
   return (
@@ -44,15 +47,15 @@ function MethodologyCard() {
       <CardContent className="rounded-lg bg-muted p-5 flex flex-col gap-3">
         <span className="text-xs font-medium text-muted-foreground">Fórmula aplicada</span>
         <span className="font-mono text-base font-semibold">
-          E = Σ (P_equip × h_uso × d_letivos) × FE_sin
+          E = Σ_dias Σ_aulas (P_estação × estações_usadas × duração_aula) × FE_mês
         </span>
-        <div className="flex gap-5">
+        <div className="flex flex-wrap gap-5">
           {[
             ['E', '= Emissão (kg CO₂)'],
-            ['P_equip', '= Potência (kW)'],
-            ['h_uso', '= Horas/dia'],
-            ['d_letivos', '= Dias letivos'],
-            ['FE_sin', '= Fator emissão'],
+            ['P_estação', '= Potência por estação (kW)'],
+            ['estações_usadas', '= da grade ou da exceção do dia'],
+            ['duração_aula', '= horas'],
+            ['FE_mês', '= Fator do mês'],
           ].map(([sym, desc]) => (
             <div key={sym} className="flex items-center gap-1">
               <span className="font-mono text-[11px] font-semibold text-primary">{sym}</span>
@@ -60,6 +63,9 @@ function MethodologyCard() {
             </div>
           ))}
         </div>
+        <span className="text-[11px] text-muted-foreground">
+          Estações não usadas são consideradas desligadas.
+        </span>
       </CardContent>
     </Card>
   )
@@ -85,15 +91,7 @@ function MetricCard({
   )
 }
 
-function ResultMetrics({
-  result,
-  totalSchoolDays,
-  periodName,
-}: {
-  result: EmissionResult
-  totalSchoolDays: number
-  periodName: string
-}) {
+function ResultMetrics({ result }: { result: EmissionResult }) {
   const avgFactor =
     result.emissionFactors.length > 0
       ? result.emissionFactors.reduce((s, f) => s + f.value, 0) / result.emissionFactors.length
@@ -101,127 +99,168 @@ function ResultMetrics({
 
   const TARIFF = 0.7
   const estimatedCost = result.totalEnergyKwh * TARIFF
+  const progress =
+    result.schoolDaysTotal > 0 ? (result.schoolDaysElapsed / result.schoolDaysTotal) * 100 : 0
+  const until = result.realizedUntil ? formatDate(result.realizedUntil) : null
 
   return (
-    <div className="flex gap-4">
-      <MetricCard
-        highlighted
-        label="EMISSÃO TOTAL SEMESTRE"
-        value={`${formatNumber(result.totalEmissionKg)} kg CO₂`}
-        subtitle={`${periodName} · ${totalSchoolDays} dias letivos`}
-      />
-      <MetricCard
-        label="CONSUMO ESTIMADO"
-        value={`${formatNumber(result.totalEnergyKwh)} kWh`}
-        subtitle="energia elétrica total"
-      />
-      <MetricCard
-        label="FATOR DE EMISSÃO SIN"
-        value={avgFactor != null ? avgFactor.toFixed(4).replace('.', ',') : '—'}
-        subtitle={`tCO₂/MWh · Média ${new Date().getFullYear()}`}
-      />
-      <MetricCard
-        label="CUSTO ESTIMADO"
-        value={`R$ ${formatNumber(estimatedCost)}`}
-        subtitle={`tarifa média R$ ${TARIFF.toFixed(2).replace('.', ',')}/kWh`}
-      />
+    <div className="flex flex-col gap-4">
+      <div className="flex gap-4">
+        <Card className="flex-[2] gap-2 bg-accent p-5">
+          <span className="text-xs font-medium tracking-wider text-muted-foreground">
+            EMISSÃO REALIZADA
+          </span>
+          <span className="font-mono text-[26px] font-semibold">
+            {formatNumber(result.totalEmissionKg)} kg CO₂
+          </span>
+          <span className="text-[11px] text-muted-foreground">
+            {until
+              ? `até ${until} · ${result.schoolDaysElapsed} de ${result.schoolDaysTotal} dias letivos`
+              : 'o período ainda não começou'}
+          </span>
+          <Progress value={progress} className="h-1.5" />
+        </Card>
+        <Card className="flex-1 gap-2 border-dashed p-5">
+          <span className="text-xs font-medium tracking-wider text-muted-foreground">
+            PROJEÇÃO DO PERÍODO
+          </span>
+          <span className="font-mono text-[22px] font-semibold">
+            {formatNumber(result.projectedEmissionKg)} kg CO₂
+          </span>
+          <span className="text-[11px] text-muted-foreground">
+            realizado + dias restantes pela grade
+          </span>
+        </Card>
+      </div>
+      <div className="flex gap-4">
+        <MetricCard
+          label="CONSUMO REALIZADO"
+          value={`${formatNumber(result.totalEnergyKwh)} kWh`}
+          subtitle={until ? `energia elétrica até ${until}` : 'energia elétrica'}
+        />
+        <MetricCard
+          label="FATOR DE EMISSÃO SIN"
+          value={avgFactor != null ? avgFactor.toFixed(4).replace('.', ',') : '—'}
+          subtitle="tCO₂/MWh · média dos meses do período"
+        />
+        <MetricCard
+          label="CUSTO ESTIMADO"
+          value={`R$ ${formatNumber(estimatedCost)}`}
+          subtitle={`tarifa média R$ ${TARIFF.toFixed(2).replace('.', ',')}/kWh`}
+        />
+      </div>
     </div>
   )
 }
 
-function LabDetailTable({ result }: { result: EmissionResult }) {
-  const totalSchoolDays = result.byMonth.reduce((s, m) => s + m.schoolDays, 0)
+function exceptionsLabel(lab: EmissionResult['byLaboratory'][number]): string | null {
+  const parts = [
+    lab.cancelledClasses > 0 ? `${lab.cancelledClasses} canc.` : null,
+    lab.adjustedClasses > 0 ? `${lab.adjustedClasses} ajust.` : null,
+    lab.extraClasses > 0 ? `${lab.extraClasses} extra` : null,
+  ].filter(Boolean)
+  return parts.length > 0 ? parts.join(' · ') : null
+}
 
+function LabDetailTable({ result }: { result: EmissionResult }) {
   const labRows = result.byLaboratory.map((lab) => {
     const totalWatts = lab.configurations.reduce((s, c) => s + c.consumptionWatts * c.quantity, 0)
-    const hoursPerDay =
-      totalWatts > 0 && totalSchoolDays > 0
-        ? (lab.energyKwh * 1000) / (totalWatts * totalSchoolDays)
-        : null
     const pct = result.totalEmissionKg > 0 ? (lab.emissionKg / result.totalEmissionKg) * 100 : 0
-
-    return { lab, totalWatts, hoursPerDay, pct }
+    return { lab, totalWatts, pct }
   })
 
   const totals = {
-    equips: labRows.reduce((s, r) => s + r.lab.stationCount, 0),
+    stations: labRows.reduce((s, r) => s + r.lab.stationCount, 0),
     watts: labRows.reduce((s, r) => s + r.totalWatts, 0),
-    kwh: result.totalEnergyKwh,
-    emission: result.totalEmissionKg,
+    stationHours: labRows.reduce((s, r) => s + r.lab.stationHours, 0),
+    exceptions: labRows.reduce(
+      (s, r) => s + r.lab.cancelledClasses + r.lab.adjustedClasses + r.lab.extraClasses,
+      0,
+    ),
   }
+  const until = result.realizedUntil ? formatDate(result.realizedUntil) : null
+  const head = 'text-xs tracking-wider text-muted-foreground'
 
   return (
     <Card className="overflow-hidden">
       <div className="flex flex-col gap-1 px-6 py-5 border-b border-border">
         <h2 className="text-base font-semibold">Detalhamento por Laboratório</h2>
         <p className="text-[13px] text-muted-foreground">
-          Decomposição do cálculo de emissões por laboratório e tipo de equipamento
+          Decomposição do realizado{until ? ` até ${until}` : ''} por laboratório, com as exceções
+          aplicadas
         </p>
       </div>
       <Table>
         <TableHeader>
           <TableRow className="bg-muted hover:bg-muted">
-            <TableHead className="px-6 text-xs tracking-wider text-muted-foreground">
-              LABORATÓRIO
-            </TableHead>
-            <TableHead className="text-xs tracking-wider text-muted-foreground">
-              EQUIPAMENTOS
-            </TableHead>
-            <TableHead className="text-xs tracking-wider text-muted-foreground">
-              POTÊNCIA TOTAL
-            </TableHead>
-            <TableHead className="text-xs tracking-wider text-muted-foreground">
-              HORAS/DIA
-            </TableHead>
-            <TableHead className="text-xs tracking-wider text-muted-foreground">
-              CONSUMO (KWH)
-            </TableHead>
-            <TableHead className="text-xs tracking-wider text-muted-foreground">
-              EMISSÃO (KG CO₂)
-            </TableHead>
-            <TableHead className="text-xs tracking-wider text-muted-foreground text-right pr-6">
-              % DO TOTAL
-            </TableHead>
+            <TableHead className={`px-6 ${head}`}>LABORATÓRIO</TableHead>
+            <TableHead className={head}>ESTAÇÕES</TableHead>
+            <TableHead className={head}>POTÊNCIA</TableHead>
+            <TableHead className={head}>ESTAÇÕES-HORA</TableHead>
+            <TableHead className={head}>USO MÉDIO</TableHead>
+            <TableHead className={head}>EXCEÇÕES</TableHead>
+            <TableHead className={head}>CONSUMO (KWH)</TableHead>
+            <TableHead className={head}>EMISSÃO (KG CO₂)</TableHead>
+            <TableHead className={`${head} text-right pr-6`}>% DO TOTAL</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {labRows.map((row, i) => (
-            <TableRow key={row.lab.laboratoryId} className={i % 2 === 1 ? 'bg-[#fbfcf9]' : ''}>
-              <TableCell className="px-6 text-[13px] font-semibold">
-                {row.lab.laboratoryName}
-              </TableCell>
-              <TableCell className="font-mono text-[13px]">{row.lab.stationCount}</TableCell>
-              <TableCell className="font-mono text-xs text-muted-foreground">
-                {formatNumber(row.totalWatts)} W
-              </TableCell>
-              <TableCell className="font-mono text-[13px]">
-                {row.hoursPerDay != null ? row.hoursPerDay.toFixed(1).replace('.', ',') : '—'}
-              </TableCell>
-              <TableCell className="font-mono text-[13px]">
-                {formatNumber(row.lab.energyKwh)}
-              </TableCell>
-              <TableCell className="font-mono text-[13px] font-semibold">
-                {formatNumber(row.lab.emissionKg)}
-              </TableCell>
-              <TableCell className="text-[13px] font-semibold text-primary text-right pr-6">
-                {row.pct.toFixed(1).replace('.', ',')}%
-              </TableCell>
-            </TableRow>
-          ))}
+          {labRows.map((row, i) => {
+            const exceptions = exceptionsLabel(row.lab)
+            return (
+              <TableRow key={row.lab.laboratoryId} className={i % 2 === 1 ? 'bg-[#fbfcf9]' : ''}>
+                <TableCell className="px-6 text-[13px] font-semibold">
+                  {row.lab.laboratoryName}
+                </TableCell>
+                <TableCell className="font-mono text-[13px]">{row.lab.stationCount}</TableCell>
+                <TableCell className="font-mono text-xs text-muted-foreground">
+                  {formatNumber(row.totalWatts)} W
+                </TableCell>
+                <TableCell className="font-mono text-[13px]">
+                  {formatNumber(row.lab.stationHours)} h
+                </TableCell>
+                <TableCell className="font-mono text-[13px]">
+                  {row.lab.averageUsagePct.toFixed(0)}%
+                </TableCell>
+                <TableCell>
+                  {exceptions ? (
+                    <Badge variant="outline">{exceptions}</Badge>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+                <TableCell className="font-mono text-[13px]">
+                  {formatNumber(row.lab.energyKwh)}
+                </TableCell>
+                <TableCell className="font-mono text-[13px] font-semibold">
+                  {formatNumber(row.lab.emissionKg)}
+                </TableCell>
+                <TableCell className="text-[13px] font-semibold text-primary text-right pr-6">
+                  {row.pct.toFixed(1).replace('.', ',')}%
+                </TableCell>
+              </TableRow>
+            )
+          })}
         </TableBody>
         <TableFooter className="bg-muted">
           <TableRow className="hover:bg-muted">
             <TableCell className="px-6 text-[13px] font-bold">Total</TableCell>
-            <TableCell className="font-mono text-[13px] font-semibold">{totals.equips}</TableCell>
+            <TableCell className="font-mono text-[13px] font-semibold">{totals.stations}</TableCell>
             <TableCell className="font-mono text-[13px] font-semibold">
               {formatNumber(totals.watts)} W
             </TableCell>
-            <TableCell className="text-[13px] text-muted-foreground">—</TableCell>
             <TableCell className="font-mono text-[13px] font-semibold">
-              {formatNumber(totals.kwh)}
+              {formatNumber(totals.stationHours)} h
+            </TableCell>
+            <TableCell className="text-[13px] text-muted-foreground">—</TableCell>
+            <TableCell className="text-[13px]">
+              {totals.exceptions > 0 ? `${totals.exceptions} ajustes` : '—'}
+            </TableCell>
+            <TableCell className="font-mono text-[13px] font-semibold">
+              {formatNumber(result.totalEnergyKwh)}
             </TableCell>
             <TableCell className="font-mono text-[13px] font-bold">
-              {formatNumber(totals.emission)}
+              {formatNumber(result.totalEmissionKg)}
             </TableCell>
             <TableCell className="text-[13px] font-bold text-primary text-right pr-6">
               100%
@@ -259,19 +298,13 @@ export function EmissionsDashboardPage() {
     enabled: !!resolvedPeriodId,
   })
 
-  const {
-    data: result,
-    isLoading: resultLoading,
-    refetch: refetchEmissions,
-  } = useQuery({
+  const { data: result, isLoading: resultLoading } = useQuery({
     queryKey: ['emissions', resolvedPeriodId],
     queryFn: () => getEmissions(resolvedPeriodId as string),
     enabled: !!resolvedPeriodId && readiness?.ready === true,
   })
 
   const selectedPeriod = periods.find((p) => p.id === resolvedPeriodId)
-
-  const totalSchoolDays = result?.byMonth.reduce((s, m) => s + m.schoolDays, 0) ?? 0
 
   function handlePeriodChange(id: string) {
     setSearchParams({ periodId: id })
@@ -305,10 +338,6 @@ export function EmissionsDashboardPage() {
           {result && selectedPeriod && (
             <ExportButton periodId={selectedPeriod.id} periodName={selectedPeriod.name} />
           )}
-          <Button onClick={() => refetchEmissions()} disabled={!resolvedPeriodId}>
-            <Calculator className="size-4" />
-            Recalcular
-          </Button>
         </div>
       </div>
 
@@ -332,18 +361,21 @@ export function EmissionsDashboardPage() {
             <div className="flex flex-col gap-6">
               <MethodologyCard />
 
-              <ResultMetrics
-                result={result}
-                totalSchoolDays={totalSchoolDays}
-                periodName={selectedPeriod?.name ?? ''}
-              />
+              <ResultMetrics result={result} />
 
               <LabDetailTable result={result} />
+
+              <ConsumptionSources sources={result.consumptionSources} />
 
               <EquivalenceCards
                 carKm={result.equivalentCarKm}
                 treesNeeded={result.equivalentTreesNeeded}
                 totalEnergyKwh={result.totalEnergyKwh}
+                basis={
+                  result.realizedUntil
+                    ? `com base no realizado até ${formatDate(result.realizedUntil)}`
+                    : undefined
+                }
               />
             </div>
           ) : null}

@@ -35,7 +35,7 @@ export const MonitorCard: React.FC<MonitorCardProps> = ({ monitor, onEdit, onDel
         </div>
         <div className="flex flex-col gap-0.5">
           <span className="text-base font-semibold">{monitor.name}</span>
-          <span className="text-[13px] text-muted-foreground">
+          <span className="text-[13px] font-semibold text-primary">
             {monitor.watts ? `${monitor.watts}W` : '-'}
           </span>
         </div>

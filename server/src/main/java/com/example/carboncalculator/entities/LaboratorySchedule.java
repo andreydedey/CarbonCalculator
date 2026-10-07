@@ -1,6 +1,5 @@
 package com.example.carboncalculator.entities;
 
-import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -10,7 +9,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.JdbcTypeCode;
@@ -50,11 +48,8 @@ public class LaboratorySchedule {
     @Column(name = "occupied_slots", nullable = false, columnDefinition = "smallint[]")
     private short[] occupiedSlots;
 
-    @Column(name = "created_at", nullable = false)
-    private OffsetDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = OffsetDateTime.now();
-    }
+    // Stations used by each occupied slot, aligned by index with occupiedSlots
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "stations_used", nullable = false, columnDefinition = "smallint[]")
+    private short[] stationsUsed;
 }

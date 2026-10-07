@@ -1,30 +1,39 @@
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Moon, Sun, Sunset } from 'lucide-react'
 import type React from 'react'
-import { useMemo } from 'react'
-import { Checkbox } from '@/components/ui/checkbox'
+import { useMemo, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { StationsField } from '@/components/academic-periods/StationsField'
+import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { DAY_FULL_LABELS, DAY_SHORT_LABELS, SHIFT_LABELS } from '@/lib/academic-period-constants'
 import type { Shift, ShiftType } from '@/lib/api/academic-periods'
+import { type StationsFormValues, stationsFormSchema } from '@/lib/schemas/occupationSchema'
+import { USAGE_TIER_CLASSES, usageTier } from '@/lib/utils/occupation'
 
-const SHIFT_META: Record<ShiftType, { label: string; icon: typeof Sun; color: string }> = {
-  MORNING: { label: 'Manhã', icon: Sun, color: 'text-amber-500' },
-  AFTERNOON: { label: 'Tarde', icon: Sunset, color: 'text-orange-500' },
-  EVENING: { label: 'Noite', icon: Moon, color: 'text-indigo-500' },
+export const SHIFT_META: Record<ShiftType, { label: string; icon: typeof Sun; color: string }> = {
+  MORNING: { label: SHIFT_LABELS.MORNING, icon: Sun, color: 'text-amber-500' },
+  AFTERNOON: { label: SHIFT_LABELS.AFTERNOON, icon: Sunset, color: 'text-orange-500' },
+  EVENING: { label: SHIFT_LABELS.EVENING, icon: Moon, color: 'text-indigo-500' },
 }
 
-const DAY_LABELS: Record<number, string> = {
-  1: 'Seg',
-  2: 'Ter',
-  3: 'Qua',
-  4: 'Qui',
-  5: 'Sex',
-  6: 'Sáb',
+/** "todas as quintas" / "todos os sábados" */
+function everyDay(day: number): string {
+  const plural = `${DAY_FULL_LABELS[day].toLowerCase()}s`
+  return day >= 6 ? `todos os ${plural}` : `todas as ${plural}`
 }
 
-export type Occupancy = Record<string, Record<number, Set<number>>>
+const EMPTY_DAY: Record<number, number> = {}
+
+/** shiftId → dayOfWeek → slot → stations used */
+export type Occupancy = Record<string, Record<number, Record<number, number>>>
 
 interface OccupationGridProps {
   shifts: Shift[]
   occupancy: Occupancy
-  onToggle: (shiftId: string, dayOfWeek: number, slot: number) => void
+  capacity: number
+  readOnly?: boolean
+  onSetStations: (shiftId: string, dayOfWeek: number, slot: number, stations: number | null) => void
 }
 
 function parseTime(time: string): number {
@@ -38,7 +47,7 @@ function fmtMin(totalMinutes: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
 
-function slotTimes(shift: Shift, slot: number) {
+export function slotTimes(shift: Shift, slot: number) {
   const base = parseTime(shift.startTime)
   const start = base + (slot - 1) * (shift.classDurationMinutes + shift.breakDurationMinutes)
   return { start: fmtMin(start), end: fmtMin(start + shift.classDurationMinutes) }
@@ -53,8 +62,83 @@ function breakTimes(shift: Shift, afterSlot: number) {
   return { start: fmtMin(start), end: fmtMin(start + shift.breakDurationMinutes) }
 }
 
-export const OccupationGrid: React.FC<OccupationGridProps> = ({ shifts, occupancy, onToggle }) => {
+function formatStationHours(hours: number): string {
+  return `${Math.round(hours).toLocaleString('pt-BR')} estações-hora`
+}
+
+function StationsEditor({
+  title,
+  help,
+  initial,
+  capacity,
+  occupied,
+  onSave,
+  onRemove,
+  onClose,
+}: {
+  title: string
+  help: string
+  initial: number
+  capacity: number
+  occupied: boolean
+  onSave: (stations: number) => void
+  onRemove: () => void
+  onClose: () => void
+}) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<StationsFormValues>({
+    resolver: zodResolver(stationsFormSchema(capacity)),
+    defaultValues: { stations: initial },
+  })
+
+  return (
+    <form className="flex flex-col gap-3" onSubmit={handleSubmit((v) => onSave(v.stations))}>
+      <p className="text-sm font-semibold">{title}</p>
+      <StationsField
+        autoFocus
+        registration={register('stations')}
+        capacity={capacity}
+        error={errors.stations?.message}
+        hint={help}
+      />
+      <div className="flex items-center gap-2 border-t pt-3">
+        {occupied && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-destructive"
+            onClick={onRemove}
+          >
+            Remover aula
+          </Button>
+        )}
+        <div className="ml-auto flex gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button type="submit" size="sm">
+            Salvar
+          </Button>
+        </div>
+      </div>
+    </form>
+  )
+}
+
+export const OccupationGrid: React.FC<OccupationGridProps> = ({
+  shifts,
+  occupancy,
+  capacity,
+  readOnly,
+  onSetStations,
+}) => {
   const enabledShifts = shifts.filter((s) => s.enabled)
+  const [editing, setEditing] = useState<string | null>(null)
+  const [lastValue, setLastValue] = useState<number | null>(null)
 
   const allDays = useMemo(() => {
     const daySet = new Set<number>()
@@ -72,15 +156,20 @@ export const OccupationGrid: React.FC<OccupationGridProps> = ({ shifts, occupanc
     )
   }
 
+  const dayStationHours = (shift: Shift, day: number) =>
+    (Object.values(occupancy[shift.id]?.[day] ?? EMPTY_DAY).reduce((s, v) => s + v, 0) *
+      shift.classDurationMinutes) /
+    60
+
   return (
     <div className="rounded-lg border overflow-hidden">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b bg-muted/50">
-            <th className="px-4 py-2 text-left font-medium min-w-[200px]">Aula</th>
+            <th className="px-4 py-2 text-left font-medium min-w-[180px]">Aula</th>
             {allDays.map((d) => (
-              <th key={d} className="px-3 py-2 text-center font-medium w-16">
-                {DAY_LABELS[d]}
+              <th key={d} className="px-2 py-2 text-center font-medium">
+                {DAY_SHORT_LABELS[d]}
               </th>
             ))}
             <th className="px-3 py-2 text-center font-medium w-16">Total</th>
@@ -94,13 +183,12 @@ export const OccupationGrid: React.FC<OccupationGridProps> = ({ shifts, occupanc
 
           let shiftTotal = 0
           for (const day of shift.activeDays) {
-            shiftTotal += shiftOcc[day]?.size ?? 0
+            shiftTotal += Object.keys(shiftOcc[day] ?? {}).length
           }
           const totalPossible = shift.classesPerDay * shift.activeDays.length
 
           return (
             <tbody key={shift.id}>
-              {/* Shift header */}
               <tr className="bg-muted/30 border-b">
                 <td colSpan={allDays.length + 2} className="px-4 py-2">
                   <div className="flex items-center gap-2">
@@ -116,13 +204,11 @@ export const OccupationGrid: React.FC<OccupationGridProps> = ({ shifts, occupanc
                 </td>
               </tr>
 
-              {/* Slot rows + break rows */}
               {Array.from({ length: shift.classesPerDay }, (_, i) => i + 1).flatMap((slot) => {
                 const t = slotTimes(shift, slot)
-                const slotCount = shift.activeDays.reduce(
-                  (sum, day) => sum + (shiftOcc[day]?.has(slot) ? 1 : 0),
-                  0,
-                )
+                const slotCount = shift.activeDays.filter(
+                  (day) => shiftOcc[day]?.[slot] != null,
+                ).length
 
                 const rows = [
                   <tr key={`s-${slot}`} className="border-b">
@@ -132,17 +218,59 @@ export const OccupationGrid: React.FC<OccupationGridProps> = ({ shifts, occupanc
                       </span>
                     </td>
                     {allDays.map((day) => {
-                      const isActive = shift.activeDays.includes(day)
-                      const checked = shiftOcc[day]?.has(slot) ?? false
-                      return (
-                        <td key={day} className="px-3 py-1.5 text-center">
-                          {isActive ? (
-                            <Checkbox
-                              checked={checked}
-                              onCheckedChange={() => onToggle(shift.id, day, slot)}
-                            />
-                          ) : (
+                      if (!shift.activeDays.includes(day)) {
+                        return (
+                          <td key={day} className="px-2 py-1.5 text-center">
                             <span className="text-muted-foreground/30">—</span>
+                          </td>
+                        )
+                      }
+                      const stations = shiftOcc[day]?.[slot]
+                      const key = `${shift.id}-${day}-${slot}`
+                      const cell = (
+                        <button
+                          type="button"
+                          disabled={readOnly}
+                          className={`h-7 w-full rounded-md font-mono text-[11px] font-semibold transition-colors ${
+                            stations != null
+                              ? USAGE_TIER_CLASSES[usageTier(stations, capacity)]
+                              : 'border bg-card hover:bg-muted'
+                          }`}
+                          aria-label={`${DAY_FULL_LABELS[day]}, ${slot}ª aula`}
+                        >
+                          {stations != null ? `${stations}/${capacity}` : ''}
+                        </button>
+                      )
+                      return (
+                        <td key={day} className="px-2 py-1.5 text-center">
+                          {readOnly ? (
+                            cell
+                          ) : (
+                            <Popover
+                              open={editing === key}
+                              onOpenChange={(open) => setEditing(open ? key : null)}
+                            >
+                              <PopoverTrigger asChild>{cell}</PopoverTrigger>
+                              <PopoverContent className="w-80">
+                                <StationsEditor
+                                  title={`${DAY_FULL_LABELS[day]} · ${meta.label} · ${slot}ª aula (${t.start}–${t.end})`}
+                                  help={`Vale para ${everyDay(day)} do período.`}
+                                  initial={stations ?? lastValue ?? Math.max(capacity, 1)}
+                                  capacity={capacity}
+                                  occupied={stations != null}
+                                  onSave={(value) => {
+                                    onSetStations(shift.id, day, slot, value)
+                                    setLastValue(value)
+                                    setEditing(null)
+                                  }}
+                                  onRemove={() => {
+                                    onSetStations(shift.id, day, slot, null)
+                                    setEditing(null)
+                                  }}
+                                  onClose={() => setEditing(null)}
+                                />
+                              </PopoverContent>
+                            </Popover>
                           )}
                         </td>
                       )
@@ -170,23 +298,21 @@ export const OccupationGrid: React.FC<OccupationGridProps> = ({ shifts, occupanc
                 return rows
               })}
 
-              {/* Shift subtotal */}
               <tr className="border-b bg-muted/30">
                 <td className="px-4 py-1.5 text-xs font-medium text-muted-foreground">
                   Subtotal {meta.label}
                 </td>
-                {allDays.map((day) => {
-                  const isActive = shift.activeDays.includes(day)
-                  const count = shiftOcc[day]?.size ?? 0
-                  const hours = (count * shift.classDurationMinutes) / 60
-                  return (
-                    <td key={day} className="px-3 py-1.5 text-center text-xs font-mono">
-                      {isActive ? `${hours.toFixed(1)}h` : '—'}
-                    </td>
-                  )
-                })}
+                {allDays.map((day) => (
+                  <td key={day} className="px-2 py-1.5 text-center text-xs font-mono">
+                    {shift.activeDays.includes(day)
+                      ? formatStationHours(dayStationHours(shift, day))
+                      : '—'}
+                  </td>
+                ))}
                 <td className="px-3 py-1.5 text-center text-xs font-mono font-semibold">
-                  {((shiftTotal * shift.classDurationMinutes) / 60).toFixed(1)}h
+                  {formatStationHours(
+                    shift.activeDays.reduce((s, day) => s + dayStationHours(shift, day), 0),
+                  )}
                 </td>
               </tr>
             </tbody>
@@ -195,32 +321,38 @@ export const OccupationGrid: React.FC<OccupationGridProps> = ({ shifts, occupanc
 
         <tfoot>
           <tr className="bg-muted/50 font-semibold">
-            <td className="px-4 py-2 text-xs">Total por Dia</td>
+            <td className="px-4 py-2 text-xs">Total por dia</td>
             {allDays.map((day) => {
-              let dayHours = 0
+              let classes = 0
+              let hours = 0
               for (const shift of enabledShifts) {
-                if (shift.activeDays.includes(day)) {
-                  dayHours +=
-                    ((occupancy[shift.id]?.[day]?.size ?? 0) * shift.classDurationMinutes) / 60
-                }
+                if (!shift.activeDays.includes(day)) continue
+                classes += Object.keys(occupancy[shift.id]?.[day] ?? {}).length
+                hours += dayStationHours(shift, day)
               }
               return (
-                <td key={day} className="px-3 py-2 text-center text-xs font-mono">
-                  {dayHours > 0 ? `${dayHours.toFixed(1)}h` : '—'}
+                <td key={day} className="px-2 py-2 text-center text-xs font-mono">
+                  {classes > 0 ? (
+                    <div className="flex flex-col">
+                      <span>{classes} aulas</span>
+                      <span className="font-normal text-muted-foreground">
+                        {formatStationHours(hours)}
+                      </span>
+                    </div>
+                  ) : (
+                    '—'
+                  )}
                 </td>
               )
             })}
             <td className="px-3 py-2 text-center text-xs font-mono">
-              {(() => {
-                let total = 0
-                for (const shift of enabledShifts) {
-                  const shiftOcc = occupancy[shift.id] ?? {}
-                  for (const day of shift.activeDays) {
-                    total += ((shiftOcc[day]?.size ?? 0) * shift.classDurationMinutes) / 60
-                  }
-                }
-                return `${total.toFixed(1)}h`
-              })()}
+              {formatStationHours(
+                enabledShifts.reduce(
+                  (sum, shift) =>
+                    sum + shift.activeDays.reduce((s, day) => s + dayStationHours(shift, day), 0),
+                  0,
+                ),
+              )}
             </td>
           </tr>
         </tfoot>

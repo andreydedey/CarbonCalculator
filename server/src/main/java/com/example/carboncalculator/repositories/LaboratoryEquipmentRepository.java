@@ -32,4 +32,11 @@ public interface LaboratoryEquipmentRepository extends JpaRepository<LaboratoryE
             WHERE le.configuration.id = :configId
             """)
     int sumQuantityByConfigurationId(@Param("configId") UUID configurationId);
+
+    @Query("""
+            SELECT COALESCE(SUM(le.quantity), 0)
+            FROM LaboratoryEquipment le
+            WHERE le.laboratory.id = :labId
+            """)
+    int sumQuantityByLaboratoryId(@Param("labId") UUID laboratoryId);
 }

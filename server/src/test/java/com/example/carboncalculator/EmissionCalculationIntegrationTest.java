@@ -48,6 +48,7 @@ import com.example.carboncalculator.dto.CreateInstitutionRequest;
 import com.example.carboncalculator.dto.CreateLaboratoryEquipmentRequest;
 import com.example.carboncalculator.dto.CreateLaboratoryRequest;
 import com.example.carboncalculator.dto.CreateMonitorRequest;
+import com.example.carboncalculator.dto.CreateOperatingSystemRequest;
 import com.example.carboncalculator.dto.EmissionFactorDTO;
 import com.example.carboncalculator.dto.EmissionResultDTO;
 import com.example.carboncalculator.dto.EquipmentModelDTO;
@@ -56,6 +57,7 @@ import com.example.carboncalculator.dto.LaboratoryDTO;
 import com.example.carboncalculator.dto.LaboratoryEquipmentDTO;
 import com.example.carboncalculator.dto.LoginRequest;
 import com.example.carboncalculator.dto.MonitorDTO;
+import com.example.carboncalculator.dto.OperatingSystemDTO;
 import com.example.carboncalculator.dto.ReadinessDTO;
 import com.example.carboncalculator.dto.ReplaceScheduleRequest;
 import com.example.carboncalculator.dto.ReplaceShiftsRequest;
@@ -192,9 +194,33 @@ class EmissionCalculationIntegrationTest {
         return response.getBody().id();
     }
 
+    // Operating systems are per-institution records; tests refer to them by name
+    private UUID operatingSystemId(String name) {
+        ResponseEntity<OperatingSystemDTO> created = restTemplate.exchange(
+                "/operating-systems", HttpMethod.POST,
+                new HttpEntity<>(new CreateOperatingSystemRequest(name), headersFor(institutionId)),
+                OperatingSystemDTO.class);
+        if (created.getStatusCode() == HttpStatus.CREATED) {
+            return created.getBody().id();
+        }
+        ResponseEntity<String> existing = restTemplate.exchange(
+                "/operating-systems?size=100", HttpMethod.GET,
+                new HttpEntity<>(headersFor(institutionId)), String.class);
+        try {
+            for (var node : objectMapper.readTree(existing.getBody()).get("content")) {
+                if (name.equals(node.get("name").asText())) {
+                    return UUID.fromString(node.get("id").asText());
+                }
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to read operating systems", e);
+        }
+        throw new IllegalStateException("Operating system not found: " + name);
+    }
+
     private UUID createConfiguration(UUID equipmentModelId, String os, UUID monitorId) {
         CreateConfigurationRequest request = new CreateConfigurationRequest(
-                equipmentModelId, os, monitorId);
+                equipmentModelId, operatingSystemId(os), monitorId);
         ResponseEntity<ConfigurationDTO> response = restTemplate.exchange(
                 "/configurations", HttpMethod.POST,
                 new HttpEntity<>(request, headersFor(institutionId)),

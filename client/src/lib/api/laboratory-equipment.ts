@@ -1,5 +1,6 @@
 import { api } from './client.ts'
 import type { Monitor } from './monitors'
+import type { OperatingSystem } from './operating-systems'
 
 export type EquipmentModelSummary = {
   id: string
@@ -15,10 +16,9 @@ export type LaboratoryEquipment = {
   id: string
   configurationId: string
   equipmentModel: EquipmentModelSummary
-  operatingSystem: string
+  operatingSystem: OperatingSystem
   monitor: Monitor | null
   quantity: number
-  createdAt?: string
 }
 
 export type LaboratoryComposition = {

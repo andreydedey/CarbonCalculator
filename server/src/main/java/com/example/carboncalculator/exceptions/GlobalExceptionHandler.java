@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -25,18 +26,32 @@ public class GlobalExceptionHandler {
             MissingLaboratoryNameException.class,
             MissingEquipmentModelNameException.class,
             MissingMonitorNameException.class,
+            MissingOperatingSystemNameException.class,
             GpuTdpRequiredException.class,
             InvalidQuantityException.class,
             CannotModifySelfException.class,
             LastManagerException.class,
             HolidayOutOfRangeException.class,
             ShiftValidationException.class,
+            OccurrenceValidationException.class,
             InvalidEmissionFactorException.class,
             IllegalArgumentException.class
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException ex, HttpServletRequest request) {
         log.warn("Bad request on {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
+    // Bean Validation on @Valid request bodies: report the first violated constraint
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidBody(MethodArgumentNotValidException ex,
+                                                           HttpServletRequest request) {
+        String message = ex.getBindingResult().getAllErrors().stream()
+                .map(error -> error.getDefaultMessage())
+                .findFirst()
+                .orElse("Requisição inválida");
+        log.warn("Bad request on {} {}: {}", request.getMethod(), request.getRequestURI(), message);
+        return buildResponse(HttpStatus.BAD_REQUEST, message, request);
     }
 
     // --- 401 Unauthorized ---
@@ -65,7 +80,9 @@ public class GlobalExceptionHandler {
             MemberNotFoundException.class,
             InstitutionNotFoundException.class,
             PeriodNotFoundException.class,
-            EmissionFactorNotFoundException.class
+            EmissionFactorNotFoundException.class,
+            OperatingSystemNotFoundException.class,
+            MeasurementNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request);
@@ -84,7 +101,9 @@ public class GlobalExceptionHandler {
             DuplicateConfigurationException.class,
             DuplicateLaboratoryEquipmentException.class,
             PeriodOverlapException.class,
-            DuplicateEmissionFactorException.class
+            DuplicateEmissionFactorException.class,
+            OperatingSystemHasDependentsException.class,
+            DuplicateOperatingSystemException.class
     })
     public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex, HttpServletRequest request) {
         log.warn("Conflict on {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());

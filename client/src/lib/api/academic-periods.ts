@@ -26,7 +26,6 @@ export type AcademicPeriod = {
   endDate: string
   holidayCount: number
   shifts: Shift[]
-  createdAt: string
 }
 
 export type Holiday = {
@@ -40,6 +39,8 @@ export type ScheduleEntry = {
   shiftType: ShiftType
   dayOfWeek: number
   occupiedSlots: number[]
+  // Aligned by index with occupiedSlots
+  stationsUsed: number[]
 }
 
 export type MonthSchoolDays = {
@@ -102,6 +103,7 @@ export type ScheduleInput = {
   shiftId: string
   dayOfWeek: number
   occupiedSlots: number[]
+  stationsUsed: number[]
 }
 
 // --- API functions ---

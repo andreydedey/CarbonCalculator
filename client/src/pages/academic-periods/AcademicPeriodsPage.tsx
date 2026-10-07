@@ -173,7 +173,6 @@ export const AcademicPeriodsPage: React.FC = () => {
                   </CardDescription>
                   <CardAction className="self-center">
                     <Button
-                      variant="outline"
                       size="sm"
                       onClick={() => navigate(`/academic-periods/${selectedPeriod.id}/occupation`)}
                     >

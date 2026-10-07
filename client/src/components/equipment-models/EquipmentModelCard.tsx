@@ -93,18 +93,22 @@ export const EquipmentModelCard: React.FC<EquipmentModelCardProps> = ({
         <span className="font-medium tracking-[0.6px] text-muted-foreground uppercase">
           Núcleos:
         </span>
-        <span className="font-semibold">{model.coreCount ?? '-'}</span>
+        <span className="font-semibold text-primary">{model.coreCount ?? '-'}</span>
       </div>
       <div className="flex items-center gap-1.5">
         <span className="font-medium tracking-[0.6px] text-muted-foreground uppercase">RAM:</span>
-        <span className="font-semibold">{model.memoryGb ? `${model.memoryGb} GB` : '-'}</span>
+        <span className="font-semibold text-primary">
+          {model.memoryGb ? `${model.memoryGb} GB` : '-'}
+        </span>
       </div>
       {model.gpuModel && (
         <div className="flex items-center gap-1.5">
           <span className="font-medium tracking-[0.6px] text-muted-foreground uppercase">
             GPU TDP:
           </span>
-          <span className="font-semibold">{model.gpuTdpWatts ? `${model.gpuTdpWatts}W` : '-'}</span>
+          <span className="font-semibold text-primary">
+            {model.gpuTdpWatts ? `${model.gpuTdpWatts}W` : '-'}
+          </span>
         </div>
       )}
     </div>

@@ -30,7 +30,7 @@ export const LoginPage: React.FC = () => {
     setError(null)
     try {
       await login(data)
-      navigate('/laboratories')
+      navigate('/dashboard')
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Erro inesperado')
     }

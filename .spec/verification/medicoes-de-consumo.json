@@ -1,0 +1,97 @@
+{
+  "feature": "medicoes-de-consumo",
+  "timestamp": "2026-10-07T00:38:26.888Z",
+  "gitRev": "7dce11b",
+  "command": "bash .spec/scripts/run-all-tests.sh",
+  "reporter": "tap",
+  "exitCode": 0,
+  "testsParsed": 171,
+  "results": {
+    "AC-119": {
+      "status": "pass",
+      "testName": "@spec:AC-119 deveVincularMedicaoDoComputadorAoModeloESistema",
+      "method": "tap"
+    },
+    "AC-120": {
+      "status": "pass",
+      "testName": "@spec:AC-120 deveRejeitarPartesFaltantesOuSobrandoParaOTipoDeAlvo",
+      "method": "tap"
+    },
+    "AC-121": {
+      "status": "pass",
+      "testName": "@spec:AC-121 medicaoDoMonitorValeParaTodasAsConfiguracoesComAqueleMonitor",
+      "method": "tap"
+    },
+    "AC-122": {
+      "status": "pass",
+      "testName": "@spec:AC-122 medicaoConjuntaValeSoParaACombinacaoExata",
+      "method": "tap"
+    },
+    "AC-123": {
+      "status": "pass",
+      "testName": "@spec:AC-123 medicaoConjuntaTemPrioridadeENaoSomaOMonitorDeNovo",
+      "method": "tap"
+    },
+    "AC-124": {
+      "status": "pass",
+      "testName": "@spec:AC-124 deveRejeitarCamposObrigatoriosAusentesOuNaoPositivos",
+      "method": "tap"
+    },
+    "AC-125": {
+      "status": "pass",
+      "testName": "@spec:AC-125 deveGuardarCondicoesEIntervaloDaMedicao",
+      "method": "tap"
+    },
+    "AC-126": {
+      "status": "pass",
+      "testName": "@spec:AC-126 semMedicaoUsaEspecificacaoDeCpuGpuEMonitor",
+      "method": "tap"
+    },
+    "AC-127": {
+      "status": "pass",
+      "testName": "@spec:AC-127 medicaoDeOutroSistemaOperacionalNaoEReaproveitada",
+      "method": "tap"
+    },
+    "AC-128": {
+      "status": "pass",
+      "testName": "@spec:AC-128 medicaoDoComputadorComEspecificacaoDoMonitor",
+      "method": "tap"
+    },
+    "AC-129": {
+      "status": "pass",
+      "testName": "@spec:AC-129 deveBloquearCalculoQuandoUmaParteNaoTemMedicaoNemEspecificacao",
+      "method": "tap"
+    },
+    "AC-130": {
+      "status": "pass",
+      "testName": "@spec:AC-130 deveInformarAOrigemDoConsumoDeCadaConfiguracao",
+      "method": "tap"
+    },
+    "AC-131": {
+      "status": "pass",
+      "testName": "@spec:AC-131 mostra a origem do consumo em português e destaca estimativas",
+      "method": "tap"
+    },
+    "AC-132": {
+      "status": "pass",
+      "testName": "@spec:AC-132 deveGuardarVariasMedicoesEUsarAMaisRecente",
+      "method": "tap"
+    },
+    "AC-133": {
+      "status": "pass",
+      "testName": "@spec:AC-133 deveAlertarMedicaoDiscrepanteSemImpedirORegistro",
+      "method": "tap"
+    },
+    "AC-134": {
+      "status": "pass",
+      "testName": "@spec:AC-134 naoDeveMostrarMedicoesDeOutraInstituicao",
+      "method": "tap"
+    },
+    "AC-135": {
+      "status": "pass",
+      "testName": "@spec:AC-135 deveRecusarSistemaOperacionalRepetidoNaMesmaInstituicao",
+      "method": "tap"
+    }
+  },
+  "principles": {}
+}

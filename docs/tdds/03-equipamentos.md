@@ -127,8 +127,6 @@ O sistema tem instituições e laboratórios, mas não sabe o que está dentro d
 | `gpu_tdp_watts`        | `INTEGER`            | NULL                            | **Novo**   |
 | `has_integrated_screen`| `BOOLEAN`            | NOT NULL, DEFAULT FALSE         | **Novo**   |
 | `description`          | `TEXT`               | NULL                            | Existente  |
-| `created_at`           | `TIMESTAMP WITH TZ`  | NOT NULL                        | Existente  |
-| `updated_at`           | `TIMESTAMP WITH TZ`  | NOT NULL                        | Existente  |
 
 **Colunas removidas:** `monitor_name`, `monitor_watts`, `operating_system`
 
@@ -142,8 +140,6 @@ O sistema tem instituições e laboratórios, mas não sabe o que está dentro d
 | `institution_id` | `UUID`               | FK → institution(id), NOT NULL  |
 | `name`           | `VARCHAR(255)`       | NOT NULL                        |
 | `watts`          | `INTEGER`            | NULL (potência nominal, pode ser desconhecida) |
-| `created_at`     | `TIMESTAMP WITH TZ`  | NOT NULL                        |
-| `updated_at`     | `TIMESTAMP WITH TZ`  | NOT NULL                        |
 
 **RLS:** Habilitado com policy filtrando por `current_setting('app.current_institution')`. Mesmo padrão de `equipment_model`.
 
@@ -157,8 +153,6 @@ O sistema tem instituições e laboratórios, mas não sabe o que está dentro d
 | `operating_system`   | `VARCHAR(100)`     | NOT NULL                                 | Existente  |
 | `monitor_id`         | `UUID`             | FK → monitor(id), NULL                   | **Novo**   |
 | `quantity`           | `INTEGER`          | NOT NULL, CHECK (quantity > 0)           | Existente  |
-| `created_at`         | `TIMESTAMP WITH TZ`| NOT NULL                                | Existente  |
-| `updated_at`         | `TIMESTAMP WITH TZ`| NOT NULL                                | Existente  |
 
 **Constraints atualizadas:**
 - `UNIQUE(laboratory_id, equipment_model_id, operating_system, monitor_id)` — substitui a atual `(laboratory_id, equipment_model_id, operating_system)`. Permite o mesmo computador com mesmo SO mas monitores diferentes.
@@ -194,9 +188,7 @@ CREATE TABLE monitor (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     institution_id UUID NOT NULL REFERENCES institution (id),
     name VARCHAR(255) NOT NULL,
-    watts INTEGER,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+    watts INTEGER
 );
 CREATE INDEX idx_monitor_institution_id ON monitor (institution_id);
 ALTER TABLE monitor ENABLE ROW LEVEL SECURITY;
@@ -319,8 +311,7 @@ CREATE UNIQUE INDEX uq_lab_equipment_without_monitor
   "gpuModel": null,
   "gpuTdpWatts": null,
   "hasIntegratedScreen": false,
-  "description": null,
-  "createdAt": "2026-09-22T10:00:00Z"
+  "description": null
 }
 ```
 
@@ -337,8 +328,7 @@ CREATE UNIQUE INDEX uq_lab_equipment_without_monitor
 {
   "id": "mmm-...",
   "name": "HP E231",
-  "watts": 25,
-  "createdAt": "2026-09-22T10:00:00Z"
+  "watts": 25
 }
 ```
 
@@ -371,8 +361,7 @@ CREATE UNIQUE INDEX uq_lab_equipment_without_monitor
     "name": "HP E231",
     "watts": 25
   },
-  "quantity": 30,
-  "createdAt": "2026-09-22T10:00:00Z"
+  "quantity": 30
 }
 ```
 
@@ -457,21 +446,21 @@ Campo adicionado: `monitor` (ManyToOne, LAZY, nullable, FK para `Monitor`).
 | DTO                         | Campos                                                                                                   |
 | --------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `CreateEquipmentModelRequest` | `name`, `equipmentType`, `processor`, `tdpWatts`, `coreCount`, `memoryGb`, `gpuModel`, `gpuTdpWatts`, `hasIntegratedScreen`, `description` |
-| `EquipmentModelDTO`          | Todos acima + `id`, `createdAt`                                                                          |
+| `EquipmentModelDTO`          | Todos acima + `id`                                                                          |
 
 **Monitores:**
 
 | DTO                    | Campos                     |
 | ---------------------- | -------------------------- |
 | `CreateMonitorRequest` | `name`, `watts`            |
-| `MonitorDTO`           | `id`, `name`, `watts`, `createdAt` |
+| `MonitorDTO`           | `id`, `name`, `watts` |
 
 **Composição do laboratório:**
 
 | DTO                                | Campos                                                                                               |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `CreateLaboratoryEquipmentRequest` | `equipmentModelId`, `operatingSystem`, `monitorId` (nullable), `quantity`                            |
-| `LaboratoryEquipmentDTO`          | `id`, `equipmentModel` (EquipmentModelSummaryDTO), `operatingSystem`, `monitor` (MonitorDTO nullable), `quantity`, `createdAt` |
+| `LaboratoryEquipmentDTO`          | `id`, `equipmentModel` (EquipmentModelSummaryDTO), `operatingSystem`, `monitor` (MonitorDTO nullable), `quantity` |
 | `EquipmentModelSummaryDTO`         | `id`, `name`, `processor`, `tdpWatts`, `coreCount`, `memoryGb`, `hasIntegratedScreen`                |
 | `LaboratoryCompositionDTO`         | `items` (List), `totalMachines`, `configurationsWithoutMonitor`                                      |
 

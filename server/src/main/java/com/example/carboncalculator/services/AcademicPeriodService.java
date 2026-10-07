@@ -188,6 +188,7 @@ public class AcademicPeriodService {
                         .laboratory(s.getLaboratory())
                         .dayOfWeek(s.getDayOfWeek())
                         .occupiedSlots(s.getOccupiedSlots().clone())
+                        .stationsUsed(s.getStationsUsed().clone())
                         .build();
                 scheduleRepository.save(copy);
             }
@@ -229,8 +230,7 @@ public class AcademicPeriodService {
                 period.getStartDate(),
                 period.getEndDate(),
                 period.getHolidays().size(),
-                period.getShifts().stream().map(shiftService::toDTO).toList(),
-                period.getCreatedAt());
+                period.getShifts().stream().map(shiftService::toDTO).toList());
     }
 
     private UUID currentInstitutionId() {

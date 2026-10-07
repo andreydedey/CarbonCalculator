@@ -34,7 +34,7 @@ export const RegisterPage: React.FC = () => {
         email: data.email,
         password: data.password,
       })
-      navigate('/laboratories')
+      navigate('/dashboard')
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Erro inesperado')
     }

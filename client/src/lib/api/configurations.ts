@@ -1,5 +1,6 @@
 import { api } from './client.ts'
 import type { Monitor } from './monitors'
+import type { OperatingSystem } from './operating-systems'
 import type { PageResponse } from './types'
 
 export type EquipmentModelSummary = {
@@ -15,16 +16,15 @@ export type EquipmentModelSummary = {
 export type Configuration = {
   id: string
   equipmentModel: EquipmentModelSummary
-  operatingSystem: string
+  operatingSystem: OperatingSystem
   monitor: Monitor | null
   usageLabCount: number
   usageStationCount: number
-  createdAt?: string
 }
 
 export type CreateConfigurationPayload = {
   equipmentModelId: string
-  operatingSystem: string
+  operatingSystemId: string
   monitorId?: string | null
 }
 

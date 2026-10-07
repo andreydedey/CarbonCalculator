@@ -11,6 +11,7 @@ import { AcademicPeriodsPage } from '@/pages/academic-periods/AcademicPeriodsPag
 import { OccupationEditorPage } from '@/pages/academic-periods/OccupationEditorPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
+import { DashboardPage } from '@/pages/dashboard/DashboardPage'
 import { EmissionFactorsPage } from '@/pages/emission-factors/EmissionFactorsPage'
 import { EmissionsDashboardPage } from '@/pages/emissions/EmissionsDashboardPage'
 import { EquipmentModelsPage } from '@/pages/equipment-models/EquipmentModelsPage'
@@ -28,6 +29,8 @@ export const App: React.FC = () => (
           <Route path="/register" element={<RegisterPage />} />
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
+              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/institutions" element={<InstitutionsPage />} />
               <Route path="/laboratories" element={<LaboratoriesPage />} />
               <Route path="/equipment-models" element={<EquipmentModelsPage />} />

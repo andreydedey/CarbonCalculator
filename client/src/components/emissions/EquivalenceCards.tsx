@@ -6,6 +6,8 @@ interface EquivalenceCardsProps {
   carKm: number
   treesNeeded: number
   totalEnergyKwh: number
+  // e.g. "com base no realizado até 23/04/2025"
+  basis?: string
 }
 
 function EquivalenceCard({
@@ -37,8 +39,14 @@ function formatNumber(n: number): string {
   return Math.round(n).toLocaleString('pt-BR')
 }
 
-export function EquivalenceCards({ carKm, treesNeeded, totalEnergyKwh }: EquivalenceCardsProps) {
+export function EquivalenceCards({
+  carKm,
+  treesNeeded,
+  totalEnergyKwh,
+  basis,
+}: EquivalenceCardsProps) {
   const ledHours = Math.round(totalEnergyKwh / 0.06)
+  const withBasis = (text: string) => (basis ? `${text} · ${basis}` : text)
 
   return (
     <div className="flex gap-4">
@@ -46,19 +54,19 @@ export function EquivalenceCards({ carKm, treesNeeded, totalEnergyKwh }: Equival
         icon={<Car className="size-[22px] text-primary" />}
         value={`${formatNumber(carKm)} km`}
         description="de carro a gasolina"
-        subtitle="distância equivalente em emissões"
+        subtitle={withBasis('distância equivalente em emissões')}
       />
       <EquivalenceCard
         icon={<TreePine className="size-[22px] text-primary" />}
         value={`${Math.ceil(treesNeeded)} árvores`}
         description="para compensar em 1 ano"
-        subtitle="plantio necessário para neutralizar"
+        subtitle={withBasis('plantio necessário para neutralizar')}
       />
       <EquivalenceCard
         icon={<Lightbulb className="size-[22px] text-primary" />}
         value={`${formatNumber(ledHours)} h`}
         description="de lâmpada LED 60W"
-        subtitle="equivalente em consumo energético"
+        subtitle={withBasis('equivalente em consumo energético')}
       />
     </div>
   )

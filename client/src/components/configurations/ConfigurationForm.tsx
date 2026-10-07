@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { AlertTriangle, Monitor } from 'lucide-react'
 import type React from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
@@ -31,10 +31,10 @@ import {
 } from '@/lib/api/configurations'
 import { listEquipmentModels } from '@/lib/api/equipment-models'
 import { listMonitors } from '@/lib/api/monitors'
+import { listOperatingSystems } from '@/lib/api/operating-systems'
 import {
   type ConfigurationFormValues,
   configurationFormSchema,
-  OS_OPTIONS,
 } from '@/lib/schemas/configurationSchema'
 
 interface ConfigurationFormProps {
@@ -66,24 +66,34 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
   })
   const monitors = monitorsPage?.content ?? []
 
+  const { data: osPage } = useQuery({
+    queryKey: ['operating-systems', 'all'],
+    queryFn: () => listOperatingSystems({ size: 100 }),
+    enabled: open,
+  })
+  const operatingSystems = osPage?.content ?? []
+
   const {
+    control,
     handleSubmit,
     reset,
-    watch,
-    setValue,
     formState: { errors, isDirty },
   } = useForm<ConfigurationFormValues>({
     resolver: zodResolver(configurationFormSchema),
     values: {
       equipmentModelId: configuration?.equipmentModel.id ?? '',
-      operatingSystem: configuration?.operatingSystem ?? '',
+      operatingSystemId: configuration?.operatingSystem?.id ?? '',
       monitorId: configuration?.monitor?.id ?? '',
     },
   })
 
-  const selectedModel = models.find((m) => m.id === watch('equipmentModelId'))
+  const [equipmentModelId, monitorId] = useWatch({
+    control,
+    name: ['equipmentModelId', 'monitorId'],
+  })
+  const selectedModel = models.find((m) => m.id === equipmentModelId)
   const hasIntegratedScreen = selectedModel?.hasIntegratedScreen ?? false
-  const showMonitorWarning = !!selectedModel && !hasIntegratedScreen && !watch('monitorId')
+  const showMonitorWarning = !!selectedModel && !hasIntegratedScreen && !monitorId
 
   const saveMutation = useMutation({
     mutationFn: (payload: CreateConfigurationPayload) =>
@@ -97,7 +107,7 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
     try {
       await saveMutation.mutateAsync({
         equipmentModelId: values.equipmentModelId,
-        operatingSystem: values.operatingSystem.trim(),
+        operatingSystemId: values.operatingSystemId,
         monitorId: finalMonitorId ?? null,
       })
       reset()
@@ -105,9 +115,7 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
       onSaved?.()
       toast.success(mode === 'edit' ? 'Configuração atualizada.' : 'Configuração cadastrada.')
     } catch (error) {
-      toast.error(
-        isApiError(error) ? error.message : 'Não foi possível salvar a configuração.',
-      )
+      toast.error(isApiError(error) ? error.message : 'Não foi possível salvar a configuração.')
     }
   }
 
@@ -137,42 +145,48 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
             <div className="flex gap-4">
               <div className="flex flex-1 flex-col gap-1.5">
                 <Label>Computador *</Label>
-                <Select
-                  value={watch('equipmentModelId')}
-                  onValueChange={(v) => setValue('equipmentModelId', v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {models.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Controller
+                  control={control}
+                  name="equipmentModelId"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {models.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
                 <FieldError message={errors.equipmentModelId?.message} />
               </div>
 
               <div className="flex flex-1 flex-col gap-1.5">
                 <Label>Sistema Operacional *</Label>
-                <Select
-                  value={watch('operatingSystem')}
-                  onValueChange={(v) => setValue('operatingSystem', v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {OS_OPTIONS.map((os) => (
-                      <SelectItem key={os} value={os}>
-                        {os}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FieldError message={errors.operatingSystem?.message} />
+                <Controller
+                  control={control}
+                  name="operatingSystemId"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {operatingSystems.map((os) => (
+                          <SelectItem key={os.id} value={os.id}>
+                            {os.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                <FieldError message={errors.operatingSystemId?.message} />
               </div>
             </div>
 
@@ -184,23 +198,29 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
             ) : (
               <div className="flex flex-col gap-1.5">
                 <Label>Monitor</Label>
-                <Select
-                  value={watch('monitorId') || ''}
-                  onValueChange={(v) => setValue('monitorId', v === '__none__' ? '' : v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">Nenhum</SelectItem>
-                    {monitors.map((mon) => (
-                      <SelectItem key={mon.id} value={mon.id}>
-                        {mon.name}
-                        {mon.watts ? ` (${mon.watts}W)` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Controller
+                  control={control}
+                  name="monitorId"
+                  render={({ field }) => (
+                    <Select
+                      value={field.value || ''}
+                      onValueChange={(v) => field.onChange(v === '__none__' ? '' : v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Nenhum</SelectItem>
+                        {monitors.map((mon) => (
+                          <SelectItem key={mon.id} value={mon.id}>
+                            {mon.name}
+                            {mon.watts ? ` (${mon.watts}W)` : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
                 <FieldError message={errors.monitorId?.message} />
               </div>
             )}
@@ -209,9 +229,7 @@ export const ConfigurationForm: React.FC<ConfigurationFormProps> = ({
               <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3">
                 <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
                 <div className="flex flex-col gap-1 text-xs text-amber-800">
-                  <span className="font-medium">
-                    Sem monitor, o resultado fica subestimado
-                  </span>
+                  <span className="font-medium">Sem monitor, o resultado fica subestimado</span>
                   <span>
                     Este computador não tem tela integrada. Monitores representaram 69% e 40% dos
                     dispositivos nos casos analisados por Sutton-Parker e ficaram fora da
