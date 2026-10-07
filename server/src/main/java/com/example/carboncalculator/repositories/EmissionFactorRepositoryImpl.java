@@ -38,8 +38,7 @@ public class EmissionFactorRepositoryImpl implements EmissionFactorRepositoryCus
                 root.get("id"),
                 root.get("referenceMonth"),
                 root.get("value"),
-                root.get("source"),
-                root.get("createdAt")));
+                root.get("source")));
 
         Predicate predicate = spec.toPredicate(root, cq, cb);
         if (predicate != null) {
