@@ -58,6 +58,7 @@ class CreateConsumptionMeasurementRequestTest {
         assertTrue(violations(request(TargetType.COMBINED, MODEL, OS, MONITOR)).isEmpty());
     }
 
+    // @spec:AC-120
     @Test
     void deveRejeitarPartesFaltantesOuSobrandoParaOTipoDeAlvo() {
         assertEquals(1, violations(request(TargetType.COMPUTER, MODEL, OS, MONITOR)).size());
@@ -66,6 +67,7 @@ class CreateConsumptionMeasurementRequestTest {
         assertEquals(1, violations(request(TargetType.COMBINED, MODEL, OS, null)).size());
     }
 
+    // @spec:AC-124
     @Test
     void deveRejeitarCamposObrigatoriosAusentesOuNaoPositivos() {
         CreateConsumptionMeasurementRequest invalid = new CreateConsumptionMeasurementRequest(
