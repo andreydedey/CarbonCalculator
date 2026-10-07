@@ -17,6 +17,7 @@ import { EmissionsDashboardPage } from '@/pages/emissions/EmissionsDashboardPage
 import { EquipmentModelsPage } from '@/pages/equipment-models/EquipmentModelsPage'
 import { InstitutionsPage } from '@/pages/institutions/InstitutionsPage'
 import { LaboratoriesPage } from '@/pages/laboratories/LaboratoriesPage'
+import { LongitudinalPage } from '@/pages/longitudinal/LongitudinalPage'
 import { UsersPage } from '@/pages/users/UsersPage'
 
 export const App: React.FC = () => (
@@ -37,6 +38,7 @@ export const App: React.FC = () => (
               <Route path="/academic-periods/:id" element={<AcademicPeriodDetailPage />} />
               <Route path="/academic-periods/:id/occupation" element={<OccupationEditorPage />} />
               <Route path="/emissions" element={<EmissionsDashboardPage />} />
+              <Route path="/longitudinal" element={<LongitudinalPage />} />
               <Route path="/emission-factors" element={<EmissionFactorsPage />} />
               <Route path="/users" element={<UsersPage />} />
             </Route>

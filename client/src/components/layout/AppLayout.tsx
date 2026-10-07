@@ -5,6 +5,7 @@ import {
   FlaskConical,
   LayoutDashboard,
   Leaf,
+  LineChart,
   LogOut,
   Percent,
   Users,
@@ -59,7 +60,10 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: 'Análise',
-    items: [{ label: 'Emissões', href: '/emissions', icon: Leaf }],
+    items: [
+      { label: 'Emissões', href: '/emissions', icon: Leaf },
+      { label: 'Longitudinal', href: '/longitudinal', icon: LineChart },
+    ],
   },
   {
     label: 'Configuração',

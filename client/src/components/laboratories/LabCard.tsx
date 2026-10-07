@@ -90,7 +90,7 @@ export const LabCard: React.FC<LabCardProps> = ({
         </div>
         <div className="flex flex-col gap-0.5">
           <span className="text-base font-semibold">{laboratory.name}</span>
-          <span className="text-[13px] text-muted-foreground">-</span>
+          <span className="text-[13px] text-muted-foreground">{laboratory.description || '-'}</span>
         </div>
       </div>
       <div className="flex items-center gap-2.5">

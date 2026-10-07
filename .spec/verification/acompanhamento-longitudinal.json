@@ -1,0 +1,77 @@
+{
+  "feature": "acompanhamento-longitudinal",
+  "timestamp": "2026-10-07T23:43:57.528Z",
+  "gitRev": "604e86a",
+  "command": "bash .spec/scripts/run-all-tests.sh",
+  "reporter": "tap",
+  "exitCode": 0,
+  "testsParsed": 58,
+  "results": {
+    "AC-136": {
+      "status": "pass",
+      "testName": "@spec:AC-136",
+      "method": "tap"
+    },
+    "AC-137": {
+      "status": "pass",
+      "testName": "@spec:AC-137 deveAgregarPorPeriodoSomandoTodosOsDias",
+      "method": "tap"
+    },
+    "AC-138": {
+      "status": "pass",
+      "testName": "@spec:AC-138 deveAgregarSemanalmentePorSemanaIso",
+      "method": "tap"
+    },
+    "AC-139": {
+      "status": "pass",
+      "testName": "@spec:AC-139 deveRetornarUmRegistroPorDataNaGranularidadeDiaria",
+      "method": "tap"
+    },
+    "AC-140": {
+      "status": "pass",
+      "testName": "@spec:AC-140",
+      "method": "tap"
+    },
+    "AC-141": {
+      "status": "pass",
+      "testName": "@spec:AC-141",
+      "method": "tap"
+    },
+    "AC-142": {
+      "status": "pass",
+      "testName": "@spec:AC-142 deveIsolarSnapshotsPorInstituicaoViaRls",
+      "method": "tap"
+    },
+    "AC-143": {
+      "status": "pass",
+      "testName": "@spec:AC-143 deveFiltrarPorStartDateEEndDateExcluindoForaDoIntervalo",
+      "method": "tap"
+    },
+    "AC-144": {
+      "status": "pass",
+      "testName": "@spec:AC-144 deveResearcherConseguirConsultarSnapshots",
+      "method": "tap"
+    },
+    "AC-151": {
+      "status": "pass",
+      "testName": "@spec:AC-151 retorna 3 cards na ordem do design, com Emissão Atual, Média Mensal e Menor Emissão calculados",
+      "method": "tap"
+    },
+    "AC-152": {
+      "status": "pass",
+      "testName": "@spec:AC-152 expõe as 4 opções de granularidade na ordem do design",
+      "method": "tap"
+    },
+    "AC-153": {
+      "status": "pass",
+      "testName": "@spec:AC-153 mensagem explica a coleta automática e não menciona tabela/gráfico vazios",
+      "method": "tap"
+    },
+    "AC-154": {
+      "status": "pass",
+      "testName": "@spec:AC-154 variação positiva (aumento) usa token destrutivo",
+      "method": "tap"
+    }
+  },
+  "principles": {}
+}

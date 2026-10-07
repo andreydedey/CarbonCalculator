@@ -1,13 +1,13 @@
 package com.example.carboncalculator.services;
 
 import java.math.BigDecimal;
-import java.time.YearMonth;
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +21,7 @@ import com.example.carboncalculator.exceptions.EmissionFactorNotFoundException;
 import com.example.carboncalculator.exceptions.InvalidEmissionFactorException;
 import com.example.carboncalculator.repositories.EmissionFactorRepository;
 import com.example.carboncalculator.repositories.InstitutionRepository;
+import com.example.carboncalculator.specifications.EmissionFactorSpecification;
 
 import lombok.RequiredArgsConstructor;
 
@@ -58,15 +59,8 @@ public class EmissionFactorService {
 
     @Transactional(readOnly = true)
     public Page<EmissionFactorDTO> list(Integer year, Pageable pageable) {
-        Page<EmissionFactor> page;
-        if (year != null) {
-            YearMonth start = YearMonth.of(year, 1);
-            YearMonth end = YearMonth.of(year, 12);
-            page = repository.findByReferenceMonthBetween(start, end, pageable);
-        } else {
-            page = repository.findAll(pageable);
-        }
-        return page.map(this::toDTO);
+        Specification<EmissionFactor> spec = EmissionFactorSpecification.referenceMonthInYear(year);
+        return repository.findAllProjected(spec, pageable);
     }
 
     @Transactional
