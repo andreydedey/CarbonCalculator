@@ -346,7 +346,7 @@ class EmissionSnapshotIntegrationTest {
         return Boolean.TRUE.equals(runTenantScoped(instId, () -> snapshotRepository.existsBySnapshotDate(date)));
     }
 
-    // @spec:AC-103 Agregação mensal soma corretamente dias do mesmo mês
+    // @spec:AC-136 Agregação mensal soma corretamente dias do mesmo mês
     @Test
     void deveAgregarMensalmenteSomandoDiasDoMesmoMes() {
         UUID periodId = createPeriod(institutionId, "2025.2-" + System.nanoTime(),
@@ -368,7 +368,7 @@ class EmissionSnapshotIntegrationTest {
         assertEquals(5, october.schoolDays());
     }
 
-    // @spec:AC-104 Agregação por período letivo soma todos os dias do período
+    // @spec:AC-137 Agregação por período letivo soma todos os dias do período
     @Test
     void deveAgregarPorPeriodoSomandoTodosOsDias() {
         UUID periodId = createPeriod(institutionId, "2025.2-" + System.nanoTime(),
@@ -392,7 +392,7 @@ class EmissionSnapshotIntegrationTest {
         assertEquals(0, expectedTotal.compareTo(period.totalEmissionKg()));
     }
 
-    // @spec:AC-105 Agregação semanal agrupa por semana ISO
+    // @spec:AC-138 Agregação semanal agrupa por semana ISO
     @Test
     void deveAgregarSemanalmentePorSemanaIso() {
         UUID periodId = createPeriod(institutionId, "2025.W-" + System.nanoTime(),
@@ -409,7 +409,7 @@ class EmissionSnapshotIntegrationTest {
         assertEquals(0, new BigDecimal("100").compareTo(result.get(0).totalEmissionKg()));
     }
 
-    // @spec:AC-106 Granularidade diária retorna um registro por snapshot_date
+    // @spec:AC-139 Granularidade diária retorna um registro por snapshot_date
     @Test
     void deveRetornarUmRegistroPorDataNaGranularidadeDiaria() {
         UUID periodId = createPeriod(institutionId, "2025.D-" + System.nanoTime(),
@@ -430,7 +430,7 @@ class EmissionSnapshotIntegrationTest {
         assertEquals(expectedDates, actualDates);
     }
 
-    // @spec:AC-107 variationPct calculado em relação ao registro imediatamente anterior
+    // @spec:AC-140 variationPct calculado em relação ao registro imediatamente anterior
     @Test
     void deveCalcularVariationPctEmRelacaoAoRegistroAnterior() {
         UUID periodId = createPeriod(institutionId, "2025.V-" + System.nanoTime(),
@@ -447,7 +447,7 @@ class EmissionSnapshotIntegrationTest {
         assertEquals(12.0, october.variationPct().doubleValue(), 0.01);
     }
 
-    // @spec:AC-108 Primeiro registro da série tem variationPct null
+    // @spec:AC-141 Primeiro registro da série tem variationPct null
     @Test
     void devePrimeiroRegistroDaSerieTerVariationPctNulo() {
         UUID periodId = createPeriod(institutionId, "2025.F-" + System.nanoTime(),
@@ -461,7 +461,7 @@ class EmissionSnapshotIntegrationTest {
         assertNull(result.get(0).variationPct());
     }
 
-    // @spec:AC-109 RLS: snapshots de outra instituição não são retornados
+    // @spec:AC-142 RLS: snapshots de outra instituição não são retornados
     @Test
     void deveIsolarSnapshotsPorInstituicaoViaRls() {
         InstitutionDTO otherInstitution = createInstitution("OTH-" + System.nanoTime());
@@ -475,7 +475,7 @@ class EmissionSnapshotIntegrationTest {
         assertTrue(result.isEmpty());
     }
 
-    // @spec:AC-110 Filtro startDate/endDate exclui registros fora do intervalo
+    // @spec:AC-143 Filtro startDate/endDate exclui registros fora do intervalo
     @Test
     void deveFiltrarPorStartDateEEndDateExcluindoForaDoIntervalo() {
         UUID periodId = createPeriod(institutionId, "2025.R-" + System.nanoTime(),
@@ -492,7 +492,7 @@ class EmissionSnapshotIntegrationTest {
         assertEquals(0, new BigDecimal("200").compareTo(result.get(0).totalEmissionKg()));
     }
 
-    // @spec:AC-111 RESEARCHER consegue consultar snapshots
+    // @spec:AC-144 RESEARCHER consegue consultar snapshots
     @Test
     void deveResearcherConseguirConsultarSnapshots() {
         String email = "researcher-" + System.nanoTime() + "@example.com";

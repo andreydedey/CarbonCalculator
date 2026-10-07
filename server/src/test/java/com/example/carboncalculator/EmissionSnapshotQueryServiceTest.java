@@ -55,7 +55,7 @@ class EmissionSnapshotQueryServiceTest {
                 .thenReturn(List.of(mostRecentFirst));
     }
 
-    // @spec:AC-103 Agregação mensal soma corretamente dias do mesmo mês
+    // @spec:AC-136 Agregação mensal soma corretamente dias do mesmo mês
     @Test
     void deveAgregarMensalmenteSomandoDiasDoMesmoMes() {
         givenAllBuckets(month(LocalDate.of(2025, 10, 1), "550", 5));
@@ -67,7 +67,7 @@ class EmissionSnapshotQueryServiceTest {
         assertEquals(5, result.get(0).schoolDays());
     }
 
-    // @spec:AC-107 variationPct calculado em relação ao registro imediatamente anterior
+    // @spec:AC-140 variationPct calculado em relação ao registro imediatamente anterior
     @Test
     void deveCalcularVariationPctEmRelacaoAoRegistroAnterior() {
         givenAllBuckets(
@@ -81,7 +81,7 @@ class EmissionSnapshotQueryServiceTest {
         assertEquals(12.0, result.get(1).variationPct().doubleValue(), 0.01);
     }
 
-    // @spec:AC-108 Primeiro registro da série tem variationPct null
+    // @spec:AC-141 Primeiro registro da série tem variationPct null
     @Test
     void devePrimeiroRegistroDaSerieTerVariationPctNulo() {
         givenAllBuckets(month(LocalDate.of(2025, 11, 1), "300", 1));
