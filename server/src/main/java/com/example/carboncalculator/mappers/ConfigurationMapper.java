@@ -22,7 +22,7 @@ public final class ConfigurationMapper {
                         model.getCoreCount(),
                         model.getMemoryGb(),
                         model.isHasIntegratedScreen()),
-                entity.getOperatingSystem(),
+                OperatingSystemMapper.toDTO(entity.getOperatingSystem()),
                 MonitorMapper.toDTO(entity.getMonitor()),
                 labCount,
                 stationCount);

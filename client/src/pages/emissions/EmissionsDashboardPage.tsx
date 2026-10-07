@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { CircleCheck } from 'lucide-react'
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { ConsumptionSources } from '@/components/emissions/ConsumptionSources'
 import { EquivalenceCards } from '@/components/emissions/EquivalenceCards'
 import { ExportButton } from '@/components/emissions/ExportButton'
 import { ReadinessCheck } from '@/components/emissions/ReadinessCheck'
@@ -363,6 +364,8 @@ export function EmissionsDashboardPage() {
               <ResultMetrics result={result} />
 
               <LabDetailTable result={result} />
+
+              <ConsumptionSources sources={result.consumptionSources} />
 
               <EquivalenceCards
                 carKm={result.equivalentCarKm}

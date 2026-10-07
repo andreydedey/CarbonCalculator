@@ -4,9 +4,9 @@
 -- ============================================================
 
 -- Reset everything (order respects FK constraints)
-TRUNCATE emission_factor,
+TRUNCATE emission_factor, consumption_measurement,
          class_occurrence, laboratory_schedule, academic_period_shift, academic_period_holiday, academic_period,
-         laboratory_equipment, configuration, monitor, equipment_model,
+         laboratory_equipment, configuration, operating_system, monitor, equipment_model,
          laboratory, user_institution, app_user, institution
 CASCADE;
 
@@ -119,23 +119,30 @@ BEGIN
      'Dell E2220H 22"', 18)
   ;
 
+  -- Operating systems
+  INSERT INTO operating_system (id, institution_id, name)
+  VALUES
+    ('0a0a0001-0001-0001-0001-000000000001', '11111111-1111-1111-1111-111111111111', 'Windows 10'),
+    ('0a0a0001-0001-0001-0001-000000000002', '11111111-1111-1111-1111-111111111111', 'Linux')
+  ;
+
   -- Configurations
-  INSERT INTO configuration (id, institution_id, equipment_model_id, operating_system, monitor_id)
+  INSERT INTO configuration (id, institution_id, equipment_model_id, operating_system_id, monitor_id)
   VALUES
     -- OptiPlex 7090 + Windows 10 + Dell P2422H
     ('ffffffff-0001-0001-0001-000000000001',
      '11111111-1111-1111-1111-111111111111',
-     'dddddddd-0001-0001-0001-000000000001', 'Windows 10',
+     'dddddddd-0001-0001-0001-000000000001', '0a0a0001-0001-0001-0001-000000000001',
      'eeeeeeee-0001-0001-0001-000000000001'),
     -- OptiPlex 3090 + Linux + Dell E2220H
     ('ffffffff-0001-0001-0001-000000000002',
      '11111111-1111-1111-1111-111111111111',
-     'dddddddd-0001-0001-0001-000000000002', 'Linux',
+     'dddddddd-0001-0001-0001-000000000002', '0a0a0001-0001-0001-0001-000000000002',
      'eeeeeeee-0001-0001-0001-000000000002'),
     -- ThinkStation P340 + Linux + Dell P2422H
     ('ffffffff-0001-0001-0001-000000000003',
      '11111111-1111-1111-1111-111111111111',
-     'dddddddd-0001-0001-0001-000000000003', 'Linux',
+     'dddddddd-0001-0001-0001-000000000003', '0a0a0001-0001-0001-0001-000000000002',
      'eeeeeeee-0001-0001-0001-000000000001')
   ;
 
@@ -389,22 +396,28 @@ BEGIN
      'LG 24MK430H 24"', 25)
   ;
 
+  -- Operating systems
+  INSERT INTO operating_system (id, institution_id, name)
+  VALUES
+    ('0a0a0002-0002-0002-0002-000000000001', '22222222-2222-2222-2222-222222222222', 'Windows 11')
+  ;
+
   -- Configurations
-  INSERT INTO configuration (id, institution_id, equipment_model_id, operating_system, monitor_id)
+  INSERT INTO configuration (id, institution_id, equipment_model_id, operating_system_id, monitor_id)
   VALUES
     -- HP ProDesk 400 G7 + Windows 11 + LG 24MK430H
     ('ffffffff-0002-0002-0002-000000000001',
      '22222222-2222-2222-2222-222222222222',
-     'dddddddd-0002-0002-0002-000000000001', 'Windows 11',
+     'dddddddd-0002-0002-0002-000000000001', '0a0a0002-0002-0002-0002-000000000001',
      'eeeeeeee-0002-0002-0002-000000000001')
   ;
 
   -- Dell Inspiron (notebook, tela integrada — sem monitor)
-  INSERT INTO configuration (id, institution_id, equipment_model_id, operating_system)
+  INSERT INTO configuration (id, institution_id, equipment_model_id, operating_system_id)
   VALUES
     ('ffffffff-0002-0002-0002-000000000002',
      '22222222-2222-2222-2222-222222222222',
-     'dddddddd-0002-0002-0002-000000000002', 'Windows 11')
+     'dddddddd-0002-0002-0002-000000000002', '0a0a0002-0002-0002-0002-000000000001')
   ;
 
   -- Laboratory ↔ Configuration

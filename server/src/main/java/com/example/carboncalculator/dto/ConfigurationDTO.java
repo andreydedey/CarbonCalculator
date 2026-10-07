@@ -5,7 +5,7 @@ import java.util.UUID;
 public record ConfigurationDTO(
         UUID id,
         LaboratoryEquipmentDTO.EquipmentModelSummaryDTO equipmentModel,
-        String operatingSystem,
+        OperatingSystemDTO operatingSystem,
         MonitorDTO monitor,
         int usageLabCount,
         int usageStationCount) {

@@ -1,11 +1,11 @@
 {
   "feature": "calculo-de-emissoes",
-  "timestamp": "2026-10-01T12:46:26.325Z",
-  "gitRev": "d2bb4b7",
+  "timestamp": "2026-10-06T18:33:34.262Z",
+  "gitRev": "7dce11b",
   "command": "bash .spec/scripts/run-all-tests.sh",
   "reporter": "tap",
   "exitCode": 0,
-  "testsParsed": 88,
+  "testsParsed": 153,
   "results": {
     "AC-072": {
       "status": "pass",
@@ -82,11 +82,6 @@
       "testName": "@spec:AC-086 deveCalcularSemMonitorApenasComputador",
       "method": "tap"
     },
-    "AC-087": {
-      "status": "pass",
-      "testName": "@spec:AC-087 deveDecomposicaoComputadorMonitorSomarIgualAoTotal",
-      "method": "tap"
-    },
     "AC-088": {
       "status": "pass",
       "testName": "@spec:AC-088 deveDecomposicaoPorModeloSomarIgualAoTotal",
@@ -119,12 +114,12 @@
     },
     "AC-094": {
       "status": "pass",
-      "testName": "@spec:AC-094 Dashboard mostra decomposição por laboratório — resposta contém byLaboratory com estações, computador e monitor",
+      "testName": "@spec:AC-094 Dashboard mostra decomposição por laboratório — resposta contém byLaboratory com estações e configurações",
       "method": "tap"
     },
     "AC-095": {
       "status": "pass",
-      "testName": "@spec:AC-095 Dashboard mostra equivalências do cotidiano — resposta contém equivalences com carKm e treesNeeded",
+      "testName": "@spec:AC-095 Dashboard mostra equivalências do cotidiano — resposta contém equivalentCarKm e equivalentTreesNeeded",
       "method": "tap"
     },
     "AC-096": {
@@ -134,11 +129,11 @@
     },
     "AC-097": {
       "status": "pass",
-      "testName": "@spec:AC-097 Dashboard mostra painel de transparência — resposta contém inputs com fatores de emissão e fontes de consumo",
+      "testName": "@spec:AC-097 Dashboard mostra painel de transparência — resposta contém emissionFactors e consumptionSources",
       "method": "tap"
     },
     "AC-098": {
-      "status": "pass",
+      "status": "fail",
       "testName": "@spec:AC-098 deveExportarCsvComDadosCorretos",
       "method": "tap"
     },

@@ -8,11 +8,13 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -59,6 +61,7 @@ public class EmissionCalculationService {
     private final ClassOccurrenceRepository occurrenceRepository;
     private final EmissionFactorRepository emissionFactorRepository;
     private final PeriodSummaryService periodSummaryService;
+    private final ConsumptionResolver consumptionResolver;
     private final Clock clock;
 
     @Transactional(readOnly = true)
@@ -121,13 +124,31 @@ public class EmissionCalculationService {
             }
         }
 
+        // Parts with neither measurement nor specification would silently count as zero watts
+        Map<UUID, List<String>> labNamesByConfig = new LinkedHashMap<>();
+        for (Laboratory lab : labs) {
+            for (LaboratoryEquipment le : labEquipmentRepository.findByLaboratoryId(lab.getId())) {
+                labNamesByConfig.computeIfAbsent(le.getConfiguration().getId(), k -> new ArrayList<>())
+                        .add(lab.getName());
+            }
+        }
+        List<ReadinessDTO.ConsumptionWarning> configsWithoutConsumption = new ArrayList<>();
+        for (var entry : labNamesByConfig.entrySet()) {
+            Configuration config = configCache.get(entry.getKey());
+            List<String> missingParts = consumptionResolver.missingParts(config);
+            if (!missingParts.isEmpty()) {
+                configsWithoutConsumption.add(new ReadinessDTO.ConsumptionWarning(
+                        config.getId(), configLabel(config), missingParts, entry.getValue()));
+            }
+        }
+
         // A lab without a grid just adds zero; only block when no lab can be calculated at all
         boolean anyLabWithSchedule = labs.stream().anyMatch(lab -> labsWithSchedule.contains(lab.getId())
                 && !labsWithoutEquipment.contains(lab.getName()));
-        boolean ready = missingFactors.isEmpty() && anyLabWithSchedule;
+        boolean ready = missingFactors.isEmpty() && anyLabWithSchedule && configsWithoutConsumption.isEmpty();
 
         return new ReadinessDTO(ready, missingFactors, labsWithoutEquipment,
-                labsWithoutSchedule, configsWithoutMonitor);
+                labsWithoutSchedule, configsWithoutMonitor, configsWithoutConsumption);
     }
 
     /**
@@ -153,9 +174,15 @@ public class EmissionCalculationService {
                 period.getStartDate(), period.getEndDate());
 
         List<Laboratory> labs = laboratoryRepository.findAll();
+        // Resolve each configuration's consumption once (measurements first, then specification)
+        Map<UUID, Watts> wattsByConfig = new HashMap<>();
+        Function<Configuration, Watts> wattsOf = config -> wattsByConfig.computeIfAbsent(
+                config.getId(), id -> Watts.of(consumptionResolver.resolve(config)));
+
         Map<UUID, LabAccumulator> labAcc = new LinkedHashMap<>();
         for (Laboratory lab : labs) {
-            labAcc.put(lab.getId(), new LabAccumulator(lab, labEquipmentRepository.findByLaboratoryId(lab.getId())));
+            labAcc.put(lab.getId(), new LabAccumulator(lab, labEquipmentRepository.findByLaboratoryId(lab.getId()),
+                    wattsOf));
         }
 
         Totals realized = new Totals();
@@ -187,7 +214,7 @@ public class EmissionCalculationService {
 
             for (LaboratoryEquipment le : lab.equipment) {
                 Configuration config = le.getConfiguration();
-                Watts watts = Watts.of(config);
+                Watts watts = wattsOf.apply(config);
                 // Stations used are split across configurations in proportion to their quantity
                 double share = (double) le.getQuantity() * stations / capacity;
                 double energyKwh = watts.total() * share * hours / 1000.0;
@@ -201,7 +228,7 @@ public class EmissionCalculationService {
                 add(monthAgg, YearMonth.from(session.date()).format(MONTH_FMT), energyKwh, emissionKg);
                 add(shiftAgg, session.shift().getShiftType().name(), energyKwh, emissionKg);
                 add(dowAgg, session.date().getDayOfWeek().getValue(), energyKwh, emissionKg);
-                add(osAgg, config.getOperatingSystem(), 0, emissionKg);
+                add(osAgg, config.getOperatingSystem().getName(), 0, emissionKg);
 
                 EquipmentModel model = config.getEquipmentModel();
                 add(equipModelAgg, model.getId(), 0, watts.computer() * share * hours / 1000.0 * factorValue);
@@ -275,9 +302,9 @@ public class EmissionCalculationService {
         for (LabAccumulator lab : labAcc.values()) {
             for (LaboratoryEquipment le : lab.equipment) {
                 Configuration config = le.getConfiguration();
-                Watts w = Watts.of(config);
+                Watts w = wattsOf.apply(config);
                 inputConsumptions.putIfAbsent(config.getId(), new InputConsumption(
-                        config.getId(), configLabel(config), w.computer(), w.monitor(), w.total()));
+                        config.getId(), configLabel(config), w.computer(), w.monitor(), w.total(), w.source()));
             }
         }
 
@@ -332,18 +359,14 @@ public class EmissionCalculationService {
 
     // --- accumulators ---
 
-    private record Watts(int computer, int monitor) {
-        static Watts of(Configuration config) {
-            EquipmentModel model = config.getEquipmentModel();
-            Monitor monitor = config.getMonitor();
-            int computer = (model.getTdpWatts() != null ? model.getTdpWatts() : 0)
-                    + (model.getGpuTdpWatts() != null ? model.getGpuTdpWatts() : 0);
-            int monitorWatts = (monitor != null && monitor.getWatts() != null) ? monitor.getWatts() : 0;
-            return new Watts(computer, monitorWatts);
-        }
-
-        int total() {
-            return computer + monitor;
+    /**
+     * Consumption of one station of a configuration. For a combined measurement only the total is
+     * known, so computer and monitor stay at zero instead of inventing a split.
+     */
+    private record Watts(int computer, int monitor, int total, String source) {
+        static Watts of(ConsumptionResolver.ResolvedConsumption resolved) {
+            return new Watts(resolved.computerWatts(), resolved.monitorWatts(), resolved.totalWatts(),
+                    resolved.source());
         }
     }
 
@@ -360,6 +383,7 @@ public class EmissionCalculationService {
     private final class LabAccumulator {
         final Laboratory lab;
         final List<LaboratoryEquipment> equipment;
+        final Function<Configuration, Watts> wattsOf;
         final Map<UUID, double[]> configAgg = new LinkedHashMap<>();
         double energyKwh;
         double emissionKg;
@@ -369,9 +393,10 @@ public class EmissionCalculationService {
         int adjusted;
         int extra;
 
-        LabAccumulator(Laboratory lab, List<LaboratoryEquipment> equipment) {
+        LabAccumulator(Laboratory lab, List<LaboratoryEquipment> equipment, Function<Configuration, Watts> wattsOf) {
             this.lab = lab;
             this.equipment = equipment;
+            this.wattsOf = wattsOf;
         }
 
         int capacity() {
@@ -406,7 +431,7 @@ public class EmissionCalculationService {
                         double[] vals = configAgg.getOrDefault(le.getId(), new double[2]);
                         Configuration config = le.getConfiguration();
                         return new ConfigurationEmission(config.getId(), configLabel(config), le.getQuantity(),
-                                Watts.of(config).total(), round2(vals[0]), round2(vals[1]));
+                                wattsOf.apply(config).total(), round2(vals[0]), round2(vals[1]));
                     })
                     .toList();
             double usagePct = capacityHours > 0 ? round1(stationHours / capacityHours * 100) : 0;
@@ -449,7 +474,7 @@ public class EmissionCalculationService {
 
     private String configLabel(Configuration config) {
         StringBuilder sb = new StringBuilder(config.getEquipmentModel().getName());
-        sb.append(" + ").append(config.getOperatingSystem());
+        sb.append(" + ").append(config.getOperatingSystem().getName());
         if (config.getMonitor() != null) {
             sb.append(" + ").append(config.getMonitor().getName());
         }

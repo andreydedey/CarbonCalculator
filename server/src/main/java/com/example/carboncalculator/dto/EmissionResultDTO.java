@@ -64,5 +64,6 @@ public record EmissionResultDTO(
     public record InputFactor(String month, BigDecimal value, String source) {}
 
     public record InputConsumption(UUID configurationId, String label,
-                                   int computerWatts, int monitorWatts, int totalWatts) {}
+                                   int computerWatts, int monitorWatts, int totalWatts,
+                                   String consumptionSource) {}
 }

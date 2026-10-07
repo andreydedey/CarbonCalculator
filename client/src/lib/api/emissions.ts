@@ -30,6 +30,7 @@ export type EmissionResult = {
     computerWatts: number
     monitorWatts: number
     totalWatts: number
+    consumptionSource: string
   }[]
 }
 
@@ -105,6 +106,13 @@ export type ReadinessResult = {
   configurationsWithoutMonitor: {
     configurationId: string
     label: string
+    laboratoryNames: string[]
+  }[]
+  // Configurations whose computer and/or monitor has no measurement and no specified power
+  configurationsWithoutConsumption: {
+    configurationId: string
+    label: string
+    missingParts: string[]
     laboratoryNames: string[]
   }[]
 }

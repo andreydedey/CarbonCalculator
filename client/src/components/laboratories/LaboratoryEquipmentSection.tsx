@@ -36,10 +36,10 @@ interface LaboratoryEquipmentSectionProps {
 
 function configLabel(config: {
   equipmentModel: { name: string }
-  operatingSystem: string
+  operatingSystem: { name: string }
   monitor: { name: string } | null
 }): string {
-  const parts = [config.equipmentModel.name, config.operatingSystem]
+  const parts = [config.equipmentModel.name, config.operatingSystem.name]
   if (config.monitor) parts.push(config.monitor.name)
   return parts.join(' + ')
 }
@@ -90,9 +90,7 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
       const wasEdit = editing?.mode === 'edit'
       closeForm()
       refetch()
-      toast.success(
-        wasEdit ? 'Quantidade atualizada.' : 'Configuração adicionada ao laboratório.',
-      )
+      toast.success(wasEdit ? 'Quantidade atualizada.' : 'Configuração adicionada ao laboratório.')
     },
     onError: (error) => {
       toast.error(isApiError(error) ? error.message : 'Não foi possível salvar.')
@@ -185,9 +183,7 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
                   </SelectContent>
                 </Select>
                 {errors.configurationId && (
-                  <span className="text-xs text-destructive">
-                    {errors.configurationId.message}
-                  </span>
+                  <span className="text-xs text-destructive">{errors.configurationId.message}</span>
                 )}
               </div>
             ) : (
@@ -305,7 +301,7 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
                       </td>
                       <td className="px-4 py-2">
                         {item.operatingSystem && (
-                          <Badge variant="secondary">{item.operatingSystem}</Badge>
+                          <Badge variant="secondary">{item.operatingSystem.name}</Badge>
                         )}
                       </td>
                       <td className="px-4 py-2 text-right font-mono text-xs">{item.quantity}</td>

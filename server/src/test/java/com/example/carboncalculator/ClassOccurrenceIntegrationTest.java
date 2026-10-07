@@ -13,7 +13,9 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +51,7 @@ import com.example.carboncalculator.dto.CreateInstitutionRequest;
 import com.example.carboncalculator.dto.CreateLaboratoryEquipmentRequest;
 import com.example.carboncalculator.dto.CreateLaboratoryRequest;
 import com.example.carboncalculator.dto.CreateMonitorRequest;
+import com.example.carboncalculator.dto.CreateOperatingSystemRequest;
 import com.example.carboncalculator.dto.DayClassesDTO;
 import com.example.carboncalculator.dto.EmissionResultDTO;
 import com.example.carboncalculator.dto.EquipmentModelDTO;
@@ -57,6 +60,7 @@ import com.example.carboncalculator.dto.InstitutionDTO;
 import com.example.carboncalculator.dto.LaboratoryDTO;
 import com.example.carboncalculator.dto.LoginRequest;
 import com.example.carboncalculator.dto.MonitorDTO;
+import com.example.carboncalculator.dto.OperatingSystemDTO;
 import com.example.carboncalculator.dto.ReadinessDTO;
 import com.example.carboncalculator.dto.ReplaceHolidaysRequest;
 import com.example.carboncalculator.dto.ReplaceScheduleRequest;
@@ -371,8 +375,13 @@ class ClassOccurrenceIntegrationTest {
         return post("/monitors", new CreateMonitorRequest(name, watts), MonitorDTO.class).id();
     }
 
+    // Operating systems are per-institution records; reuse the one created earlier in the same test
+    private final Map<String, UUID> operatingSystems = new HashMap<>();
+
     private UUID createConfiguration(UUID modelId, String os, UUID monitorId) {
-        return post("/configurations", new CreateConfigurationRequest(modelId, os, monitorId), ConfigurationDTO.class).id();
+        UUID osId = operatingSystems.computeIfAbsent(institutionId + "|" + os,
+                key -> post("/operating-systems", new CreateOperatingSystemRequest(os), OperatingSystemDTO.class).id());
+        return post("/configurations", new CreateConfigurationRequest(modelId, osId, monitorId), ConfigurationDTO.class).id();
     }
 
     private void assignEquipment(UUID lab, UUID configId, int quantity) {

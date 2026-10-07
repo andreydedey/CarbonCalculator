@@ -6,7 +6,7 @@ import { ConfigurationForm } from '@/components/configurations/ConfigurationForm
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
-import { useDialog } from '@/hooks/use-dialog'
+import { useFormDialog } from '@/hooks/use-dialog'
 import { isApiError } from '@/lib/api/client'
 import {
   type Configuration,
@@ -21,14 +21,9 @@ interface ConfigurationListProps {
 
 function usageLabel(config: Configuration): string {
   if (config.usageLabCount === 0) return 'Não utilizada'
-  const labs =
-    config.usageLabCount === 1
-      ? '1 laboratório'
-      : `${config.usageLabCount} laboratórios`
+  const labs = config.usageLabCount === 1 ? '1 laboratório' : `${config.usageLabCount} laboratórios`
   const stations =
-    config.usageStationCount === 1
-      ? '1 estação'
-      : `${config.usageStationCount} estações`
+    config.usageStationCount === 1 ? '1 estação' : `${config.usageStationCount} estações`
   return `${labs} · ${stations}`
 }
 
@@ -36,7 +31,10 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
   formOpen,
   onFormOpenChange,
 }) => {
-  const editDialog = useDialog<Configuration>()
+  const formDialog = useFormDialog<Configuration>({
+    createOpen: formOpen,
+    onCreateOpenChange: onFormOpenChange,
+  })
 
   const {
     data: configurationsData,
@@ -62,25 +60,12 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
       toast.success('Configuração excluída.')
     },
     onError: (error) => {
-      toast.error(
-        isApiError(error) ? error.message : 'Não foi possível excluir a configuração.',
-      )
+      toast.error(isApiError(error) ? error.message : 'Não foi possível excluir a configuração.')
     },
   })
 
-  const isCreateFormOpen = formOpen ?? false
-  const isFormOpen = isCreateFormOpen || editDialog.open
-
-  function handleFormOpenChange(open: boolean) {
-    if (!open) {
-      onFormOpenChange?.(false)
-      editDialog.closeDialog()
-    }
-  }
-
   function handleSaved() {
-    onFormOpenChange?.(false)
-    editDialog.closeDialog()
+    formDialog.close()
     refetch()
   }
 
@@ -93,9 +78,9 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
   return (
     <div className="flex flex-col gap-6">
       <ConfigurationForm
-        configuration={editDialog.data ?? undefined}
-        open={isFormOpen}
-        onOpenChange={handleFormOpenChange}
+        configuration={formDialog.editing ?? undefined}
+        open={formDialog.open}
+        onOpenChange={formDialog.onOpenChange}
         onSaved={handleSaved}
       />
 
@@ -121,7 +106,7 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
                   <tr key={config.id} className="border-b last:border-b-0">
                     <td className="px-4 py-2 font-medium">{config.equipmentModel.name}</td>
                     <td className="px-4 py-2">
-                      <Badge variant="secondary">{config.operatingSystem}</Badge>
+                      <Badge variant="secondary">{config.operatingSystem.name}</Badge>
                     </td>
                     <td className="px-4 py-2 text-muted-foreground">
                       {config.equipmentModel.hasIntegratedScreen
@@ -130,7 +115,13 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
                           ? config.monitor.name
                           : '—'}
                     </td>
-                    <td className="px-4 py-2 text-xs text-muted-foreground">
+                    <td
+                      className={`px-4 py-2 text-xs ${
+                        config.usageLabCount > 0
+                          ? 'font-medium text-primary'
+                          : 'text-muted-foreground'
+                      }`}
+                    >
                       {usageLabel(config)}
                     </td>
                     <td className="px-4 py-2 text-right">
@@ -139,7 +130,7 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
                           variant="ghost"
                           size="icon"
                           className="size-7"
-                          onClick={() => editDialog.openDialog(config)}
+                          onClick={() => formDialog.openEdit(config)}
                           title="Editar configuração"
                         >
                           <Pencil className="size-3.5" />

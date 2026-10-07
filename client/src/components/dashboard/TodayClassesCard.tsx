@@ -241,7 +241,7 @@ export function TodayClassesCard({
   )
   const editable = canEdit && !!periodId
   const dayLabel = `${DAY_SHORT_LABELS[isoDayOfWeek(date)]} ${formatDayMonth(date)}`
-  const title = date === today ? `Aulas de hoje — ${dayLabel}` : `Aulas de ${dayLabel}`
+  const title = date === today ? 'Aulas de hoje' : 'Aulas do dia'
   const labsOfPeriod = laboratories.filter((l) => l.active)
 
   return (
@@ -253,6 +253,11 @@ export function TodayClassesCard({
             Valores vêm da grade semanal. Ajuste apenas o que mudou no dia.
           </p>
         </div>
+        {date !== today && (
+          <Button variant="link" size="sm" className="h-7 px-0" onClick={() => setDate(today)}>
+            Voltar para hoje
+          </Button>
+        )}
         <div className="flex items-center gap-1 rounded-lg border px-1.5 py-1">
           <Button
             variant="ghost"
@@ -263,14 +268,9 @@ export function TodayClassesCard({
           >
             <ChevronLeft className="size-4" />
           </Button>
-          <Button
-            variant={date === today ? 'secondary' : 'ghost'}
-            size="sm"
-            className="h-7"
-            onClick={() => setDate(today)}
-          >
-            Hoje
-          </Button>
+          <span className="min-w-20 text-center text-[13px] font-semibold text-primary">
+            {dayLabel}
+          </span>
           <Button
             variant="ghost"
             size="icon"

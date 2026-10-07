@@ -2,7 +2,6 @@ package com.example.carboncalculator.entities;
 
 import java.util.UUID;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -38,8 +37,9 @@ public class Configuration {
     @JoinColumn(name = "equipment_model_id", nullable = false)
     private EquipmentModel equipmentModel;
 
-    @Column(name = "operating_system", nullable = false, length = 100)
-    private String operatingSystem;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "operating_system_id", nullable = false)
+    private OperatingSystem operatingSystem;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "monitor_id")

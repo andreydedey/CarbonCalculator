@@ -13,7 +13,10 @@ export function ReadinessCheck({ readiness }: ReadinessCheckProps) {
   if (readiness.ready && !hasWarnings) return null
 
   const isBlocking = !readiness.ready
-  const noLabCalculable = isBlocking && readiness.missingEmissionFactors.length === 0
+  const noLabCalculable =
+    isBlocking &&
+    readiness.missingEmissionFactors.length === 0 &&
+    readiness.configurationsWithoutConsumption.length === 0
 
   return (
     <div
@@ -44,6 +47,12 @@ export function ReadinessCheck({ readiness }: ReadinessCheckProps) {
             <strong>{readiness.missingEmissionFactors.join(', ')}</strong>
           </li>
         )}
+        {readiness.configurationsWithoutConsumption.map((c) => (
+          <li key={c.configurationId}>
+            Sem medição nem especificação de potência ({c.missingParts.join(' e ')}):{' '}
+            <strong>{c.label}</strong> (labs: {c.laboratoryNames.join(', ')})
+          </li>
+        ))}
         {noLabCalculable && (
           <li>Nenhum laboratório tem equipamentos e grade de ocupação definidos.</li>
         )}

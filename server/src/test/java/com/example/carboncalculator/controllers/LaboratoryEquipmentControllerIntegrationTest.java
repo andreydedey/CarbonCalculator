@@ -33,6 +33,7 @@ import com.example.carboncalculator.dto.CreateEquipmentModelRequest;
 import com.example.carboncalculator.dto.CreateInstitutionRequest;
 import com.example.carboncalculator.dto.CreateLaboratoryEquipmentRequest;
 import com.example.carboncalculator.dto.CreateLaboratoryRequest;
+import com.example.carboncalculator.dto.CreateOperatingSystemRequest;
 import com.example.carboncalculator.dto.LaboratoryCompositionDTO;
 import com.example.carboncalculator.dto.LaboratoryDTO;
 import com.example.carboncalculator.dto.LaboratoryEquipmentDTO;
@@ -142,8 +143,29 @@ class LaboratoryEquipmentControllerIntegrationTest {
         return UUID.fromString(body.substring(idx, body.indexOf("\"", idx)));
     }
 
+    private UUID getOrCreateOperatingSystem(UUID institutionId, String osName) {
+        CreateOperatingSystemRequest osRequest = new CreateOperatingSystemRequest(osName);
+        ResponseEntity<String> osResponse = restTemplate.exchange(
+                "/operating-systems", HttpMethod.POST,
+                new HttpEntity<>(osRequest, headersFor(institutionId)), String.class);
+        if (osResponse.getStatusCode() == HttpStatus.CONFLICT) {
+            // OS already exists, list and find it
+            ResponseEntity<String> listResponse = restTemplate.exchange(
+                    "/operating-systems?name=" + osName + "&size=1", HttpMethod.GET,
+                    new HttpEntity<>(headersFor(institutionId)), String.class);
+            String listBody = listResponse.getBody();
+            int idx = listBody.indexOf("\"id\":\"") + 6;
+            return UUID.fromString(listBody.substring(idx, listBody.indexOf("\"", idx)));
+        }
+        assertEquals(HttpStatus.CREATED, osResponse.getStatusCode());
+        String body = osResponse.getBody();
+        int idx = body.indexOf("\"id\":\"") + 6;
+        return UUID.fromString(body.substring(idx, body.indexOf("\"", idx)));
+    }
+
     private UUID createConfiguration(UUID institutionId, UUID modelId, String os) {
-        CreateConfigurationRequest request = new CreateConfigurationRequest(modelId, os, null);
+        UUID osId = getOrCreateOperatingSystem(institutionId, os);
+        CreateConfigurationRequest request = new CreateConfigurationRequest(modelId, osId, null);
         ResponseEntity<String> response = restTemplate.exchange(
                 "/configurations", HttpMethod.POST,
                 new HttpEntity<>(request, headersFor(institutionId)), String.class);
@@ -175,7 +197,7 @@ class LaboratoryEquipmentControllerIntegrationTest {
         LaboratoryEquipmentDTO body = response.getBody();
         assertNotNull(body.id());
         assertEquals(30, body.quantity());
-        assertEquals("Linux", body.operatingSystem());
+        assertEquals("Linux", body.operatingSystem().name());
 
         ResponseEntity<LaboratoryCompositionDTO> composition = restTemplate.exchange(
                 "/laboratories/" + labId + "/equipment", HttpMethod.GET,

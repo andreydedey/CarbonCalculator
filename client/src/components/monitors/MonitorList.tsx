@@ -8,7 +8,7 @@ import { MonitorCard } from '@/components/monitors/MonitorCard'
 import { MonitorForm } from '@/components/monitors/MonitorForm'
 import { Input } from '@/components/ui/input'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
-import { useDialog } from '@/hooks/use-dialog'
+import { useDialog, useFormDialog } from '@/hooks/use-dialog'
 import { listMonitors, type Monitor } from '@/lib/api/monitors'
 
 interface MonitorListProps {
@@ -18,7 +18,10 @@ interface MonitorListProps {
 
 export const MonitorList: React.FC<MonitorListProps> = ({ formOpen, onFormOpenChange }) => {
   const [searchParams, setSearchParams] = useSearchParams()
-  const editDialog = useDialog<Monitor>()
+  const formDialog = useFormDialog<Monitor>({
+    createOpen: formOpen,
+    onCreateOpenChange: onFormOpenChange,
+  })
   const deleteDialog = useDialog<Monitor>()
 
   const search = searchParams.get('q') ?? ''
@@ -52,18 +55,8 @@ export const MonitorList: React.FC<MonitorListProps> = ({ formOpen, onFormOpenCh
 
   const monitors = monitorsData?.pages.flatMap((p) => p.content) ?? []
 
-  const isFormOpen = editDialog.open || (formOpen ?? false)
-
-  function handleFormOpenChange(open: boolean) {
-    if (!open) {
-      editDialog.closeDialog()
-      onFormOpenChange?.(false)
-    }
-  }
-
   function handleSaved() {
-    editDialog.closeDialog()
-    onFormOpenChange?.(false)
+    formDialog.close()
     refetch()
   }
 
@@ -75,9 +68,9 @@ export const MonitorList: React.FC<MonitorListProps> = ({ formOpen, onFormOpenCh
   return (
     <div className="flex flex-col gap-6">
       <MonitorForm
-        monitor={editDialog.data ?? undefined}
-        open={isFormOpen}
-        onOpenChange={handleFormOpenChange}
+        monitor={formDialog.editing ?? undefined}
+        open={formDialog.open}
+        onOpenChange={formDialog.onOpenChange}
         onSaved={handleSaved}
       />
 
@@ -103,7 +96,7 @@ export const MonitorList: React.FC<MonitorListProps> = ({ formOpen, onFormOpenCh
             <MonitorCard
               key={monitor.id}
               monitor={monitor}
-              onEdit={(m) => editDialog.openDialog(m)}
+              onEdit={(m) => formDialog.openEdit(m)}
               onDelete={(m) => deleteDialog.openDialog(m)}
             />
           ))}
@@ -120,7 +113,7 @@ export const MonitorList: React.FC<MonitorListProps> = ({ formOpen, onFormOpenCh
         <DeleteMonitorDialog
           monitor={deleteDialog.data}
           open={deleteDialog.open}
-          onOpenChange={(open) => !open && deleteDialog.closeDialog()}
+          onOpenChange={deleteDialog.onOpenChange}
           onDeleted={handleDeleted}
         />
       )}

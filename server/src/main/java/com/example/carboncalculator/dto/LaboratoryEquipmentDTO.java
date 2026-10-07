@@ -6,7 +6,7 @@ public record LaboratoryEquipmentDTO(
         UUID id,
         UUID configurationId,
         EquipmentModelSummaryDTO equipmentModel,
-        String operatingSystem,
+        OperatingSystemDTO operatingSystem,
         MonitorDTO monitor,
         int quantity) {
 
