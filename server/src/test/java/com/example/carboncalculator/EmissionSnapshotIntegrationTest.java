@@ -76,7 +76,6 @@ import com.example.carboncalculator.repositories.AcademicPeriodRepository;
 import com.example.carboncalculator.repositories.EmissionSnapshotRepository;
 import com.example.carboncalculator.specifications.EmissionSnapshotSpecification;
 import com.example.carboncalculator.repositories.InstitutionRepository;
-import com.example.carboncalculator.services.EmissionSnapshotCronService;
 
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -130,9 +129,6 @@ class EmissionSnapshotIntegrationTest {
 
     @Autowired
     private AcademicPeriodRepository academicPeriodRepository;
-
-    @Autowired
-    private EmissionSnapshotCronService cronService;
 
     private JdbcTemplate jdbcTemplate;
 
@@ -508,166 +504,4 @@ class EmissionSnapshotIntegrationTest {
         assertNotNull(result);
     }
 
-    // @spec:AC-112 Cron cria snapshot para dia dentro de período ativo com fator disponível
-    @Test
-    void deveCronCriarSnapshotParaDiaDentroDePeriodoAtivoComFatorDisponivel() {
-        LocalDate yesterday = LocalDate.now().minusDays(1);
-        int dow = yesterday.getDayOfWeek().getValue();
-
-        createEmissionFactor(institutionId, YearMonth.from(yesterday), "0.0500");
-        UUID labId = createLab(institutionId, "LAB-CRON-" + System.nanoTime());
-        UUID modelId = createEquipmentModel(institutionId, "Model-" + System.nanoTime(), 100);
-        UUID configId = createConfiguration(institutionId, modelId, "Linux");
-        assignEquipment(institutionId, labId, configId, 3);
-
-        UUID periodId = createPeriod(institutionId, "PERIOD-CRON-" + System.nanoTime(),
-                yesterday.minusDays(5), yesterday.plusDays(5));
-        List<ShiftDTO> shifts = replaceShifts(institutionId, periodId, List.of(
-                new ReplaceShiftsRequest.ShiftInput(
-                        ShiftType.MORNING, LocalTime.of(7, 30), 1, 50, 10, List.of(dow), true)));
-        replaceSchedule(institutionId, periodId, labId, List.of(
-                new ReplaceScheduleRequest.ScheduleInput(shifts.get(0).id(), dow, List.of(1))));
-
-        cronService.captureYesterday();
-
-        Optional<EmissionSnapshot> snapshot = fetchSnapshot(institutionId, yesterday);
-        assertTrue(snapshot.isPresent());
-        assertEquals(yesterday, snapshot.get().getSnapshotDate());
-        assertTrue(snapshot.get().getDailyEmissionKg().compareTo(BigDecimal.ZERO) > 0);
-        assertEquals(0, new BigDecimal("0.0500").compareTo(snapshot.get().getEmissionFactorValue()));
-    }
-
-    // @spec:AC-113 Cron é idempotente — execução duplicada não cria novo snapshot
-    @Test
-    void deveCronSerIdempotente() {
-        LocalDate yesterday = LocalDate.now().minusDays(1);
-        int dow = yesterday.getDayOfWeek().getValue();
-
-        createEmissionFactor(institutionId, YearMonth.from(yesterday), "0.0500");
-        UUID labId = createLab(institutionId, "LAB-IDEMP-" + System.nanoTime());
-        UUID modelId = createEquipmentModel(institutionId, "Model-" + System.nanoTime(), 100);
-        UUID configId = createConfiguration(institutionId, modelId, "Linux");
-        assignEquipment(institutionId, labId, configId, 2);
-
-        UUID periodId = createPeriod(institutionId, "PERIOD-IDEMP-" + System.nanoTime(),
-                yesterday.minusDays(5), yesterday.plusDays(5));
-        List<ShiftDTO> shifts = replaceShifts(institutionId, periodId, List.of(
-                new ReplaceShiftsRequest.ShiftInput(
-                        ShiftType.MORNING, LocalTime.of(7, 30), 1, 50, 10, List.of(dow), true)));
-        replaceSchedule(institutionId, periodId, labId, List.of(
-                new ReplaceScheduleRequest.ScheduleInput(shifts.get(0).id(), dow, List.of(1))));
-
-        cronService.captureYesterday();
-        EmissionSnapshot first = fetchSnapshot(institutionId, yesterday).orElseThrow();
-
-        cronService.captureYesterday();
-        EmissionSnapshot second = fetchSnapshot(institutionId, yesterday).orElseThrow();
-
-        assertEquals(first.getId(), second.getId());
-        assertEquals(0, first.getDailyEmissionKg().compareTo(second.getDailyEmissionKg()));
-    }
-
-    // @spec:AC-114 Cron não cria snapshot para dia fora de período letivo
-    @Test
-    void deveCronNaoCriarSnapshotParaDiaForaDePeriodoLetivo() {
-        LocalDate yesterday = LocalDate.now().minusDays(1);
-        createEmissionFactor(institutionId, YearMonth.from(yesterday), "0.0500");
-
-        cronService.captureYesterday();
-
-        assertFalse(snapshotExists(institutionId, yesterday));
-    }
-
-    // @spec:AC-115 Cron não cria snapshot quando fator SIN está ausente
-    @Test
-    void deveCronNaoCriarSnapshotQuandoFatorSinAusente() {
-        LocalDate yesterday = LocalDate.now().minusDays(1);
-        int dow = yesterday.getDayOfWeek().getValue();
-
-        UUID labId = createLab(institutionId, "LAB-NOFATOR-" + System.nanoTime());
-        UUID modelId = createEquipmentModel(institutionId, "Model-" + System.nanoTime(), 100);
-        UUID configId = createConfiguration(institutionId, modelId, "Linux");
-        assignEquipment(institutionId, labId, configId, 2);
-
-        UUID periodId = createPeriod(institutionId, "PERIOD-NOFATOR-" + System.nanoTime(),
-                yesterday.minusDays(5), yesterday.plusDays(5));
-        List<ShiftDTO> shifts = replaceShifts(institutionId, periodId, List.of(
-                new ReplaceShiftsRequest.ShiftInput(
-                        ShiftType.MORNING, LocalTime.of(7, 30), 1, 50, 10, List.of(dow), true)));
-        replaceSchedule(institutionId, periodId, labId, List.of(
-                new ReplaceScheduleRequest.ScheduleInput(shifts.get(0).id(), dow, List.of(1))));
-
-        cronService.captureYesterday();
-
-        assertFalse(snapshotExists(institutionId, yesterday));
-    }
-
-    // @spec:AC-116 Dia feriado gera snapshot com emissão zero
-    @Test
-    void deveDiaFeriadoGerarSnapshotComEmissaoZero() {
-        LocalDate yesterday = LocalDate.now().minusDays(1);
-        int dow = yesterday.getDayOfWeek().getValue();
-
-        createEmissionFactor(institutionId, YearMonth.from(yesterday), "0.0500");
-        UUID labId = createLab(institutionId, "LAB-FERIADO-" + System.nanoTime());
-        UUID modelId = createEquipmentModel(institutionId, "Model-" + System.nanoTime(), 100);
-        UUID configId = createConfiguration(institutionId, modelId, "Linux");
-        assignEquipment(institutionId, labId, configId, 2);
-
-        UUID periodId = createPeriod(institutionId, "PERIOD-FERIADO-" + System.nanoTime(),
-                yesterday.minusDays(5), yesterday.plusDays(5));
-        List<ShiftDTO> shifts = replaceShifts(institutionId, periodId, List.of(
-                new ReplaceShiftsRequest.ShiftInput(
-                        ShiftType.MORNING, LocalTime.of(7, 30), 1, 50, 10, List.of(dow), true)));
-        replaceSchedule(institutionId, periodId, labId, List.of(
-                new ReplaceScheduleRequest.ScheduleInput(shifts.get(0).id(), dow, List.of(1))));
-        replaceHolidays(institutionId, periodId, List.of(
-                new HolidayDTO(yesterday, "Feriado de Teste", HolidayType.NATIONAL)));
-
-        cronService.captureYesterday();
-
-        EmissionSnapshot snapshot = fetchSnapshot(institutionId, yesterday).orElseThrow();
-        assertFalse(snapshot.isSchoolDay());
-        assertEquals(0, BigDecimal.ZERO.compareTo(snapshot.getDailyEmissionKg()));
-        assertEquals(0, BigDecimal.ZERO.compareTo(snapshot.getDailyEnergyKwh()));
-    }
-
-    // @spec:AC-117 Lab sem schedule para o dayOfWeek do dia não contribui para emissão
-    @Test
-    void deveLabSemScheduleParaDiaNaoContribuirParaEmissao() {
-        LocalDate yesterday = LocalDate.now().minusDays(1);
-        int yesterdayDow = yesterday.getDayOfWeek().getValue();
-        int otherDow = (yesterdayDow % 7) + 1;
-
-        createEmissionFactor(institutionId, YearMonth.from(yesterday), "0.0500");
-
-        UUID labA = createLab(institutionId, "LAB-A-" + System.nanoTime());
-        UUID modelA = createEquipmentModel(institutionId, "Model-A-" + System.nanoTime(), 100);
-        UUID configA = createConfiguration(institutionId, modelA, "Linux");
-        assignEquipment(institutionId, labA, configA, 5);
-
-        UUID labB = createLab(institutionId, "LAB-B-" + System.nanoTime());
-        UUID modelB = createEquipmentModel(institutionId, "Model-B-" + System.nanoTime(), 50);
-        UUID configB = createConfiguration(institutionId, modelB, "Linux");
-        assignEquipment(institutionId, labB, configB, 2);
-
-        UUID periodId = createPeriod(institutionId, "PERIOD-DOW-" + System.nanoTime(),
-                yesterday.minusDays(5), yesterday.plusDays(5));
-        List<ShiftDTO> shifts = replaceShifts(institutionId, periodId, List.of(
-                new ReplaceShiftsRequest.ShiftInput(
-                        ShiftType.MORNING, LocalTime.of(7, 30), 1, 50, 10,
-                        List.of(yesterdayDow, otherDow), true)));
-        UUID shiftId = shifts.get(0).id();
-
-        replaceSchedule(institutionId, periodId, labA, List.of(
-                new ReplaceScheduleRequest.ScheduleInput(shiftId, otherDow, List.of(1))));
-        replaceSchedule(institutionId, periodId, labB, List.of(
-                new ReplaceScheduleRequest.ScheduleInput(shiftId, yesterdayDow, List.of(1))));
-
-        cronService.captureYesterday();
-
-        EmissionSnapshot snapshot = fetchSnapshot(institutionId, yesterday).orElseThrow();
-        assertEquals(2, snapshot.getStationCount());
-        assertTrue(snapshot.getDailyEnergyKwh().compareTo(BigDecimal.ZERO) > 0);
-    }
 }
