@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Date;
 import java.time.LocalDate;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,6 +27,54 @@ public class EmissionSnapshotRepositoryImpl implements EmissionSnapshotRepositor
             + "COUNT(*) FILTER (WHERE es.is_school_day), MAX(es.station_count), "
             + "AVG(es.emission_factor_value)";
 
+    private static final String DATE_FILTER = " WHERE es.snapshot_date BETWEEN :startDate AND :endDate";
+
+    private record SqlTemplate(String selectColumns, String from, String groupBy, String orderBy) {
+
+        String bucketSql(boolean filtered) {
+            return "SELECT " + selectColumns + ", " + AGGREGATES + " " + from
+                    + (filtered ? DATE_FILTER : "") + " GROUP BY " + groupBy
+                    + " ORDER BY " + orderBy;
+        }
+
+        String countSql(boolean filtered) {
+            return "SELECT COUNT(*) FROM (SELECT 1 " + from
+                    + (filtered ? DATE_FILTER : "") + " GROUP BY " + groupBy + ") buckets";
+        }
+    }
+
+    private static final EnumMap<SnapshotGranularity, SqlTemplate> TEMPLATES = buildTemplates();
+
+    private static EnumMap<SnapshotGranularity, SqlTemplate> buildTemplates() {
+        var map = new EnumMap<SnapshotGranularity, SqlTemplate>(SnapshotGranularity.class);
+
+        map.put(SnapshotGranularity.DAILY, new SqlTemplate(
+                "es.snapshot_date, NULL, NULL, NULL",
+                "FROM emission_snapshot es",
+                "es.snapshot_date",
+                "es.snapshot_date DESC"));
+
+        map.put(SnapshotGranularity.WEEKLY, new SqlTemplate(
+                "CAST(date_trunc('week', es.snapshot_date) AS date), NULL, NULL, NULL",
+                "FROM emission_snapshot es",
+                "CAST(date_trunc('week', es.snapshot_date) AS date)",
+                "CAST(date_trunc('week', es.snapshot_date) AS date) DESC"));
+
+        map.put(SnapshotGranularity.MONTHLY, new SqlTemplate(
+                "CAST(date_trunc('month', es.snapshot_date) AS date), NULL, NULL, NULL",
+                "FROM emission_snapshot es",
+                "CAST(date_trunc('month', es.snapshot_date) AS date)",
+                "CAST(date_trunc('month', es.snapshot_date) AS date) DESC"));
+
+        map.put(SnapshotGranularity.PERIOD, new SqlTemplate(
+                "ap.start_date, ap.end_date, ap.id, ap.name",
+                "FROM emission_snapshot es JOIN academic_period ap ON ap.id = es.academic_period_id",
+                "ap.id, ap.name, ap.start_date, ap.end_date",
+                "ap.start_date DESC, ap.id DESC"));
+
+        return map;
+    }
+
     private final EntityManager em;
 
     @Override
@@ -45,61 +94,19 @@ public class EmissionSnapshotRepositoryImpl implements EmissionSnapshotRepositor
 
     @Override
     public long countBuckets(SnapshotGranularity granularity, LocalDate startDate, LocalDate endDate) {
-        String sql = "SELECT COUNT(*) FROM (SELECT 1 " + from(granularity) + where(startDate, endDate)
-                + " GROUP BY " + groupBy(granularity) + ") buckets";
+        boolean filtered = hasDateRange(startDate, endDate);
+        String sql = TEMPLATES.get(granularity).countSql(filtered);
         Query query = em.createNativeQuery(sql);
         bindDateRange(query, startDate, endDate);
         return ((Number) query.getSingleResult()).longValue();
     }
 
     private Query bucketQuery(SnapshotGranularity granularity, LocalDate startDate, LocalDate endDate) {
-        String sql = "SELECT " + bucketColumns(granularity) + ", " + AGGREGATES + " "
-                + from(granularity) + where(startDate, endDate)
-                + " GROUP BY " + groupBy(granularity)
-                + " ORDER BY " + orderBy(granularity);
+        boolean filtered = hasDateRange(startDate, endDate);
+        String sql = TEMPLATES.get(granularity).bucketSql(filtered);
         Query query = em.createNativeQuery(sql);
         bindDateRange(query, startDate, endDate);
         return query;
-    }
-
-    private static String bucketColumns(SnapshotGranularity granularity) {
-        return switch (granularity) {
-            case PERIOD -> "ap.start_date, ap.end_date, ap.id, ap.name";
-            default -> bucketStart(granularity) + ", NULL, NULL, NULL";
-        };
-    }
-
-    private static String bucketStart(SnapshotGranularity granularity) {
-        return switch (granularity) {
-            case DAILY -> "es.snapshot_date";
-            case WEEKLY -> "CAST(date_trunc('week', es.snapshot_date) AS date)";
-            case MONTHLY -> "CAST(date_trunc('month', es.snapshot_date) AS date)";
-            case PERIOD -> "ap.start_date";
-        };
-    }
-
-    private static String from(SnapshotGranularity granularity) {
-        return granularity == SnapshotGranularity.PERIOD
-                ? "FROM emission_snapshot es JOIN academic_period ap ON ap.id = es.academic_period_id"
-                : "FROM emission_snapshot es";
-    }
-
-    private static String where(LocalDate startDate, LocalDate endDate) {
-        return hasDateRange(startDate, endDate)
-                ? " WHERE es.snapshot_date BETWEEN :startDate AND :endDate"
-                : "";
-    }
-
-    private static String groupBy(SnapshotGranularity granularity) {
-        return granularity == SnapshotGranularity.PERIOD
-                ? "ap.id, ap.name, ap.start_date, ap.end_date"
-                : bucketStart(granularity);
-    }
-
-    private static String orderBy(SnapshotGranularity granularity) {
-        return granularity == SnapshotGranularity.PERIOD
-                ? "ap.start_date DESC, ap.id DESC"
-                : bucketStart(granularity) + " DESC";
     }
 
     private static boolean hasDateRange(LocalDate startDate, LocalDate endDate) {
