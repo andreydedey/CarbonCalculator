@@ -204,8 +204,8 @@ class EmissionSnapshotIntegrationTest {
         return response.getBody().id();
     }
 
-    private UUID createConfiguration(UUID instId, UUID equipmentModelId, String os) {
-        CreateConfigurationRequest request = new CreateConfigurationRequest(equipmentModelId, os, null);
+    private UUID createConfiguration(UUID instId, UUID equipmentModelId, UUID operatingSystemId) {
+        CreateConfigurationRequest request = new CreateConfigurationRequest(equipmentModelId, operatingSystemId, null);
         ResponseEntity<ConfigurationDTO> response = restTemplate.exchange(
                 "/configurations", HttpMethod.POST,
                 new HttpEntity<>(request, headersFor(instId)),
