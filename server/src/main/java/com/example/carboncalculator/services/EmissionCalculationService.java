@@ -124,13 +124,31 @@ public class EmissionCalculationService {
             }
         }
 
+        // Parts with neither measurement nor specification would silently count as zero watts
+        Map<UUID, List<String>> labNamesByConfig = new LinkedHashMap<>();
+        for (Laboratory lab : labs) {
+            for (LaboratoryEquipment le : labEquipmentRepository.findByLaboratoryId(lab.getId())) {
+                labNamesByConfig.computeIfAbsent(le.getConfiguration().getId(), k -> new ArrayList<>())
+                        .add(lab.getName());
+            }
+        }
+        List<ReadinessDTO.ConsumptionWarning> configsWithoutConsumption = new ArrayList<>();
+        for (var entry : labNamesByConfig.entrySet()) {
+            Configuration config = configCache.get(entry.getKey());
+            List<String> missingParts = consumptionResolver.missingParts(config);
+            if (!missingParts.isEmpty()) {
+                configsWithoutConsumption.add(new ReadinessDTO.ConsumptionWarning(
+                        config.getId(), configLabel(config), missingParts, entry.getValue()));
+            }
+        }
+
         // A lab without a grid just adds zero; only block when no lab can be calculated at all
         boolean anyLabWithSchedule = labs.stream().anyMatch(lab -> labsWithSchedule.contains(lab.getId())
                 && !labsWithoutEquipment.contains(lab.getName()));
-        boolean ready = missingFactors.isEmpty() && anyLabWithSchedule;
+        boolean ready = missingFactors.isEmpty() && anyLabWithSchedule && configsWithoutConsumption.isEmpty();
 
         return new ReadinessDTO(ready, missingFactors, labsWithoutEquipment,
-                labsWithoutSchedule, configsWithoutMonitor);
+                labsWithoutSchedule, configsWithoutMonitor, configsWithoutConsumption);
     }
 
     /**

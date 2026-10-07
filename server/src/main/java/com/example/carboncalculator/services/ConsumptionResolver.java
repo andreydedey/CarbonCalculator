@@ -1,6 +1,7 @@
 package com.example.carboncalculator.services;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -62,8 +63,9 @@ public class ConsumptionResolver {
 
         if (hasComputerMeasurement) {
             int computerWatts = computerMeasurements.get(0).getAverageWatts().intValue();
+            String source = monitor != null ? "measurement_computer+specification_monitor" : "measurement_computer";
             return new ResolvedConsumption(computerWatts + specMonitorWatts, computerWatts, specMonitorWatts,
-                    computerWatts + specMonitorWatts, "measurement_computer+specification_monitor");
+                    computerWatts + specMonitorWatts, source);
         }
 
         if (hasMonitorMeasurement) {
@@ -75,6 +77,38 @@ public class ConsumptionResolver {
         // 4. Pure specification
         return new ResolvedConsumption(specComputerWatts + specMonitorWatts, specComputerWatts, specMonitorWatts,
                 specComputerWatts + specMonitorWatts, "specification");
+    }
+
+    /**
+     * Parts of a configuration ("computador", "monitor") that have neither a measurement covering
+     * them nor a specified power, so their consumption would silently count as zero.
+     */
+    public List<String> missingParts(Configuration config) {
+        EquipmentModel model = config.getEquipmentModel();
+        Monitor monitor = config.getMonitor();
+        UUID modelId = model.getId();
+        UUID osId = config.getOperatingSystem().getId();
+
+        boolean combined = monitor != null
+                && !measurementRepository.findCombinedMeasurements(modelId, osId, monitor.getId()).isEmpty();
+        if (combined) {
+            return List.of();
+        }
+
+        List<String> missing = new ArrayList<>();
+        boolean computerCovered = model.getTdpWatts() != null
+                || !measurementRepository.findComputerMeasurements(modelId, osId).isEmpty();
+        if (!computerCovered) {
+            missing.add("computador");
+        }
+        if (monitor != null) {
+            boolean monitorCovered = monitor.getWatts() != null
+                    || !measurementRepository.findMonitorMeasurements(monitor.getId()).isEmpty();
+            if (!monitorCovered) {
+                missing.add("monitor");
+            }
+        }
+        return missing;
     }
 
     public record ResolvedConsumption(

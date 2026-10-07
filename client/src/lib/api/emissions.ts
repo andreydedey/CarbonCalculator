@@ -108,6 +108,13 @@ export type ReadinessResult = {
     label: string
     laboratoryNames: string[]
   }[]
+  // Configurations whose computer and/or monitor has no measurement and no specified power
+  configurationsWithoutConsumption: {
+    configurationId: string
+    label: string
+    missingParts: string[]
+    laboratoryNames: string[]
+  }[]
 }
 
 // --- API ---
