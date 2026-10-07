@@ -89,8 +89,8 @@ export function LongitudinalPage() {
         <p className="text-xs font-normal text-muted-foreground">Análise &rsaquo; Acompanhamento Longitudinal</p>
         <div className="flex items-center justify-between">
           <h1 className="font-heading text-2xl font-bold">Acompanhamento Longitudinal</h1>
-          <div className="flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs bg-[#F0FDF4] border-[#BBF7D0] text-[#15803D]">
-            <Timer className="size-3 text-[#16A34A]" />
+          <div className="flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs bg-accent border-accent text-primary">
+            <Timer className="size-3 text-primary" />
             <span className="font-medium">Coleta automática diária</span>
           </div>
         </div>
@@ -120,7 +120,7 @@ export function LongitudinalPage() {
             onClick={() => setGranularity(opt.value)}
             className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
               granularity === opt.value
-                ? 'bg-[#192219] text-white'
+                ? 'bg-foreground text-background'
                 : 'text-muted-foreground hover:bg-muted'
             }`}
           >
@@ -144,7 +144,7 @@ export function LongitudinalPage() {
               {periods.length > 0 && (
                 <Select value={selectedPeriodId} onValueChange={setSelectedPeriodId}>
                   <SelectTrigger className="w-auto h-8 text-xs gap-1.5 border-dashed">
-                    <CalendarDays className="size-3 text-[#24744D]" />
+                    <CalendarDays className="size-3 text-primary" />
                     <SelectValue placeholder="Todos os períodos" />
                   </SelectTrigger>
                   <SelectContent>
@@ -167,7 +167,7 @@ export function LongitudinalPage() {
                     'Emissão',
                   ]}
                 />
-                <Bar dataKey="totalEmissionKg" fill="#24744D" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="totalEmissionKg" fill="var(--chart-1)" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

@@ -44,5 +44,5 @@ export function computeKpiCards(monthlySnapshots: SnapshotAggregateDTO[]): KpiCa
 
 export function getVariationColor(variationPct: number | null): string | null {
   if (variationPct === null) return null
-  return variationPct > 0 ? '#DC2626' : '#16A34A'
+  return variationPct > 0 ? 'var(--destructive)' : 'var(--success)'
 }
