@@ -16,7 +16,6 @@ import com.example.carboncalculator.dto.AcceptInviteRequest;
 import com.example.carboncalculator.dto.AuthResponse;
 import com.example.carboncalculator.dto.InviteValidationResponse;
 import com.example.carboncalculator.dto.LoginRequest;
-import com.example.carboncalculator.dto.RegisterRequest;
 import com.example.carboncalculator.dto.UserProfileDTO;
 import com.example.carboncalculator.entities.AppUser;
 import com.example.carboncalculator.security.JwtService;
@@ -34,15 +33,6 @@ public class AuthController {
     private final AuthService authService;
     private final JwtService jwtService;
     private final org.springframework.core.env.Environment environment;
-
-    @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
-        AuthResponse response = authService.register(request.name(), request.email(), request.password());
-        AppUser user = authService.findByEmail(request.email());
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(user).toString())
-                .body(response);
-    }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {

@@ -37,25 +37,6 @@ public class AuthService {
     private final JwtService jwtService;
     private final InviteTokenService inviteTokenService;
 
-    @Transactional
-    public AuthResponse register(String name, String email, String password) {
-        if (userRepository.existsByEmail(email)) {
-            throw new EmailAlreadyExistsException(email);
-        }
-
-        AppUser user = AppUser.builder()
-                .name(name)
-                .email(email)
-                .passwordHash(passwordEncoder.encode(password))
-                .build();
-        user = userRepository.save(user);
-        log.info("User registered: id={}", user.getId());
-
-        activatePendingInvitations(user);
-
-        return buildAuthResponse(user);
-    }
-
     @Transactional(readOnly = true)
     public AuthResponse login(String email, String password) {
         AppUser user = userRepository.findByEmail(email)
