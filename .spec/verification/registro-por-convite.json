@@ -1,0 +1,92 @@
+{
+  "feature": "registro-por-convite",
+  "timestamp": "2026-10-08T22:32:51.182Z",
+  "gitRev": "bf98ce8",
+  "command": "bash .spec/scripts/run-all-tests.sh",
+  "reporter": "tap",
+  "exitCode": 0,
+  "testsParsed": 212,
+  "results": {
+    "AC-155": {
+      "status": "pass",
+      "testName": "@spec:AC-155 invitePendingUser_returnsInviteLink",
+      "method": "tap"
+    },
+    "AC-156": {
+      "status": "pass",
+      "testName": "@spec:AC-156 inviteToken_storedAsHash",
+      "method": "tap"
+    },
+    "AC-157": {
+      "status": "pass",
+      "testName": "@spec:AC-157 expiredToken_rejected",
+      "method": "tap"
+    },
+    "AC-158": {
+      "status": "pass",
+      "testName": "@spec:AC-158 inviteExistingUser_noInviteLink",
+      "method": "tap"
+    },
+    "AC-159": {
+      "status": "pass",
+      "testName": "@spec:AC-159 validateToken_returnsInviteData",
+      "method": "tap"
+    },
+    "AC-160": {
+      "status": "pass",
+      "testName": "@spec:AC-160 validateInvalidToken_rejected",
+      "method": "tap"
+    },
+    "AC-161": {
+      "status": "pass",
+      "testName": "@spec:AC-161 acceptInvite_createsUserAndActivatesMembership",
+      "method": "tap"
+    },
+    "AC-162": {
+      "status": "pass",
+      "testName": "@spec:AC-162 consumedToken_cannotBeReused",
+      "method": "tap"
+    },
+    "AC-163": {
+      "status": "pass",
+      "testName": "@spec:AC-163 acceptInvite_activatesOtherPendingInvites",
+      "method": "tap"
+    },
+    "AC-164": {
+      "status": "pass",
+      "testName": "@spec:AC-164 acceptInvite_rejectsIfEmailAlreadyRegistered",
+      "method": "tap"
+    },
+    "AC-165": {
+      "status": "pass",
+      "testName": "@spec:AC-165 shows readonly email field after token validation 15ms",
+      "method": "tap"
+    },
+    "AC-166": {
+      "status": "pass",
+      "testName": "@spec:AC-166 shows \"Convite necessário\" message 20ms",
+      "method": "tap"
+    },
+    "AC-167": {
+      "status": "pass",
+      "testName": "@spec:AC-167 oldRegisterEndpoint_returns401",
+      "method": "tap"
+    },
+    "AC-168": {
+      "status": "pass",
+      "testName": "@spec:AC-168 does not show a registration link 24ms",
+      "method": "tap"
+    },
+    "AC-169": {
+      "status": "pass",
+      "testName": "@spec:AC-169 shows copyable link dialog when inviting a new user 169ms",
+      "method": "tap"
+    },
+    "AC-170": {
+      "status": "pass",
+      "testName": "@spec:AC-170 copies invite link to clipboard on button click 100ms",
+      "method": "tap"
+    }
+  },
+  "principles": {}
+}
