@@ -1,10 +1,18 @@
 import { useInfiniteQuery, useMutation } from '@tanstack/react-query'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Layers, Pencil, Trash2 } from 'lucide-react'
 import type React from 'react'
 import { toast } from 'sonner'
 import { ConfigurationForm } from '@/components/configurations/ConfigurationForm'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
 import { useFormDialog } from '@/hooks/use-dialog'
 import { isApiError } from '@/lib/api/client'
@@ -87,7 +95,20 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>
       ) : configurations.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nenhuma configuração encontrada.</p>
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia>
+              <Layers className="size-6 text-muted-foreground" />
+            </EmptyMedia>
+            <EmptyTitle>Nenhuma configuração cadastrada</EmptyTitle>
+            <EmptyDescription>
+              Comece cadastrando a primeira configuração de estação.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button onClick={() => onFormOpenChange?.(true)}>Cadastrar Configuração</Button>
+          </EmptyContent>
+        </Empty>
       ) : (
         <>
           <div className="rounded-lg border overflow-hidden">

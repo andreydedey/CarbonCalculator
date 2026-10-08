@@ -1,11 +1,20 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { Search } from 'lucide-react'
+import { Cpu, Search } from 'lucide-react'
 import type React from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useDebounce } from 'use-debounce'
 import { DeleteEquipmentModelDialog } from '@/components/equipment-models/DeleteEquipmentModelDialog'
 import { EquipmentModelCard } from '@/components/equipment-models/EquipmentModelCard'
 import { EquipmentModelForm } from '@/components/equipment-models/EquipmentModelForm'
+import { Button } from '@/components/ui/button'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { Input } from '@/components/ui/input'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
 import { useDialog, useFormDialog } from '@/hooks/use-dialog'
@@ -92,7 +101,32 @@ export const EquipmentModelList: React.FC<EquipmentModelListProps> = ({
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>
       ) : models.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nenhum modelo encontrado.</p>
+        search.length > 0 ? (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia>
+                <Search className="size-6 text-muted-foreground" />
+              </EmptyMedia>
+              <EmptyTitle>Nenhum resultado encontrado</EmptyTitle>
+              <EmptyDescription>Tente ajustar os filtros ou o termo de busca.</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia>
+                <Cpu className="size-6 text-muted-foreground" />
+              </EmptyMedia>
+              <EmptyTitle>Nenhum modelo cadastrado</EmptyTitle>
+              <EmptyDescription>
+                Comece cadastrando o primeiro modelo de equipamento.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button onClick={() => onFormOpenChange?.(true)}>Cadastrar Modelo</Button>
+            </EmptyContent>
+          </Empty>
+        )
       ) : (
         <div className="flex flex-col gap-4">
           {models.map((model) => (

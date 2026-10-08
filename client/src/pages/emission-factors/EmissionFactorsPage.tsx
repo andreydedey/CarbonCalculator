@@ -1,11 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { Info, Leaf, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Info, Leaf, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -398,10 +399,30 @@ export function EmissionFactorsPage() {
         {isLoading ? (
           <div className="px-6 py-8 text-sm text-[#6D786D]">Carregando...</div>
         ) : rows.length === 0 ? (
-          <div className="flex items-center justify-center px-6 py-8">
-            <p className="text-sm italic text-[#6D786D]">
-              Nenhum fator cadastrado{yearFilter ? ` para ${yearFilter}` : ''}.
-            </p>
+          <div className="px-6 py-8">
+            {yearParam !== null ? (
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia>
+                    <Search className="size-6 text-muted-foreground" />
+                  </EmptyMedia>
+                  <EmptyTitle>Nenhum resultado encontrado</EmptyTitle>
+                  <EmptyDescription>Tente ajustar o filtro de ano.</EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            ) : (
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia>
+                    <Leaf className="size-6 text-muted-foreground" />
+                  </EmptyMedia>
+                  <EmptyTitle>Nenhum fator de emissão cadastrado</EmptyTitle>
+                  <EmptyDescription>
+                    Comece cadastrando o primeiro fator de emissão.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            )}
           </div>
         ) : (
           <Table>

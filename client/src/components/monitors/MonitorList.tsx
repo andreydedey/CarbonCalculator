@@ -1,11 +1,20 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { Search } from 'lucide-react'
+import { Monitor as MonitorIcon, Search } from 'lucide-react'
 import type React from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useDebounce } from 'use-debounce'
 import { DeleteMonitorDialog } from '@/components/monitors/DeleteMonitorDialog'
 import { MonitorCard } from '@/components/monitors/MonitorCard'
 import { MonitorForm } from '@/components/monitors/MonitorForm'
+import { Button } from '@/components/ui/button'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { Input } from '@/components/ui/input'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
 import { useDialog, useFormDialog } from '@/hooks/use-dialog'
@@ -89,7 +98,30 @@ export const MonitorList: React.FC<MonitorListProps> = ({ formOpen, onFormOpenCh
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>
       ) : monitors.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nenhum monitor encontrado.</p>
+        search.length > 0 ? (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia>
+                <Search className="size-6 text-muted-foreground" />
+              </EmptyMedia>
+              <EmptyTitle>Nenhum resultado encontrado</EmptyTitle>
+              <EmptyDescription>Tente ajustar os filtros ou o termo de busca.</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia>
+                <MonitorIcon className="size-6 text-muted-foreground" />
+              </EmptyMedia>
+              <EmptyTitle>Nenhum monitor cadastrado</EmptyTitle>
+              <EmptyDescription>Comece cadastrando o primeiro monitor.</EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button onClick={() => onFormOpenChange?.(true)}>Cadastrar Monitor</Button>
+            </EmptyContent>
+          </Empty>
+        )
       ) : (
         <div className="flex flex-col gap-4">
           {monitors.map((monitor) => (

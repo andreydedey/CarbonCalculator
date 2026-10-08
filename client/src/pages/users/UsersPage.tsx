@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { UserPlus } from 'lucide-react'
+import { UserPlus, Users } from 'lucide-react'
 import type React from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -143,7 +144,11 @@ export const UsersPage: React.FC = () => {
                 )}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={!inviteForm.formState.isDirty || inviteMutation.isPending}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={!inviteForm.formState.isDirty || inviteMutation.isPending}
+            >
               {inviteMutation.isPending ? 'Enviando...' : 'Enviar Convite'}
             </Button>
           </form>
@@ -253,8 +258,18 @@ export const UsersPage: React.FC = () => {
                 ))}
                 {members.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                      Nenhum membro encontrado
+                    <td colSpan={5} className="px-4 py-8">
+                      <Empty>
+                        <EmptyHeader>
+                          <EmptyMedia>
+                            <Users className="size-6 text-muted-foreground" />
+                          </EmptyMedia>
+                          <EmptyTitle>Nenhum membro cadastrado</EmptyTitle>
+                          <EmptyDescription>
+                            Convide o primeiro membro para a instituição.
+                          </EmptyDescription>
+                        </EmptyHeader>
+                      </Empty>
                     </td>
                   </tr>
                 )}

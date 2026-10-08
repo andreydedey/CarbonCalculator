@@ -10,6 +10,14 @@ import { DeleteDialog } from '@/components/laboratories/DeleteDialog'
 import { LabCard, SummaryCard } from '@/components/laboratories/LabCard'
 import { LaboratoryForm } from '@/components/laboratories/LaboratoryForm'
 import { Button } from '@/components/ui/button'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { Input } from '@/components/ui/input'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
 import {
@@ -233,7 +241,30 @@ export const LaboratoryList: React.FC = () => {
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>
       ) : laboratories.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nenhum laboratório encontrado.</p>
+        search.length > 0 || statusFilter !== 'all' ? (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia>
+                <Search className="size-6 text-muted-foreground" />
+              </EmptyMedia>
+              <EmptyTitle>Nenhum resultado encontrado</EmptyTitle>
+              <EmptyDescription>Tente ajustar os filtros ou o termo de busca.</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia>
+                <Cpu className="size-6 text-muted-foreground" />
+              </EmptyMedia>
+              <EmptyTitle>Nenhum laboratório cadastrado</EmptyTitle>
+              <EmptyDescription>Comece cadastrando o primeiro laboratório.</EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button onClick={() => form.openDialog()}>Cadastrar Laboratório</Button>
+            </EmptyContent>
+          </Empty>
+        )
       ) : (
         <div className="flex flex-col gap-4">
           {laboratories.map((laboratory) => (
