@@ -1,12 +1,12 @@
 import type React from 'react'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import {
+  type AcceptInvitePayload,
   type AuthResponse,
+  acceptInvite as apiAcceptInvite,
   login as apiLogin,
   refreshToken as apiRefresh,
-  register as apiRegister,
   type LoginPayload,
-  type RegisterPayload,
   type UserProfile,
 } from '@/lib/api/auth'
 import { api } from '@/lib/api/client'
@@ -16,7 +16,7 @@ type AuthState = {
   isAuthenticated: boolean
   isLoading: boolean
   login: (payload: LoginPayload) => Promise<void>
-  register: (payload: RegisterPayload) => Promise<void>
+  acceptInvite: (token: string, payload: AcceptInvitePayload) => Promise<void>
   logout: () => void
 }
 
@@ -39,9 +39,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [handleAuthResponse],
   )
 
-  const register = useCallback(
-    async (payload: RegisterPayload) => {
-      const response = await apiRegister(payload)
+  const acceptInvite = useCallback(
+    async (token: string, payload: AcceptInvitePayload) => {
+      const response = await apiAcceptInvite(token, payload)
       handleAuthResponse(response)
     },
     [handleAuthResponse],
@@ -65,10 +65,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isAuthenticated: user !== null,
       isLoading,
       login,
-      register,
+      acceptInvite,
       logout,
     }),
-    [user, isLoading, login, register, logout],
+    [user, isLoading, login, acceptInvite, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
