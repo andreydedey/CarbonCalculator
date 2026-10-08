@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight, Plus, RotateCcw, X } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, Plus, RotateCcw, X } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -188,6 +188,8 @@ export function TodayClassesCard({
   const date = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : today
   const labFilter = searchParams.get('lab') ?? ALL_LABS
   const [extraOpen, setExtraOpen] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+  const VISIBLE_LIMIT = 10
 
   const setParam = (key: string, value: string | null) =>
     setSearchParams((prev) => {
@@ -309,92 +311,105 @@ export function TodayClassesCard({
           Nenhuma aula na grade para esta data.
         </p>
       ) : (
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b text-left text-[11px] tracking-wider text-muted-foreground">
-              <th className="px-1 pb-2 font-medium">LABORATÓRIO</th>
-              <th className="pb-2 font-medium">TURNO · AULA</th>
-              <th className="pb-2 font-medium">HORÁRIO</th>
-              <th className="pb-2 font-medium">ESTAÇÕES USADAS</th>
-              <th className="pb-2 font-medium">STATUS</th>
-              <th className="pb-2" />
-            </tr>
-          </thead>
-          <tbody>
-            {classes.map((c) => (
-              <tr
-                key={`${c.laboratoryId}-${c.shiftId}-${c.slot}`}
-                className="h-12 border-b last:border-0"
-              >
-                <td className="px-1 text-[13px] font-semibold">{c.laboratoryName}</td>
-                <td className="text-[13px]">
-                  {SHIFT_LABELS[c.shiftType]} · {c.slot}ª aula
-                </td>
-                <td className="font-mono text-xs text-muted-foreground">
-                  {c.startTime}–{c.endTime}
-                </td>
-                <td>
-                  {c.status === 'CANCELLED' ? (
-                    <span className="font-mono text-[13px] text-muted-foreground/60">
-                      — de {c.capacity}
-                    </span>
-                  ) : (
-                    <StationsInput
-                      value={c.stationsUsed}
-                      capacity={c.capacity}
-                      highlighted={c.status === 'ADJUSTED'}
-                      disabled={!editable}
-                      onCommit={(stationsUsed) =>
-                        saveMutation.mutate({
-                          labId: c.laboratoryId,
-                          shiftId: c.shiftId,
-                          slot: c.slot,
-                          stationsUsed,
-                        })
-                      }
-                    />
-                  )}
-                </td>
-                <td>
-                  <StatusBadge status={c.status} />
-                </td>
-                <td className="text-right">
-                  {editable &&
-                    (c.status === 'GRID' ? (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8"
-                        aria-label="Cancelar aula"
-                        onClick={() =>
+        <>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-left text-[11px] tracking-wider text-muted-foreground">
+                <th className="px-1 pb-2 font-medium">LABORATÓRIO</th>
+                <th className="pb-2 font-medium">TURNO · AULA</th>
+                <th className="pb-2 font-medium">HORÁRIO</th>
+                <th className="pb-2 font-medium">ESTAÇÕES USADAS</th>
+                <th className="pb-2 font-medium">STATUS</th>
+                <th className="pb-2" />
+              </tr>
+            </thead>
+            <tbody>
+              {(expanded ? classes : classes.slice(0, VISIBLE_LIMIT)).map((c) => (
+                <tr
+                  key={`${c.laboratoryId}-${c.shiftId}-${c.slot}`}
+                  className="h-12 border-b last:border-0"
+                >
+                  <td className="px-1 text-[13px] font-semibold">{c.laboratoryName}</td>
+                  <td className="text-[13px]">
+                    {SHIFT_LABELS[c.shiftType]} · {c.slot}ª aula
+                  </td>
+                  <td className="font-mono text-xs text-muted-foreground">
+                    {c.startTime}–{c.endTime}
+                  </td>
+                  <td>
+                    {c.status === 'CANCELLED' ? (
+                      <span className="font-mono text-[13px] text-muted-foreground/60">
+                        — de {c.capacity}
+                      </span>
+                    ) : (
+                      <StationsInput
+                        value={c.stationsUsed}
+                        capacity={c.capacity}
+                        highlighted={c.status === 'ADJUSTED'}
+                        disabled={!editable}
+                        onCommit={(stationsUsed) =>
                           saveMutation.mutate({
                             labId: c.laboratoryId,
                             shiftId: c.shiftId,
                             slot: c.slot,
-                            stationsUsed: 0,
+                            stationsUsed,
                           })
                         }
-                      >
-                        <X className="size-4 text-destructive" />
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8"
-                        aria-label={
-                          c.status === 'EXTRA' ? 'Remover aula extra' : 'Voltar ao padrão da grade'
-                        }
-                        onClick={() => resetMutation.mutate(c)}
-                      >
-                        <RotateCcw className="size-4 text-muted-foreground" />
-                      </Button>
-                    ))}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                      />
+                    )}
+                  </td>
+                  <td>
+                    <StatusBadge status={c.status} />
+                  </td>
+                  <td className="text-right">
+                    {editable &&
+                      (c.status === 'GRID' ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          aria-label="Cancelar aula"
+                          onClick={() =>
+                            saveMutation.mutate({
+                              labId: c.laboratoryId,
+                              shiftId: c.shiftId,
+                              slot: c.slot,
+                              stationsUsed: 0,
+                            })
+                          }
+                        >
+                          <X className="size-4 text-destructive" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          aria-label={
+                            c.status === 'EXTRA' ? 'Remover aula extra' : 'Voltar ao padrão da grade'
+                          }
+                          onClick={() => resetMutation.mutate(c)}
+                        >
+                          <RotateCcw className="size-4 text-muted-foreground" />
+                        </Button>
+                      ))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {classes.length > VISIBLE_LIMIT && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-muted-foreground"
+              onClick={() => setExpanded(!expanded)}
+            >
+              <ChevronDown className={`size-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+              {expanded ? 'Mostrar menos' : `Ver mais ${classes.length - VISIBLE_LIMIT} aulas`}
+            </Button>
+          )}
+        </>
       )}
 
       {data?.periodId && (
