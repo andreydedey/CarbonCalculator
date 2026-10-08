@@ -8,6 +8,10 @@ public final class UserMemberMapper {
     private UserMemberMapper() {}
 
     public static UserMemberDTO toDTO(UserInstitution membership) {
+        return toDTO(membership, null);
+    }
+
+    public static UserMemberDTO toDTO(UserInstitution membership, String inviteLink) {
         String name = membership.getUser() != null ? membership.getUser().getName() : null;
         String email = membership.getUser() != null
                 ? membership.getUser().getEmail()
@@ -17,6 +21,7 @@ public final class UserMemberMapper {
                 name,
                 email,
                 membership.getRole().name(),
-                membership.getStatus().name());
+                membership.getStatus().name(),
+                inviteLink);
     }
 }
