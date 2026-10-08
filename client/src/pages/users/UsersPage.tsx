@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { UserPlus, Users } from 'lucide-react'
+import { Check, Copy, UserPlus, Users } from 'lucide-react'
 import type React from 'react'
+import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -40,6 +41,8 @@ export const UsersPage: React.FC = () => {
   const { user: currentUser } = useAuth()
   const inviteDialog = useDialog()
   const revokeDialog = useDialog<UserMember>()
+  const [inviteLink, setInviteLink] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   const { data: membersPage, refetch } = useQuery({
     queryKey: ['users'],
@@ -54,16 +57,29 @@ export const UsersPage: React.FC = () => {
 
   const inviteMutation = useMutation({
     mutationFn: (data: InviteFormData) => inviteUser(data),
-    onSuccess: () => {
+    onSuccess: (result) => {
       refetch()
       inviteDialog.closeDialog()
       inviteForm.reset()
-      toast.success('Convite enviado')
+      if (result.inviteLink) {
+        const fullLink = `${window.location.origin}${result.inviteLink}`
+        setInviteLink(fullLink)
+        setCopied(false)
+      } else {
+        toast.success('Membro adicionado')
+      }
     },
     onError: (err) => {
       toast.error(err instanceof ApiError ? err.message : 'Erro ao enviar convite')
     },
   })
+
+  const handleCopy = async () => {
+    if (!inviteLink) return
+    await navigator.clipboard.writeText(inviteLink)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const changeRoleMutation = useMutation({
     mutationFn: ({ id, role }: { id: string; role: string }) => changeRole(id, { role }),
@@ -163,6 +179,24 @@ export const UsersPage: React.FC = () => {
           onRevoked={refetch}
         />
       )}
+
+      <Dialog open={!!inviteLink} onOpenChange={(open) => !open && setInviteLink(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Convite criado</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Envie o link abaixo para o convidado. O link expira em 7 dias.
+          </p>
+          <div className="flex items-center gap-2">
+            <Input value={inviteLink ?? ''} readOnly className="font-mono text-xs" />
+            <Button variant="outline" size="icon" onClick={handleCopy}>
+              {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+            </Button>
+          </div>
+          {copied && <p className="text-xs text-muted-foreground">Copiado!</p>}
+        </DialogContent>
+      </Dialog>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
