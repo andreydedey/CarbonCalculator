@@ -43,6 +43,14 @@ public class AuthController {
                 .body(response);
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout() {
+        ResponseCookie clearCookie = buildClearRefreshCookie();
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.SET_COOKIE, clearCookie.toString())
+                .build();
+    }
+
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refresh(HttpServletRequest request) {
         String refreshToken = extractRefreshToken(request);
@@ -81,6 +89,17 @@ public class AuthController {
                 .secure(isProd)
                 .path("/api/v1/auth/refresh")
                 .maxAge(jwtService.getRefreshTokenValidityMs() / 1000)
+                .sameSite("Strict")
+                .build();
+    }
+
+    private ResponseCookie buildClearRefreshCookie() {
+        boolean isProd = java.util.Arrays.asList(environment.getActiveProfiles()).contains("prod");
+        return ResponseCookie.from("refresh_token", "")
+                .httpOnly(true)
+                .secure(isProd)
+                .path("/api/v1/auth/refresh")
+                .maxAge(0)
                 .sameSite("Strict")
                 .build();
     }

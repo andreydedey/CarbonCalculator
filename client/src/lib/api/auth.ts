@@ -52,6 +52,10 @@ export function refreshToken(): Promise<AuthResponse> {
   return api.post('/auth/refresh').then((r) => r.data)
 }
 
+export function logout(): Promise<void> {
+  return api.post('/auth/logout')
+}
+
 export function getProfile(): Promise<UserProfile> {
   return api.get('/auth/me').then((r) => r.data)
 }

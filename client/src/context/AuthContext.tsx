@@ -5,6 +5,7 @@ import {
   type AuthResponse,
   acceptInvite as apiAcceptInvite,
   login as apiLogin,
+  logout as apiLogout,
   refreshToken as apiRefresh,
   type LoginPayload,
   type UserProfile,
@@ -48,6 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   )
 
   const logout = useCallback(() => {
+    apiLogout().catch(() => {})
     delete api.defaults.headers.common.Authorization
     setUser(null)
   }, [])
