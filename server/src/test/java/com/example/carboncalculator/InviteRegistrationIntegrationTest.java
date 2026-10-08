@@ -240,28 +240,15 @@ class InviteRegistrationIntegrationTest {
     void acceptInvite_activatesOtherPendingInvites() {
         String email = "multi-" + System.nanoTime() + "@test.com";
 
-        // Create another institution and invite same email
+        // Create a second institution
         InstitutionDTO inst2 = createInstitution("INV2-" + System.nanoTime());
-        invite(email, "RESEARCHER"); // in default institution
-        inviteInInstitution(email, "MANAGER", inst2.id()); // in second institution
 
-        // Accept the first invite
-        UserMemberDTO invited = invite(email, "RESEARCHER");
-        // Actually we already invited — let's get the token from the first invite
-        // Need to query the token from the first institution's invite
-        String tokenHash = jdbcTemplate.queryForObject(
-                "SELECT invite_token_hash FROM user_institution WHERE user_email = ? AND institution_id = ?::uuid LIMIT 1",
-                String.class, email, institutionId.toString());
-
-        // Since we can't get raw token from hash, let me re-approach:
-        // Delete existing invites and re-invite to get the token
-        jdbcTemplate.update("DELETE FROM user_institution WHERE user_email = ?", email);
-
+        // Invite the same email in both institutions
         UserMemberDTO inv1 = invite(email, "RESEARCHER");
         inviteInInstitution(email, "MANAGER", inst2.id());
 
+        // Accept the first invite — should create user and activate BOTH memberships
         String rawToken = inv1.inviteLink().replace("/register?token=", "");
-
         AcceptInviteRequest request = new AcceptInviteRequest("Multi User", "Senha-123!");
         ResponseEntity<AuthResponse> response = restTemplate.postForEntity(
                 "/auth/invitations/{token}/accept", request, AuthResponse.class, rawToken);

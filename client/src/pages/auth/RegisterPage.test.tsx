@@ -32,9 +32,8 @@ function renderWithProviders(initialEntries: string[]) {
   )
 }
 
-// @spec:AC-166 page without token shows warning
-describe('RegisterPage without token', () => {
-  it('shows "Convite necessário" message', () => {
+describe('@spec:AC-166 page without token shows warning', () => {
+  it('@spec:AC-166 shows "Convite necessário" message', () => {
     renderWithProviders(['/register'])
 
     expect(screen.getByText('Convite necessário')).toBeInTheDocument()
@@ -43,9 +42,8 @@ describe('RegisterPage without token', () => {
   })
 })
 
-// @spec:AC-165 form displays readonly email
-describe('RegisterPage with valid token', () => {
-  it('shows readonly email field after token validation', async () => {
+describe('@spec:AC-165 form displays readonly email', () => {
+  it('@spec:AC-165 shows readonly email field after token validation', async () => {
     const { validateInvite } = await import('@/lib/api/auth')
     vi.mocked(validateInvite).mockResolvedValue({
       email: 'convidado@uni.br',

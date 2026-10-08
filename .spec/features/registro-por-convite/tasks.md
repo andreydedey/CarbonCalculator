@@ -50,6 +50,6 @@
 
 ## T-069 — Testes frontend [concluida]
 - Refs: AC-165, AC-166, AC-168, AC-169, AC-170
-- Arquivos: client/src/pages/auth/RegisterPage.test.ts, client/src/pages/auth/LoginPage.test.ts, client/src/pages/users/UsersPage.test.ts
+- Arquivos: client/src/pages/auth/RegisterPage.test.tsx, client/src/pages/auth/LoginPage.test.tsx, client/src/pages/users/UsersPage.test.tsx
 - Esforço: medio
 - Notas: testar RegisterPage com/sem token, LoginPage sem link de registro, UsersPage dialog de link. Depende de T-065 a T-067.

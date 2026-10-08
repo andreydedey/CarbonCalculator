@@ -22,9 +22,8 @@ vi.mock('@/components/auth/GoogleAuthButton', () => ({
   GoogleAuthButton: () => <div data-testid="google-btn" />,
 }))
 
-// @spec:AC-168 login page has no register link
-describe('LoginPage', () => {
-  it('does not show a registration link', () => {
+describe('@spec:AC-168 login page has no register link', () => {
+  it('@spec:AC-168 does not show a registration link', () => {
     render(
       <MemoryRouter>
         <LoginPage />

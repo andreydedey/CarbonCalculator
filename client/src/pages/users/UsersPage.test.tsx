@@ -83,9 +83,8 @@ async function inviteAndOpenLinkDialog(tokenSuffix: string) {
   return user
 }
 
-// @spec:AC-169 dialog shows copyable link after invite
-describe('UsersPage invite link dialog', () => {
-  it('shows copyable link dialog when inviting a new user', async () => {
+describe('@spec:AC-169 dialog shows copyable link after invite', () => {
+  it('@spec:AC-169 shows copyable link dialog when inviting a new user', async () => {
     await inviteAndOpenLinkDialog('abc123')
 
     expect(screen.getByText(/O link expira em 7 dias/)).toBeInTheDocument()
@@ -96,9 +95,8 @@ describe('UsersPage invite link dialog', () => {
   })
 })
 
-// @spec:AC-170 copy button works
-describe('UsersPage copy button', () => {
-  it('copies invite link to clipboard on button click', async () => {
+describe('@spec:AC-170 copy button works', () => {
+  it('@spec:AC-170 copies invite link to clipboard on button click', async () => {
     await inviteAndOpenLinkDialog('xyz789')
 
     // The copy button renders in a Radix Dialog portal.

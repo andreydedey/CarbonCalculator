@@ -507,7 +507,6 @@ class EmissionSnapshotIntegrationTest {
     void deveResearcherConseguirConsultarSnapshots() {
         String email = "researcher-" + System.nanoTime() + "@example.com";
         String researcherToken = registerAndGetToken(email);
-        inviteMember(institutionId, email, "RESEARCHER");
 
         List<SnapshotAggregateDTO> result = getSnapshots(institutionId, researcherToken, "monthly", null, null);
 
