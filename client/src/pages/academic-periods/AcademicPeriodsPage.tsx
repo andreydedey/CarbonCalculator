@@ -28,6 +28,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
 import { useDialog } from '@/hooks/use-dialog'
 import {
@@ -118,14 +126,18 @@ export const AcademicPeriodsPage: React.FC = () => {
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>
       ) : periods.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-3 py-12">
-          <Calendar className="size-12 text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">Nenhum período letivo cadastrado.</p>
-          <Button variant="outline" size="sm" onClick={() => form.openDialog()}>
-            <Plus className="size-4" />
-            Criar primeiro período
-          </Button>
-        </div>
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia>
+              <Calendar className="size-6 text-muted-foreground" />
+            </EmptyMedia>
+            <EmptyTitle>Nenhum período letivo cadastrado</EmptyTitle>
+            <EmptyDescription>Comece cadastrando o primeiro período letivo.</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button onClick={() => form.openDialog()}>Criar Período</Button>
+          </EmptyContent>
+        </Empty>
       ) : (
         <>
           <div className="flex gap-4 overflow-x-auto px-1 py-2">

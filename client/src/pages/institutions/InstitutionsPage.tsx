@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation } from '@tanstack/react-query'
-import { Plus, Search } from 'lucide-react'
+import { Building2, Plus, Search } from 'lucide-react'
 import type React from 'react'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -18,6 +18,14 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { Input } from '@/components/ui/input'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
 import { useAuth } from '@/context/AuthContext'
@@ -126,7 +134,32 @@ export const InstitutionsPage: React.FC = () => {
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>
       ) : institutions.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nenhuma instituição encontrada.</p>
+        search.length > 0 ? (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia>
+                <Search className="size-6 text-muted-foreground" />
+              </EmptyMedia>
+              <EmptyTitle>Nenhum resultado encontrado</EmptyTitle>
+              <EmptyDescription>Tente ajustar os filtros ou o termo de busca.</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia>
+                <Building2 className="size-6 text-muted-foreground" />
+              </EmptyMedia>
+              <EmptyTitle>Nenhuma instituição cadastrada</EmptyTitle>
+              <EmptyDescription>Comece cadastrando a primeira instituição.</EmptyDescription>
+            </EmptyHeader>
+            {isAdmin && (
+              <EmptyContent>
+                <Button onClick={() => formDialog.openDialog()}>Cadastrar Instituição</Button>
+              </EmptyContent>
+            )}
+          </Empty>
+        )
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {institutions.map((institution) => (

@@ -1,10 +1,18 @@
 import { useInfiniteQuery, useMutation } from '@tanstack/react-query'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Plug, Trash2 } from 'lucide-react'
 import type React from 'react'
 import { toast } from 'sonner'
 import { ConsumptionMeasurementForm } from '@/components/consumption-measurements/ConsumptionMeasurementForm'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
 import { useFormDialog } from '@/hooks/use-dialog'
 import { isApiError } from '@/lib/api/client'
@@ -91,7 +99,18 @@ export const ConsumptionMeasurementList: React.FC<ConsumptionMeasurementListProp
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>
       ) : measurements.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nenhuma medição registrada.</p>
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia>
+              <Plug className="size-6 text-muted-foreground" />
+            </EmptyMedia>
+            <EmptyTitle>Nenhuma medição registrada</EmptyTitle>
+            <EmptyDescription>Comece registrando a primeira medição de consumo.</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button onClick={() => onFormOpenChange?.(true)}>Registrar Medição</Button>
+          </EmptyContent>
+        </Empty>
       ) : (
         <>
           <div className="rounded-lg border overflow-hidden">

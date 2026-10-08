@@ -1,13 +1,13 @@
 import {
   Building2,
+  Calculator,
   Calendar,
   Cpu,
-  FlaskConical,
   LayoutDashboard,
-  Leaf,
-  LineChart,
   LogOut,
-  Percent,
+  Monitor,
+  Table2,
+  TrendingUp,
   Users,
 } from 'lucide-react'
 import type React from 'react'
@@ -53,22 +53,22 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Cadastro',
     items: [
       { label: 'Instituições', href: '/institutions', icon: Building2 },
-      { label: 'Laboratórios', href: '/laboratories', icon: FlaskConical },
-      { label: 'Equipamentos', href: '/equipment-models', icon: Cpu },
-      { label: 'Calendário', href: '/academic-periods', icon: Calendar },
+      { label: 'Laboratórios', href: '/laboratories', icon: Cpu },
+      { label: 'Equipamentos', href: '/equipment-models', icon: Monitor },
+      { label: 'Calendário Letivo', href: '/academic-periods', icon: Calendar },
     ],
   },
   {
     label: 'Análise',
     items: [
-      { label: 'Emissões', href: '/emissions', icon: Leaf },
-      { label: 'Longitudinal', href: '/longitudinal', icon: LineChart },
+      { label: 'Cálculo de Emissões', href: '/emissions', icon: Calculator },
+      { label: 'Acompanhamento', href: '/longitudinal', icon: TrendingUp },
     ],
   },
   {
-    label: 'Configuração',
+    label: 'Administração',
     items: [
-      { label: 'Fatores de Emissão', href: '/emission-factors', icon: Percent, adminOnly: true },
+      { label: 'Fatores de Emissão', href: '/emission-factors', icon: Table2, adminOnly: true },
       { label: 'Usuários', href: '/users', icon: Users, requiresRole: 'MANAGER' },
     ],
   },
