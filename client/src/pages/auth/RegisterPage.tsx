@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
 import type React from 'react'
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { AuthBrandPanel } from '@/components/auth/AuthBrandPanel'
@@ -19,7 +18,6 @@ export const RegisterPage: React.FC = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token')
-  const [error, setError] = useState<string | null>(null)
 
   const {
     data: invite,
@@ -35,6 +33,8 @@ export const RegisterPage: React.FC = () => {
   const {
     register,
     handleSubmit,
+    setError,
+    clearErrors,
     formState: { errors, isSubmitting },
   } = useForm<AcceptInviteFormData>({
     resolver: zodResolver(acceptInviteSchema),
@@ -42,12 +42,12 @@ export const RegisterPage: React.FC = () => {
 
   const onSubmit = async (data: AcceptInviteFormData) => {
     if (!token) return
-    setError(null)
+    clearErrors('root')
     try {
       await acceptInvite(token, { name: data.name, password: data.password })
       navigate('/dashboard')
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Erro inesperado')
+      setError('root', { message: err instanceof ApiError ? err.message : 'Erro inesperado' })
     }
   }
 
@@ -123,9 +123,9 @@ export const RegisterPage: React.FC = () => {
             </p>
           </div>
 
-          {error && (
+          {errors.root && (
             <div className="rounded-md border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-              {error}
+              {errors.root.message}
             </div>
           )}
 

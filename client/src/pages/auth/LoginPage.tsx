@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import type React from 'react'
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { AuthBrandPanel } from '@/components/auth/AuthBrandPanel'
@@ -16,23 +15,24 @@ import { type LoginFormData, loginSchema } from '@/lib/schemas/authSchemas'
 export const LoginPage: React.FC = () => {
   const { login } = useAuth()
   const navigate = useNavigate()
-  const [error, setError] = useState<string | null>(null)
 
   const {
     register,
     handleSubmit,
+    setError,
+    clearErrors,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   })
 
   const onSubmit = async (data: LoginFormData) => {
-    setError(null)
+    clearErrors('root')
     try {
       await login(data)
       navigate('/dashboard')
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Erro inesperado')
+      setError('root', { message: err instanceof ApiError ? err.message : 'Erro inesperado' })
     }
   }
 
@@ -47,9 +47,9 @@ export const LoginPage: React.FC = () => {
             <p className="text-muted-foreground text-sm">Acesse sua conta para continuar</p>
           </div>
 
-          {error && (
+          {errors.root && (
             <div className="rounded-md border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-              {error}
+              {errors.root.message}
             </div>
           )}
 
