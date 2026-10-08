@@ -91,7 +91,7 @@ export const UsersPage: React.FC = () => {
           <p className="text-muted-foreground text-sm">Gerencie os membros da instituição</p>
         </div>
 
-        <Button size="sm" onClick={() => inviteDialog.openDialog()}>
+        <Button size="lg" onClick={() => inviteDialog.openDialog()}>
           <UserPlus className="mr-2 h-4 w-4" />
           Convidar
         </Button>
