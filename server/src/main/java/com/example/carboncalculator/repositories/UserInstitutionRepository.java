@@ -26,4 +26,6 @@ public interface UserInstitutionRepository extends JpaRepository<UserInstitution
     List<UserInstitution> findByUserEmailAndStatus(String userEmail, MembershipStatus status);
 
     boolean existsByUserEmailAndInstitutionId(String userEmail, UUID institutionId);
+
+    Optional<UserInstitution> findByInviteTokenHash(String inviteTokenHash);
 }

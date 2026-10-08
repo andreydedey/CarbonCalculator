@@ -35,6 +35,7 @@ public class GlobalExceptionHandler {
             ShiftValidationException.class,
             OccurrenceValidationException.class,
             InvalidEmissionFactorException.class,
+            InvalidInviteTokenException.class,
             IllegalArgumentException.class
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException ex, HttpServletRequest request) {

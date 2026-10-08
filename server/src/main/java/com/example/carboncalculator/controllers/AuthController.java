@@ -6,12 +6,15 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.carboncalculator.dto.AcceptInviteRequest;
 import com.example.carboncalculator.dto.AuthResponse;
+import com.example.carboncalculator.dto.InviteValidationResponse;
 import com.example.carboncalculator.dto.LoginRequest;
 import com.example.carboncalculator.dto.RegisterRequest;
 import com.example.carboncalculator.dto.UserProfileDTO;
@@ -63,6 +66,21 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<UserProfileDTO> me(@AuthenticationPrincipal AppUser user) {
         return ResponseEntity.ok(authService.getProfile(user));
+    }
+
+    @GetMapping("/invitations/{token}/validate")
+    public ResponseEntity<InviteValidationResponse> validateInvite(@PathVariable String token) {
+        return ResponseEntity.ok(authService.validateInvite(token));
+    }
+
+    @PostMapping("/invitations/{token}/accept")
+    public ResponseEntity<AuthResponse> acceptInvite(@PathVariable String token,
+                                                      @RequestBody AcceptInviteRequest request) {
+        AuthResponse response = authService.acceptInvite(token, request.name(), request.password());
+        AppUser user = authService.findByEmail(response.user().email());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(user).toString())
+                .body(response);
     }
 
     private ResponseCookie buildRefreshCookie(AppUser user) {

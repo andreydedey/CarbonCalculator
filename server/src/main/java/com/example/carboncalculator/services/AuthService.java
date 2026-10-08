@@ -1,5 +1,6 @@
 package com.example.carboncalculator.services;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -9,12 +10,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.carboncalculator.dto.AuthResponse;
+import com.example.carboncalculator.dto.InviteValidationResponse;
 import com.example.carboncalculator.dto.UserProfileDTO;
 import com.example.carboncalculator.entities.AppUser;
 import com.example.carboncalculator.entities.MembershipStatus;
 import com.example.carboncalculator.entities.UserInstitution;
 import com.example.carboncalculator.exceptions.EmailAlreadyExistsException;
 import com.example.carboncalculator.exceptions.InvalidCredentialsException;
+import com.example.carboncalculator.exceptions.InvalidInviteTokenException;
 import com.example.carboncalculator.mappers.UserProfileMapper;
 import com.example.carboncalculator.repositories.AppUserRepository;
 import com.example.carboncalculator.repositories.UserInstitutionRepository;
@@ -32,6 +35,7 @@ public class AuthService {
     private final UserInstitutionRepository membershipRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final InviteTokenService inviteTokenService;
 
     @Transactional
     public AuthResponse register(String name, String email, String password) {
@@ -90,6 +94,61 @@ public class AuthService {
     public UserProfileDTO getProfile(AppUser user) {
         List<UserInstitution> memberships = membershipRepository.findByUserId(user.getId());
         return UserProfileMapper.toProfileDTO(user, memberships);
+    }
+
+    @Transactional(readOnly = true)
+    public InviteValidationResponse validateInvite(String rawToken) {
+        UserInstitution membership = findValidInvite(rawToken);
+        return new InviteValidationResponse(
+                membership.getUserEmail(),
+                membership.getRole().name(),
+                membership.getInstitution().getName());
+    }
+
+    @Transactional
+    public AuthResponse acceptInvite(String rawToken, String name, String password) {
+        UserInstitution membership = findValidInvite(rawToken);
+        String email = membership.getUserEmail();
+
+        if (userRepository.existsByEmail(email)) {
+            throw new EmailAlreadyExistsException(email);
+        }
+
+        AppUser user = AppUser.builder()
+                .name(name)
+                .email(email)
+                .passwordHash(passwordEncoder.encode(password))
+                .build();
+        user = userRepository.save(user);
+        log.info("User registered via invite: id={}", user.getId());
+
+        // Activate this invite
+        membership.setUser(user);
+        membership.setUserEmail(null);
+        membership.setStatus(MembershipStatus.ACTIVE);
+        membership.setInviteTokenHash(null);
+        membership.setInviteExpiresAt(null);
+        membershipRepository.save(membership);
+
+        // Activate other pending invites for the same email
+        activatePendingInvitations(user);
+
+        return buildAuthResponse(user);
+    }
+
+    private UserInstitution findValidInvite(String rawToken) {
+        String hash = inviteTokenService.hash(rawToken);
+        UserInstitution membership = membershipRepository.findByInviteTokenHash(hash)
+                .orElseThrow(InvalidInviteTokenException::new);
+
+        if (membership.getStatus() != MembershipStatus.PENDING) {
+            throw new InvalidInviteTokenException();
+        }
+        if (membership.getInviteExpiresAt() != null
+                && membership.getInviteExpiresAt().isBefore(OffsetDateTime.now())) {
+            throw new InvalidInviteTokenException();
+        }
+        return membership;
     }
 
     private void activatePendingInvitations(AppUser user) {
