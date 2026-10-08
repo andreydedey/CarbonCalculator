@@ -61,7 +61,8 @@ import com.example.carboncalculator.dto.InviteRequest;
 import com.example.carboncalculator.dto.LaboratoryDTO;
 import com.example.carboncalculator.dto.LaboratoryEquipmentDTO;
 import com.example.carboncalculator.dto.LoginRequest;
-import com.example.carboncalculator.dto.RegisterRequest;
+import com.example.carboncalculator.dto.AcceptInviteRequest;
+import com.example.carboncalculator.dto.UserMemberDTO;
 import com.example.carboncalculator.dto.ReplaceHolidaysRequest;
 import com.example.carboncalculator.dto.ReplaceScheduleRequest;
 import com.example.carboncalculator.dto.ReplaceShiftsRequest;
@@ -275,9 +276,18 @@ class EmissionSnapshotIntegrationTest {
     }
 
     private String registerAndGetToken(String email) {
-        RegisterRequest request = new RegisterRequest("Pesquisador Teste", email, "Senha-123!");
+        // Invite the email first to get a token
+        InviteRequest inviteReq = new InviteRequest(email, "RESEARCHER");
+        ResponseEntity<UserMemberDTO> inviteResp = restTemplate.exchange(
+                "/users/invite", HttpMethod.POST,
+                new HttpEntity<>(inviteReq, headersFor(institutionId)), UserMemberDTO.class);
+        assertEquals(HttpStatus.CREATED, inviteResp.getStatusCode());
+        String rawToken = inviteResp.getBody().inviteLink().replace("/register?token=", "");
+
+        // Accept the invite
+        AcceptInviteRequest acceptReq = new AcceptInviteRequest("Pesquisador Teste", "Senha-123!");
         ResponseEntity<AuthResponse> response = restTemplate.postForEntity(
-                "/auth/register", request, AuthResponse.class);
+                "/auth/invitations/{token}/accept", acceptReq, AuthResponse.class, rawToken);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         return response.getBody().accessToken();
     }
