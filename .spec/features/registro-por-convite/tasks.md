@@ -48,8 +48,7 @@
 - Esforço: alto
 - Notas: testar todo o fluxo: convite gera token, validação, aceitação, token expirado, token consumido, email duplicado, ativação cross-institution, endpoint antigo removido. Depende de T-060 a T-064.
 
-## T-069 — Testes frontend [pendente]
-
+## T-069 — Testes frontend [concluida]
 - Refs: AC-165, AC-166, AC-168, AC-169, AC-170
 - Arquivos: client/src/pages/auth/RegisterPage.test.ts, client/src/pages/auth/LoginPage.test.ts, client/src/pages/users/UsersPage.test.ts
 - Esforço: medio
