@@ -107,6 +107,8 @@ public class AuthService {
             throw new EmailAlreadyExistsException(email);
         }
 
+        boolean shouldPromote = membership.isPromoteToAdmin();
+
         AppUser user = AppUser.builder()
                 .name(name)
                 .email(email)
@@ -121,10 +123,17 @@ public class AuthService {
         membership.setStatus(MembershipStatus.ACTIVE);
         membership.setInviteTokenHash(null);
         membership.setInviteExpiresAt(null);
+        membership.setPromoteToAdmin(false);
         membershipRepository.save(membership);
 
         // Activate other pending invites for the same email
-        activatePendingInvitations(user);
+        shouldPromote |= activatePendingInvitations(user);
+
+        if (shouldPromote) {
+            user.setAdmin(true);
+            userRepository.save(user);
+            log.info("User promoted to admin via invite: id={}", user.getId());
+        }
 
         return buildAuthResult(user);
     }
@@ -144,17 +153,27 @@ public class AuthService {
         return membership;
     }
 
-    private void activatePendingInvitations(AppUser user) {
+    /**
+     * Activates all pending invitations for the given user's email.
+     * @return true if any of the activated invitations had promoteToAdmin set
+     */
+    private boolean activatePendingInvitations(AppUser user) {
         List<UserInstitution> pending = membershipRepository
                 .findByUserEmailAndStatus(user.getEmail(), MembershipStatus.PENDING);
+        boolean shouldPromote = false;
         for (UserInstitution membership : pending) {
+            if (membership.isPromoteToAdmin()) {
+                shouldPromote = true;
+            }
             membership.setUser(user);
             membership.setUserEmail(null);
             membership.setStatus(MembershipStatus.ACTIVE);
             membership.setInviteTokenHash(null);
             membership.setInviteExpiresAt(null);
+            membership.setPromoteToAdmin(false);
             membershipRepository.save(membership);
         }
+        return shouldPromote;
     }
 
     private AuthResult buildAuthResult(AppUser user) {
