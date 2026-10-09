@@ -28,6 +28,7 @@ import { changeRole, inviteUser, listMembers, type UserMember } from '@/lib/api/
 import { type InviteFormData, inviteSchema } from '@/lib/schemas/inviteSchema'
 
 const ROLE_LABELS: Record<string, string> = {
+  ADMIN: 'Admin Global',
   MANAGER: 'Gestor',
   RESEARCHER: 'Pesquisador',
 }
@@ -153,6 +154,9 @@ export const UsersPage: React.FC = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      {currentUser?.admin && (
+                        <SelectItem value="ADMIN">Admin Global</SelectItem>
+                      )}
                       <SelectItem value="MANAGER">Gestor</SelectItem>
                       <SelectItem value="RESEARCHER">Pesquisador</SelectItem>
                     </SelectContent>
