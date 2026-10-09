@@ -38,9 +38,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     @Value("${app.oauth2.frontend-redirect-url}")
     private String frontendRedirectUrl;
 
-    @Value("${spring.profiles.active:}")
-    private String activeProfiles;
-
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
@@ -54,6 +51,16 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         AppUser user = userRepository.findByEmail(email).orElse(null);
 
         if (user == null) {
+            List<UserInstitution> pendingInvites = membershipRepository
+                    .findByUserEmailAndStatus(email, MembershipStatus.PENDING);
+
+            if (pendingInvites.isEmpty()) {
+                log.info("OAuth login rejected — no account or invite for email={}", email);
+                response.sendRedirect(frontendRedirectUrl.replace("/oauth/callback", "/login")
+                        + "?error=no_invite");
+                return;
+            }
+
             user = AppUser.builder()
                     .name(name)
                     .email(email)
@@ -74,10 +81,9 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
 
-        boolean isProd = activeProfiles.contains("prod");
         ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refreshToken)
                 .httpOnly(true)
-                .secure(isProd)
+                .secure(request.isSecure())
                 .path("/api/v1/auth/refresh")
                 .maxAge(jwtService.getRefreshTokenValidityMs() / 1000)
                 .sameSite("Strict")

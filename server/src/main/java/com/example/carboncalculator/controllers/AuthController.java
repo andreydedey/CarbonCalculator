@@ -35,19 +35,19 @@ public class AuthController {
 
     private final AuthService authService;
     private final JwtService jwtService;
-    private final org.springframework.core.env.Environment environment;
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
-        AuthResult result = authService.login(request.email(), request.password());
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest,
+                                              HttpServletRequest httpRequest) {
+        AuthResult result = authService.login(loginRequest.email(), loginRequest.password());
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(result.refreshToken()).toString())
+                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(result.refreshToken(), httpRequest).toString())
                 .body(result.response());
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
-        ResponseCookie clearCookie = buildClearRefreshCookie();
+    public ResponseEntity<Void> logout(HttpServletRequest httpRequest) {
+        ResponseCookie clearCookie = buildClearRefreshCookie(httpRequest);
         return ResponseEntity.noContent()
                 .header(HttpHeaders.SET_COOKIE, clearCookie.toString())
                 .build();
@@ -75,29 +75,28 @@ public class AuthController {
 
     @PostMapping("/invitations/{token}/accept")
     public ResponseEntity<AuthResponse> acceptInvite(@PathVariable String token,
-                                                      @RequestBody AcceptInviteRequest request) {
-        AuthResult result = authService.acceptInvite(token, request.name(), request.password());
+                                                      @RequestBody AcceptInviteRequest acceptRequest,
+                                                      HttpServletRequest httpRequest) {
+        AuthResult result = authService.acceptInvite(token, acceptRequest.name(), acceptRequest.password());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(result.refreshToken()).toString())
+                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(result.refreshToken(), httpRequest).toString())
                 .body(result.response());
     }
 
-    private ResponseCookie buildRefreshCookie(String refreshToken) {
-        boolean isProd = java.util.Arrays.asList(environment.getActiveProfiles()).contains("prod");
+    private ResponseCookie buildRefreshCookie(String refreshToken, HttpServletRequest request) {
         return ResponseCookie.from("refresh_token", refreshToken)
                 .httpOnly(true)
-                .secure(isProd)
+                .secure(request.isSecure())
                 .path(REFRESH_COOKIE_PATH)
                 .maxAge(jwtService.getRefreshTokenValidityMs() / 1000)
                 .sameSite("Strict")
                 .build();
     }
 
-    private ResponseCookie buildClearRefreshCookie() {
-        boolean isProd = java.util.Arrays.asList(environment.getActiveProfiles()).contains("prod");
+    private ResponseCookie buildClearRefreshCookie(HttpServletRequest request) {
         return ResponseCookie.from("refresh_token", "")
                 .httpOnly(true)
-                .secure(isProd)
+                .secure(request.isSecure())
                 .path(REFRESH_COOKIE_PATH)
                 .maxAge(0)
                 .sameSite("Strict")
