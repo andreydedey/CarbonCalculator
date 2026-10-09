@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import { TableSkeleton } from '@/components/ui/skeletons'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -397,7 +398,9 @@ export function EmissionFactorsPage() {
         </div>
 
         {isLoading ? (
-          <div className="px-6 py-8 text-sm text-[#6D786D]">Carregando...</div>
+          <div className="px-6 py-4">
+            <TableSkeleton rows={6} columns={5} />
+          </div>
         ) : rows.length === 0 ? (
           <div className="px-6 py-8">
             {yearParam !== null ? (

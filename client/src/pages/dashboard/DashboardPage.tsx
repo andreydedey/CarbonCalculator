@@ -7,6 +7,7 @@ import { TodayClassesCard } from '@/components/dashboard/TodayClassesCard'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+import { CardGridSkeleton, MetricCardSkeleton, TableSkeleton } from '@/components/ui/skeletons'
 import { useCanManage } from '@/hooks/useCanManage'
 import { type AcademicPeriod, listAcademicPeriods } from '@/lib/api/academic-periods'
 import { getEmissions } from '@/lib/api/emissions'
@@ -46,7 +47,7 @@ export function DashboardPage() {
   const canManage = useCanManage()
   const today = toIsoDate(new Date())
 
-  const { data: periodsPage } = useQuery({
+  const { data: periodsPage, isLoading: periodsLoading } = useQuery({
     queryKey: ['academic-periods', 'all-for-dashboard'],
     queryFn: () => listAcademicPeriods(0, 100),
   })
@@ -89,7 +90,13 @@ export function DashboardPage() {
         )}
       </div>
 
-      {!period ? (
+      {periodsLoading ? (
+        <div className="flex flex-col gap-7">
+          <MetricCardSkeleton count={4} />
+          <TableSkeleton rows={5} columns={6} />
+          <CardGridSkeleton count={3} columns={3} />
+        </div>
+      ) : !period ? (
         <p className="text-sm text-muted-foreground italic">
           Nenhum período letivo cadastrado. Cadastre um período no Calendário para acompanhar as
           emissões.
