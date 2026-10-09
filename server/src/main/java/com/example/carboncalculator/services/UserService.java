@@ -16,6 +16,7 @@ import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.InstitutionRole;
 import com.example.carboncalculator.entities.MembershipStatus;
 import com.example.carboncalculator.entities.UserInstitution;
+import com.example.carboncalculator.exceptions.AdminRequiredException;
 import com.example.carboncalculator.exceptions.CannotModifySelfException;
 import com.example.carboncalculator.exceptions.DuplicateInviteException;
 import com.example.carboncalculator.exceptions.InstitutionNotFoundException;
@@ -54,7 +55,14 @@ public class UserService {
     @Transactional
     public UserMemberDTO invite(String email, String roleName, AppUser inviter) {
         UUID institutionId = currentInstitutionId();
-        InstitutionRole role = parseRole(roleName);
+
+        boolean isAdminInvite = "ADMIN".equalsIgnoreCase(roleName);
+        if (isAdminInvite && !inviter.isAdmin()) {
+            throw new AdminRequiredException();
+        }
+
+        // Admin invitees get MANAGER as their institution role
+        InstitutionRole role = isAdminInvite ? InstitutionRole.MANAGER : parseRole(roleName);
 
         AppUser user = userRepository.findByEmail(email).orElse(null);
 
@@ -68,6 +76,12 @@ public class UserService {
         Institution institution = institutionRepository.findById(institutionId)
                 .orElseThrow(() -> new InstitutionNotFoundException(institutionId));
 
+        // If user already exists and this is an admin invite, promote immediately
+        if (isAdminInvite && user != null) {
+            user.setAdmin(true);
+            userRepository.save(user);
+        }
+
         String rawToken = null;
         String inviteLink = null;
         boolean isPending = user == null;
@@ -77,6 +91,7 @@ public class UserService {
                 .userEmail(isPending ? email : null)
                 .institution(institution)
                 .role(role)
+                .promoteToAdmin(isAdminInvite && isPending)
                 .status(isPending ? MembershipStatus.PENDING : MembershipStatus.ACTIVE);
 
         if (isPending) {
@@ -87,7 +102,7 @@ public class UserService {
         }
 
         UserInstitution membership = membershipRepository.save(builder.build());
-        log.info("User invited: email={}, role={}, pending={}", email, role, isPending);
+        log.info("User invited: email={}, role={}, admin={}, pending={}", email, role, isAdminInvite, isPending);
 
         return UserMemberMapper.toDTO(membership, inviteLink);
     }
