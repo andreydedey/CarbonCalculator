@@ -3,7 +3,6 @@ import { CalendarDays } from 'lucide-react'
 import { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
-import { ChartSkeleton, MetricCardSkeleton, TableSkeleton } from '@/components/ui/skeletons'
 import {
   Select,
   SelectContent,
@@ -11,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { ChartSkeleton, MetricCardSkeleton, TableSkeleton } from '@/components/ui/skeletons'
 import {
   Table,
   TableBody,
@@ -61,7 +61,7 @@ export function LongitudinalPage() {
     queryFn: () => listSnapshots({ granularity, ...dateFilter }),
   })
 
-  const { data: monthlyData = [] } = useQuery({
+  const { data: monthlyData = [], isLoading: isKpiLoading } = useQuery({
     queryKey: ['snapshots', KPI_GRANULARITY, selectedPeriodId],
     queryFn: () => listSnapshots({ granularity: KPI_GRANULARITY, ...dateFilter }),
   })
@@ -87,25 +87,31 @@ export function LongitudinalPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <p className="text-xs font-normal text-muted-foreground">Análise &rsaquo; Acompanhamento Longitudinal</p>
+        <p className="text-xs font-normal text-muted-foreground">
+          Análise &rsaquo; Acompanhamento Longitudinal
+        </p>
         <h1 className="font-heading text-2xl font-bold">Acompanhamento Longitudinal</h1>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        {kpiCards.map((card) => (
-          <div key={card.label} className="rounded-lg border bg-card p-4 flex flex-col gap-1">
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">{card.label}</p>
-            <p className="text-2xl font-bold font-mono">
-              {typeof card.value === 'number'
-                ? card.value.toLocaleString('pt-BR', { maximumFractionDigits: 1 })
-                : card.value}
-            </p>
-            {typeof card.value === 'number' && (
-              <p className="text-xs text-muted-foreground">kg CO₂</p>
-            )}
-          </div>
-        ))}
-      </div>
+      {isKpiLoading ? (
+        <MetricCardSkeleton count={3} />
+      ) : (
+        <div className="grid grid-cols-3 gap-4">
+          {kpiCards.map((card) => (
+            <div key={card.label} className="rounded-lg border bg-card p-4 flex flex-col gap-1">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">{card.label}</p>
+              <p className="text-2xl font-bold font-mono">
+                {typeof card.value === 'number'
+                  ? card.value.toLocaleString('pt-BR', { maximumFractionDigits: 1 })
+                  : card.value}
+              </p>
+              {typeof card.value === 'number' && (
+                <p className="text-xs text-muted-foreground">kg CO₂</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="flex items-center gap-1 rounded-lg border bg-muted/30 p-1 w-fit">
         {GRANULARITY_OPTIONS.map((opt) => (
@@ -131,7 +137,9 @@ export function LongitudinalPage() {
         </div>
       ) : isEmpty ? (
         <div className="rounded-lg border p-8 flex items-center justify-center">
-          <p className="text-sm text-muted-foreground text-center max-w-sm">{EMPTY_STATE_MESSAGE}</p>
+          <p className="text-sm text-muted-foreground text-center max-w-sm">
+            {EMPTY_STATE_MESSAGE}
+          </p>
         </div>
       ) : (
         <>
@@ -139,7 +147,16 @@ export function LongitudinalPage() {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <p className="text-sm font-medium">Evolução de Emissões</p>
-                <p className="text-xs text-muted-foreground mt-0.5">kg CO₂ emitidos · visão {granularity === 'monthly' ? 'mensal' : granularity === 'weekly' ? 'semanal' : granularity === 'daily' ? 'diária' : 'por período'}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  kg CO₂ emitidos · visão{' '}
+                  {granularity === 'monthly'
+                    ? 'mensal'
+                    : granularity === 'weekly'
+                      ? 'semanal'
+                      : granularity === 'daily'
+                        ? 'diária'
+                        : 'por período'}
+                </p>
               </div>
               {periods.length > 0 && (
                 <Select value={selectedPeriodId} onValueChange={setSelectedPeriodId}>
@@ -150,7 +167,9 @@ export function LongitudinalPage() {
                   <SelectContent>
                     <SelectItem value="all">Todos os períodos</SelectItem>
                     {periods.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
