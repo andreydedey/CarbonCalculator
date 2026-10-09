@@ -2,8 +2,21 @@
 # Runs frontend (Node) and backend (Maven/Surefire) tests, outputting TAP for onp-spec verify.
 set -uo pipefail
 
-# --- 1. Frontend (Node.js TAP) ---
+# --- 1a. Frontend — unit tests (Node.js TAP) ---
 node --test --test-reporter=tap "client/src/**/*.test.ts" 2>&1 || true
+
+# --- 1b. Frontend — component tests (Vitest → TAP) ---
+vitest_out=$(cd client && bunx vitest run --reporter=verbose 2>&1) || true
+tap_vt=200
+echo "$vitest_out" | grep '@spec:' | while IFS= read -r line; do
+  tap_vt=$((tap_vt + 1))
+  title=$(echo "$line" | sed 's/.*@spec:/\@spec:/' | sed 's/[[:space:]]*$//')
+  if echo "$line" | grep -q '✓\|✔'; then
+    echo "ok $tap_vt - $title"
+  else
+    echo "not ok $tap_vt - $title"
+  fi
+done
 
 # --- 2. Backend (Maven → TAP) ---
 export JAVA_HOME="${JAVA_HOME:-/opt/homebrew/opt/openjdk@25}"

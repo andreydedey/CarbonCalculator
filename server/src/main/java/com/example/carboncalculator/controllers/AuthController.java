@@ -6,14 +6,17 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.carboncalculator.dto.AcceptInviteRequest;
 import com.example.carboncalculator.dto.AuthResponse;
+import com.example.carboncalculator.dto.AuthResult;
+import com.example.carboncalculator.dto.InviteValidationResponse;
 import com.example.carboncalculator.dto.LoginRequest;
-import com.example.carboncalculator.dto.RegisterRequest;
 import com.example.carboncalculator.dto.UserProfileDTO;
 import com.example.carboncalculator.entities.AppUser;
 import com.example.carboncalculator.security.JwtService;
@@ -28,26 +31,26 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthController {
 
+    private static final String REFRESH_COOKIE_PATH = "/api/v1/auth/refresh";
+
     private final AuthService authService;
     private final JwtService jwtService;
     private final org.springframework.core.env.Environment environment;
 
-    @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
-        AuthResponse response = authService.register(request.name(), request.email(), request.password());
-        AppUser user = authService.findByEmail(request.email());
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(user).toString())
-                .body(response);
-    }
-
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
-        AuthResponse response = authService.login(request.email(), request.password());
-        AppUser user = authService.findByEmail(request.email());
+        AuthResult result = authService.login(request.email(), request.password());
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(user).toString())
-                .body(response);
+                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(result.refreshToken()).toString())
+                .body(result.response());
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout() {
+        ResponseCookie clearCookie = buildClearRefreshCookie();
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.SET_COOKIE, clearCookie.toString())
+                .build();
     }
 
     @PostMapping("/refresh")
@@ -65,14 +68,38 @@ public class AuthController {
         return ResponseEntity.ok(authService.getProfile(user));
     }
 
-    private ResponseCookie buildRefreshCookie(AppUser user) {
-        String refreshToken = jwtService.generateRefreshToken(user);
+    @GetMapping("/invitations/{token}/validate")
+    public ResponseEntity<InviteValidationResponse> validateInvite(@PathVariable String token) {
+        return ResponseEntity.ok(authService.validateInvite(token));
+    }
+
+    @PostMapping("/invitations/{token}/accept")
+    public ResponseEntity<AuthResponse> acceptInvite(@PathVariable String token,
+                                                      @RequestBody AcceptInviteRequest request) {
+        AuthResult result = authService.acceptInvite(token, request.name(), request.password());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(result.refreshToken()).toString())
+                .body(result.response());
+    }
+
+    private ResponseCookie buildRefreshCookie(String refreshToken) {
         boolean isProd = java.util.Arrays.asList(environment.getActiveProfiles()).contains("prod");
         return ResponseCookie.from("refresh_token", refreshToken)
                 .httpOnly(true)
                 .secure(isProd)
-                .path("/api/v1/auth/refresh")
+                .path(REFRESH_COOKIE_PATH)
                 .maxAge(jwtService.getRefreshTokenValidityMs() / 1000)
+                .sameSite("Strict")
+                .build();
+    }
+
+    private ResponseCookie buildClearRefreshCookie() {
+        boolean isProd = java.util.Arrays.asList(environment.getActiveProfiles()).contains("prod");
+        return ResponseCookie.from("refresh_token", "")
+                .httpOnly(true)
+                .secure(isProd)
+                .path(REFRESH_COOKIE_PATH)
+                .maxAge(0)
                 .sameSite("Strict")
                 .build();
     }

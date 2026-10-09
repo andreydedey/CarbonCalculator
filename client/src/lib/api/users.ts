@@ -7,6 +7,7 @@ export type UserMember = {
   email: string
   role: string
   status: string
+  inviteLink: string | null
 }
 
 export type InvitePayload = {

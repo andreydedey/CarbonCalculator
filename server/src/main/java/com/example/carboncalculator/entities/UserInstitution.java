@@ -54,6 +54,12 @@ public class UserInstitution {
     @Column(nullable = false, length = 20)
     private MembershipStatus status = MembershipStatus.PENDING;
 
+    @Column(name = "invite_token_hash", length = 64)
+    private String inviteTokenHash;
+
+    @Column(name = "invite_expires_at")
+    private OffsetDateTime inviteExpiresAt;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 

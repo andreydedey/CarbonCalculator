@@ -1,5 +1,6 @@
 package com.example.carboncalculator.services;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -9,12 +10,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.carboncalculator.dto.AuthResponse;
+import com.example.carboncalculator.dto.AuthResult;
+import com.example.carboncalculator.dto.InviteValidationResponse;
 import com.example.carboncalculator.dto.UserProfileDTO;
 import com.example.carboncalculator.entities.AppUser;
 import com.example.carboncalculator.entities.MembershipStatus;
 import com.example.carboncalculator.entities.UserInstitution;
 import com.example.carboncalculator.exceptions.EmailAlreadyExistsException;
 import com.example.carboncalculator.exceptions.InvalidCredentialsException;
+import com.example.carboncalculator.exceptions.InvalidInviteTokenException;
 import com.example.carboncalculator.mappers.UserProfileMapper;
 import com.example.carboncalculator.repositories.AppUserRepository;
 import com.example.carboncalculator.repositories.UserInstitutionRepository;
@@ -32,28 +36,10 @@ public class AuthService {
     private final UserInstitutionRepository membershipRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-
-    @Transactional
-    public AuthResponse register(String name, String email, String password) {
-        if (userRepository.existsByEmail(email)) {
-            throw new EmailAlreadyExistsException(email);
-        }
-
-        AppUser user = AppUser.builder()
-                .name(name)
-                .email(email)
-                .passwordHash(passwordEncoder.encode(password))
-                .build();
-        user = userRepository.save(user);
-        log.info("User registered: id={}", user.getId());
-
-        activatePendingInvitations(user);
-
-        return buildAuthResponse(user);
-    }
+    private final InviteTokenService inviteTokenService;
 
     @Transactional(readOnly = true)
-    public AuthResponse login(String email, String password) {
+    public AuthResult login(String email, String password) {
         AppUser user = userRepository.findByEmail(email)
                 .filter(u -> u.getPasswordHash() != null)
                 .filter(u -> passwordEncoder.matches(password, u.getPasswordHash()))
@@ -64,12 +50,13 @@ public class AuthService {
         }
 
         log.info("User logged in: id={}", user.getId());
-        return buildAuthResponse(user);
+        return buildAuthResult(user);
     }
 
     @Transactional(readOnly = true)
     public AuthResponse refresh(String refreshToken) {
-        if (!jwtService.isTokenValid(refreshToken)) {
+        if (!jwtService.isTokenValid(refreshToken)
+                || !"refresh".equals(jwtService.extractTokenType(refreshToken))) {
             throw new InvalidCredentialsException();
         }
 
@@ -78,18 +65,77 @@ public class AuthService {
                 .filter(AppUser::isActive)
                 .orElseThrow(InvalidCredentialsException::new);
 
-        return buildAuthResponse(user);
-    }
-
-    @Transactional(readOnly = true)
-    public AppUser findByEmail(String email) {
-        return userRepository.findByEmail(email).orElseThrow(InvalidCredentialsException::new);
+        String accessToken = jwtService.generateAccessToken(user);
+        List<UserInstitution> memberships = membershipRepository.findByUserId(user.getId());
+        return new AuthResponse(accessToken, UserProfileMapper.toProfileDTO(user, memberships));
     }
 
     @Transactional(readOnly = true)
     public UserProfileDTO getProfile(AppUser user) {
         List<UserInstitution> memberships = membershipRepository.findByUserId(user.getId());
         return UserProfileMapper.toProfileDTO(user, memberships);
+    }
+
+    @Transactional(readOnly = true)
+    public InviteValidationResponse validateInvite(String rawToken) {
+        UserInstitution membership = findValidInvite(rawToken);
+        return new InviteValidationResponse(
+                membership.getUserEmail(),
+                membership.getRole().name(),
+                membership.getInstitution().getName());
+    }
+
+    @Transactional
+    public AuthResult acceptInvite(String rawToken, String name, String password) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Name is required");
+        }
+        if (password == null || password.length() < 6) {
+            throw new IllegalArgumentException("Password must be at least 6 characters");
+        }
+
+        UserInstitution membership = findValidInvite(rawToken);
+        String email = membership.getUserEmail();
+
+        if (userRepository.existsByEmail(email)) {
+            throw new EmailAlreadyExistsException(email);
+        }
+
+        AppUser user = AppUser.builder()
+                .name(name)
+                .email(email)
+                .passwordHash(passwordEncoder.encode(password))
+                .build();
+        user = userRepository.save(user);
+        log.info("User registered via invite: id={}", user.getId());
+
+        // Activate this invite
+        membership.setUser(user);
+        membership.setUserEmail(null);
+        membership.setStatus(MembershipStatus.ACTIVE);
+        membership.setInviteTokenHash(null);
+        membership.setInviteExpiresAt(null);
+        membershipRepository.save(membership);
+
+        // Activate other pending invites for the same email
+        activatePendingInvitations(user);
+
+        return buildAuthResult(user);
+    }
+
+    private UserInstitution findValidInvite(String rawToken) {
+        String hash = inviteTokenService.hash(rawToken);
+        UserInstitution membership = membershipRepository.findByInviteTokenHash(hash)
+                .orElseThrow(InvalidInviteTokenException::new);
+
+        if (membership.getStatus() != MembershipStatus.PENDING) {
+            throw new InvalidInviteTokenException();
+        }
+        if (membership.getInviteExpiresAt() != null
+                && membership.getInviteExpiresAt().isBefore(OffsetDateTime.now())) {
+            throw new InvalidInviteTokenException();
+        }
+        return membership;
     }
 
     private void activatePendingInvitations(AppUser user) {
@@ -99,13 +145,17 @@ public class AuthService {
             membership.setUser(user);
             membership.setUserEmail(null);
             membership.setStatus(MembershipStatus.ACTIVE);
+            membership.setInviteTokenHash(null);
+            membership.setInviteExpiresAt(null);
             membershipRepository.save(membership);
         }
     }
 
-    private AuthResponse buildAuthResponse(AppUser user) {
+    private AuthResult buildAuthResult(AppUser user) {
         String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
         List<UserInstitution> memberships = membershipRepository.findByUserId(user.getId());
-        return new AuthResponse(accessToken, UserProfileMapper.toProfileDTO(user, memberships));
+        AuthResponse response = new AuthResponse(accessToken, UserProfileMapper.toProfileDTO(user, memberships));
+        return new AuthResult(response, refreshToken);
     }
 }

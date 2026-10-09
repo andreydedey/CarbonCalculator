@@ -37,15 +37,9 @@ import com.example.carboncalculator.dto.CreateInstitutionRequest;
 import com.example.carboncalculator.dto.EmissionFactorDTO;
 import com.example.carboncalculator.dto.LoginRequest;
 import com.example.carboncalculator.dto.PageResponse;
-import com.example.carboncalculator.dto.RegisterRequest;
-import com.example.carboncalculator.entities.AppUser;
-import com.example.carboncalculator.entities.Institution;
-import com.example.carboncalculator.entities.InstitutionRole;
-import com.example.carboncalculator.entities.MembershipStatus;
-import com.example.carboncalculator.entities.UserInstitution;
-import com.example.carboncalculator.repositories.AppUserRepository;
-import com.example.carboncalculator.repositories.InstitutionRepository;
-import com.example.carboncalculator.repositories.UserInstitutionRepository;
+import com.example.carboncalculator.dto.AcceptInviteRequest;
+import com.example.carboncalculator.dto.InviteRequest;
+import com.example.carboncalculator.dto.UserMemberDTO;
 
 /**
  * Integration tests for Emission Factor (US-033..US-034) against a real
@@ -88,15 +82,6 @@ class EmissionFactorControllerIntegrationTest {
 
     @Autowired
     private TestRestTemplate restTemplate;
-
-    @Autowired
-    private AppUserRepository appUserRepository;
-
-    @Autowired
-    private InstitutionRepository institutionRepository;
-
-    @Autowired
-    private UserInstitutionRepository userInstitutionRepository;
 
     private String adminToken;
 
@@ -142,26 +127,28 @@ class EmissionFactorControllerIntegrationTest {
         return UUID.fromString(body.substring(idx, body.indexOf("\"", idx)));
     }
 
-    /** Registers a new user and attaches it as MANAGER of the given institution, returning its token. */
+    /** Invites a new user as MANAGER of the given institution and accepts the invite, returning its token. */
     private String createManagerTokenFor(UUID institutionId) {
         String email = "manager" + System.nanoTime() + "@example.com";
-        RegisterRequest register = new RegisterRequest("Gestor Teste", email, "password123");
+
+        // Invite via API as admin
+        InviteRequest invite = new InviteRequest(email, "MANAGER");
+        HttpHeaders inviteHeaders = authHeaders();
+        inviteHeaders.set("X-Institution-Id", institutionId.toString());
+        ResponseEntity<UserMemberDTO> inviteResp = restTemplate.exchange(
+                "/users/invite", HttpMethod.POST,
+                new HttpEntity<>(invite, inviteHeaders), UserMemberDTO.class);
+        assertEquals(HttpStatus.CREATED, inviteResp.getStatusCode());
+
+        String rawToken = inviteResp.getBody().inviteLink().replace("/register?token=", "");
+
+        // Accept invite to create the user
+        AcceptInviteRequest accept = new AcceptInviteRequest("Gestor Teste", "password123");
         ResponseEntity<AuthResponse> response = restTemplate.postForEntity(
-                "/auth/register", register, AuthResponse.class);
+                "/auth/invitations/{token}/accept", accept, AuthResponse.class, rawToken);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        String token = response.getBody().accessToken();
 
-        AppUser user = appUserRepository.findByEmail(email).orElseThrow();
-        Institution institution = institutionRepository.getReferenceById(institutionId);
-        UserInstitution membership = UserInstitution.builder()
-                .user(user)
-                .institution(institution)
-                .role(InstitutionRole.MANAGER)
-                .status(MembershipStatus.ACTIVE)
-                .build();
-        userInstitutionRepository.save(membership);
-
-        return token;
+        return response.getBody().accessToken();
     }
 
     private ResponseEntity<EmissionFactorDTO> createFactor(

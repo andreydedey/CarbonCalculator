@@ -27,6 +27,8 @@ import com.example.carboncalculator.repositories.AppUserRepository;
 import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.UserInstitutionRepository;
 
+import java.time.OffsetDateTime;
+
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -35,9 +37,12 @@ public class UserService {
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
+    private static final int INVITE_EXPIRATION_DAYS = 7;
+
     private final UserInstitutionRepository membershipRepository;
     private final AppUserRepository userRepository;
     private final InstitutionRepository institutionRepository;
+    private final InviteTokenService inviteTokenService;
 
     @Transactional(readOnly = true)
     public Page<UserMemberDTO> listMembers(Pageable pageable) {
@@ -63,17 +68,28 @@ public class UserService {
         Institution institution = institutionRepository.findById(institutionId)
                 .orElseThrow(() -> new InstitutionNotFoundException(institutionId));
 
-        UserInstitution membership = UserInstitution.builder()
+        String rawToken = null;
+        String inviteLink = null;
+        boolean isPending = user == null;
+
+        var builder = UserInstitution.builder()
                 .user(user)
-                .userEmail(user == null ? email : null)
+                .userEmail(isPending ? email : null)
                 .institution(institution)
                 .role(role)
-                .status(user != null ? MembershipStatus.ACTIVE : MembershipStatus.PENDING)
-                .build();
-        membership = membershipRepository.save(membership);
-        log.info("User invited: email={}, role={}", email, role);
+                .status(isPending ? MembershipStatus.PENDING : MembershipStatus.ACTIVE);
 
-        return UserMemberMapper.toDTO(membership);
+        if (isPending) {
+            rawToken = inviteTokenService.generateToken();
+            builder.inviteTokenHash(inviteTokenService.hash(rawToken))
+                   .inviteExpiresAt(OffsetDateTime.now().plusDays(INVITE_EXPIRATION_DAYS));
+            inviteLink = "/register?token=" + rawToken;
+        }
+
+        UserInstitution membership = membershipRepository.save(builder.build());
+        log.info("User invited: email={}, role={}, pending={}", email, role, isPending);
+
+        return UserMemberMapper.toDTO(membership, inviteLink);
     }
 
     @Transactional

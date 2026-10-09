@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { CalendarDays, Timer } from 'lucide-react'
+import { CalendarDays } from 'lucide-react'
 import { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
@@ -87,13 +87,7 @@ export function LongitudinalPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         <p className="text-xs font-normal text-muted-foreground">Análise &rsaquo; Acompanhamento Longitudinal</p>
-        <div className="flex items-center justify-between">
-          <h1 className="font-heading text-2xl font-bold">Acompanhamento Longitudinal</h1>
-          <div className="flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs bg-accent border-accent text-primary">
-            <Timer className="size-3 text-primary" />
-            <span className="font-medium">Coleta automática diária</span>
-          </div>
-        </div>
+        <h1 className="font-heading text-2xl font-bold">Acompanhamento Longitudinal</h1>
       </div>
 
       <div className="grid grid-cols-3 gap-4">

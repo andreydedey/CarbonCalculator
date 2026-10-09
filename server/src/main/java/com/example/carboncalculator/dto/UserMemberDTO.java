@@ -7,4 +7,5 @@ public record UserMemberDTO(
         String name,
         String email,
         String role,
-        String status) {}
+        String status,
+        String inviteLink) {}

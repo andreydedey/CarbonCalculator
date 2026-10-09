@@ -25,9 +25,14 @@ export type LoginPayload = {
   password: string
 }
 
-export type RegisterPayload = {
-  name: string
+export type InviteValidation = {
   email: string
+  role: string
+  institutionName: string
+}
+
+export type AcceptInvitePayload = {
+  name: string
   password: string
 }
 
@@ -35,12 +40,20 @@ export function login(payload: LoginPayload): Promise<AuthResponse> {
   return api.post('/auth/login', payload).then((r) => r.data)
 }
 
-export function register(payload: RegisterPayload): Promise<AuthResponse> {
-  return api.post('/auth/register', payload).then((r) => r.data)
+export function validateInvite(token: string): Promise<InviteValidation> {
+  return api.get(`/auth/invitations/${token}/validate`).then((r) => r.data)
+}
+
+export function acceptInvite(token: string, payload: AcceptInvitePayload): Promise<AuthResponse> {
+  return api.post(`/auth/invitations/${token}/accept`, payload).then((r) => r.data)
 }
 
 export function refreshToken(): Promise<AuthResponse> {
   return api.post('/auth/refresh').then((r) => r.data)
+}
+
+export function logout(): Promise<void> {
+  return api.post('/auth/logout')
 }
 
 export function getProfile(): Promise<UserProfile> {
