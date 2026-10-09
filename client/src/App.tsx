@@ -10,6 +10,7 @@ import { AcademicPeriodDetailPage } from '@/pages/academic-periods/AcademicPerio
 import { AcademicPeriodsPage } from '@/pages/academic-periods/AcademicPeriodsPage'
 import { OccupationEditorPage } from '@/pages/academic-periods/OccupationEditorPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
+import { OAuthCallbackPage } from '@/pages/auth/OAuthCallbackPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
 import { DashboardPage } from '@/pages/dashboard/DashboardPage'
 import { EmissionFactorsPage } from '@/pages/emission-factors/EmissionFactorsPage'
@@ -27,6 +28,7 @@ export const App: React.FC = () => (
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route index element={<Navigate to="/dashboard" replace />} />

@@ -43,6 +43,9 @@ public class AppUser {
     @Column(name = "is_admin", nullable = false)
     private boolean admin = false;
 
+    @Column(name = "oauth2_provider")
+    private String oauth2Provider;
+
     @Builder.Default
     @Column(nullable = false)
     private boolean active = true;
