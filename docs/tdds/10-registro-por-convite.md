@@ -6,7 +6,7 @@
 | TDD de origem    | `docs/tdds/01-acesso-e-papeis.md`                        |
 | Status           | Draft                                                    |
 | Criado em        | 2026-10-07                                               |
-| Atualizado em    | 2026-10-07                                               |
+| Atualizado em    | 2026-10-09                                               |
 
 ---
 
@@ -23,7 +23,7 @@ Como o modelo do sistema é **baseado em convite** (o gestor convida membros pel
 - Fluxo de convite: gestor envia email → cria `UserInstitution(status=PENDING, userEmail=<email>)`
 - Na hora do registro, `activatePendingInvitations()` ativa vínculos pendentes por matching de email
 - Frontend com páginas `/login` e `/register` públicas
-- Google OAuth button no frontend (backend ainda não implementado)
+- Google OAuth2 implementado com ativação condicional (`@ConditionalOnExpression`) e `prompt=select_account`
 
 ### O que muda
 
@@ -70,7 +70,7 @@ Este é um pré-requisito para a segurança mínima do sistema. Não faz sentido
 ### Fora do escopo
 
 - Envio automático de email (SMTP/SendGrid) — o gestor copia o link manualmente
-- Expiração e reenvio de convite pela UI (pode ser adicionado depois)
+- ~~Expiração e reenvio de convite pela UI~~ — **Implementado:** botão "Reenviar" para membros PENDING gera novo token e reabre o dialog com o link (`POST /users/{id}/resend-invite`)
 - Rate limiting no endpoint de aceitação (defesa em profundidade, mas não crítico para TCC)
 - Recuperação de senha
 
@@ -256,17 +256,19 @@ Este endpoint deixa de existir. Tentativas de acesso retornam 404.
 - Dentro de `@Transactional`: criar usuário + atualizar membership + limpar token
 - Após consumo: `invite_token_hash = NULL`, `invite_expires_at = NULL`, `status = ACTIVE`
 
-### Google OAuth com convite
+### Google OAuth com convite (implementado)
 
-O Google OAuth (quando implementado) seguirá a mesma regra:
+O Google OAuth segue regras complementares ao convite:
 
-1. Usuário clica "Continuar com Google" na tela de registro (com token na URL)
-2. O token de convite é armazenado na sessão/state antes do redirect para Google
-3. Após callback do Google, o backend valida o token e verifica que o email do Google coincide com o email do convite
-4. Se válido, cria o AppUser (sem password_hash) e ativa a membership
-5. Se inválido ou sem token, rejeita com erro
+1. Usuário clica "Continuar com Google" na tela de login
+2. Spring Security redireciona para Google com `prompt=select_account` (evita cache de conta após revogação)
+3. No callback (`OAuth2LoginSuccessHandler`), o backend verifica:
+   - **Novo usuário:** busca convites PENDING pelo email do Google. Se não há convite, redireciona para `/login?error=no_invite`. Se há, cria o `AppUser` e ativa as memberships pendentes.
+   - **Usuário existente:** verifica se tem membership ACTIVE (ou é admin). Se não, redireciona com erro.
+4. Se convite PENDING tem role `ADMIN`, o usuário é promovido a admin global e o role é rebaixado para `MANAGER`
+5. Gera JWT + refresh cookie e redireciona para o frontend (`/oauth/callback?token=<jwt>`)
 
-Para login com Google (usuário já existente), o fluxo atual é mantido — basta verificar que o `AppUser` existe e está ativo.
+**Ativação condicional:** o OAuth2 só é ativado quando `GOOGLE_CLIENT_ID` está configurado (`@ConditionalOnExpression`). Sem a variável, a app funciona normalmente com login por senha, e os testes rodam sem credenciais do Google.
 
 ### Frontend — alterações
 
@@ -308,7 +310,7 @@ Para login com Google (usuário já existente), o fluxo atual é mantido — bas
 | Token de convite vazado permite registro não autorizado | Médio | Baixa | Token é de uso único + expira em 7 dias; após consumo, é invalidado |
 | Brute force no token de convite | Baixo | Muito baixa | 160 bits de entropia (2^160 combinações); computacionalmente inviável |
 | Convites PENDING existentes ficam sem token após migração | Médio | Certa | Migration gera tokens retroativamente; gestores precisam recopiar links |
-| Gestor perde o link antes de enviar | Baixo | Média | UI permite revogar e recriar convite (gera novo token) |
+| Gestor perde o link antes de enviar | Baixo | Média | Botão "Reenviar" na tabela de membros PENDING regenera o token e reabre o dialog com o link |
 | Email do Google não coincide com email do convite | Baixo | Baixa | Backend valida que o email OAuth coincide; se divergir, rejeita |
 
 ---

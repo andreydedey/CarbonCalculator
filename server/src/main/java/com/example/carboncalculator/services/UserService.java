@@ -16,6 +16,8 @@ import com.example.carboncalculator.entities.Institution;
 import com.example.carboncalculator.entities.InstitutionRole;
 import com.example.carboncalculator.entities.MembershipStatus;
 import com.example.carboncalculator.entities.UserInstitution;
+import com.example.carboncalculator.exceptions.AdminRequiredException;
+import com.example.carboncalculator.exceptions.CannotDemoteAdminException;
 import com.example.carboncalculator.exceptions.CannotModifySelfException;
 import com.example.carboncalculator.exceptions.DuplicateInviteException;
 import com.example.carboncalculator.exceptions.InstitutionNotFoundException;
@@ -54,7 +56,13 @@ public class UserService {
     @Transactional
     public UserMemberDTO invite(String email, String roleName, AppUser inviter) {
         UUID institutionId = currentInstitutionId();
+
         InstitutionRole role = parseRole(roleName);
+        boolean isAdminInvite = role == InstitutionRole.ADMIN;
+
+        if (isAdminInvite && !inviter.isAdmin()) {
+            throw new AdminRequiredException();
+        }
 
         AppUser user = userRepository.findByEmail(email).orElse(null);
 
@@ -68,10 +76,20 @@ public class UserService {
         Institution institution = institutionRepository.findById(institutionId)
                 .orElseThrow(() -> new InstitutionNotFoundException(institutionId));
 
+        // If user already exists and this is an admin invite, promote immediately
+        // and use MANAGER as the actual institution role
+        if (isAdminInvite && user != null) {
+            user.setAdmin(true);
+            userRepository.save(user);
+            role = InstitutionRole.MANAGER;
+        }
+
         String rawToken = null;
         String inviteLink = null;
         boolean isPending = user == null;
 
+        // For pending admin invites, role is still ADMIN (temporary marker);
+        // it will be resolved to MANAGER when the invite is accepted.
         var builder = UserInstitution.builder()
                 .user(user)
                 .userEmail(isPending ? email : null)
@@ -87,7 +105,7 @@ public class UserService {
         }
 
         UserInstitution membership = membershipRepository.save(builder.build());
-        log.info("User invited: email={}, role={}, pending={}", email, role, isPending);
+        log.info("User invited: email={}, role={}, admin={}, pending={}", email, role, isAdminInvite, isPending);
 
         return UserMemberMapper.toDTO(membership, inviteLink);
     }
@@ -95,6 +113,12 @@ public class UserService {
     @Transactional
     public UserMemberDTO changeRole(UUID membershipId, String roleName, AppUser requester) {
         InstitutionRole role = parseRole(roleName);
+        boolean isAdminPromotion = role == InstitutionRole.ADMIN;
+
+        if (isAdminPromotion && !requester.isAdmin()) {
+            throw new AdminRequiredException();
+        }
+
         UUID institutionId = currentInstitutionId();
 
         UserInstitution membership = membershipRepository.findById(membershipId)
@@ -103,6 +127,21 @@ public class UserService {
 
         if (isSelf(membership, requester)) {
             throw new CannotModifySelfException();
+        }
+
+        AppUser target = membership.getUser();
+        if (!isAdminPromotion && target != null && target.isAdmin()) {
+            throw new CannotDemoteAdminException();
+        }
+
+        if (isAdminPromotion) {
+            // Promote user to global admin; keep MANAGER as institution role
+            if (target != null && !target.isAdmin()) {
+                target.setAdmin(true);
+                userRepository.save(target);
+                log.info("User promoted to admin: userId={}", target.getId());
+            }
+            role = InstitutionRole.MANAGER;
         }
 
         membership.setRole(role);

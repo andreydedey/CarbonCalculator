@@ -7,7 +7,7 @@
 | ADRs relevantes  | ADR-001 (stack), ADR-004 (multi-tenancy RLS)   |
 | Status           | Em progresso                                   |
 | Criado em        | 2026-09-20                                     |
-| Atualizado em    | 2026-09-24                                     |
+| Atualizado em    | 2026-10-09                                     |
 
 ---
 
@@ -125,7 +125,7 @@ Sem autenticação, o `X-Institution-Id` é confiado cegamente — qualquer clie
 | `user_id`        | `UUID`               | FK → app_user(id), NULL (preenchido quando o convidado se registra) |
 | `user_email`     | `VARCHAR(255)`       | NOT NULL (identifica o convidado antes do registro) |
 | `institution_id` | `UUID`               | FK → institution(id), NOT NULL         |
-| `role`           | `VARCHAR(20)`        | NOT NULL, CHECK IN ('MANAGER','RESEARCHER') |
+| `role`           | `VARCHAR(20)`        | NOT NULL, CHECK IN ('ADMIN','MANAGER','RESEARCHER') |
 | `status`         | `VARCHAR(20)`        | NOT NULL, CHECK IN ('ACTIVE','PENDING')  |
 | `created_at`     | `TIMESTAMP WITH TZ`  | NOT NULL                               |
 
@@ -323,6 +323,7 @@ O `TenantFilter` existente será modificado para, após extrair o `X-Institution
 | ------ | --------------------------------- | ---------------------------------- | ------ |
 | GET    | `/api/v1/users`                   | Listar membros da instituição      | 200    |
 | POST   | `/api/v1/users/invite`            | Convidar usuário por email         | 201    |
+| POST   | `/api/v1/users/{id}/resend-invite`| Reenviar convite (gera novo token) | 200    |
 | PATCH  | `/api/v1/users/{id}/role`         | Alterar papel do membro            | 200    |
 | DELETE | `/api/v1/users/{id}`              | Revogar acesso do membro           | 204    |
 
@@ -356,7 +357,7 @@ O `TenantFilter` existente será modificado para, após extrair o `X-Institution
 // Request
 {
   "email": "novo.pesquisador@ufpa.br",
-  "role": "RESEARCHER"
+  "role": "RESEARCHER"   // valores: "RESEARCHER", "MANAGER", "ADMIN" (admin só por admin)
 }
 
 // Response 201
@@ -364,8 +365,24 @@ O `TenantFilter` existente será modificado para, após extrair o `X-Institution
   "id": "880e8400-...",
   "email": "novo.pesquisador@ufpa.br",
   "role": "RESEARCHER",
-  "status": "PENDING"
+  "status": "PENDING",
+  "inviteLink": "/register?token=abc123..."   // null se o usuário já existia (status=ACTIVE)
 }
+```
+
+```json
+// POST /api/v1/users/{id}/resend-invite
+// Header: X-Institution-Id: 660e8400-...
+// Gera novo token e nova expiração para convite PENDING
+// Response 200
+{
+  "id": "880e8400-...",
+  "email": "novo.pesquisador@ufpa.br",
+  "role": "RESEARCHER",
+  "status": "PENDING",
+  "inviteLink": "/register?token=newtoken456..."
+}
+// Response 400 se o membro não estiver PENDING
 ```
 
 ```json
@@ -393,6 +410,11 @@ O `TenantFilter` existente será modificado para, após extrair o `X-Institution
 - Convite para email já vinculado à instituição retorna `409 Conflict`
 - Login com credenciais inválidas retorna `401 Unauthorized` com mensagem genérica
 - Registro com email já existente retorna `409 Conflict`
+- Apenas um admin global pode convidar com role `ADMIN`; não-admins que tentam recebem `403 Forbidden`
+- Convite como ADMIN: se o usuário já existe, `is_admin` é setado imediatamente; se é pendente, o role `ADMIN` na membership serve de marcador e é rebaixado para `MANAGER` ao aceitar (com promoção de `is_admin`)
+- Reenviar convite (`POST /users/{id}/resend-invite`) gera novo token e nova expiração; só funciona para membros PENDING
+- Membership é validada no refresh do token: se o usuário foi revogado, o refresh falha com `401`
+- Google OAuth força `prompt=select_account` para evitar cache de conta após revogação
 
 ### Frontend
 
@@ -464,7 +486,7 @@ O `TenantFilter` existente será modificado para, após extrair o `X-Institution
 | **2 — Auth** | JWT service | Geração, validação e refresh de tokens JWT | Concluído |
 | **2 — Auth** | SecurityFilterChain | JWT filter, public endpoints, CORS config | Concluído |
 | **2 — Auth** | AuthController | Endpoints de register, login, refresh, me | Concluído |
-| **2 — Auth** | Google OAuth2 | OAuth2 client config, callback handler, geração de JWT após OAuth | Pendente |
+| **2 — Auth** | Google OAuth2 | OAuth2 client config (condicional via `@ConditionalOnExpression`), callback handler com `prompt=select_account`, geração de JWT após OAuth | Concluído |
 | **2 — Auth** | TenantFilter update | Validar vínculo user↔institution e injetar role do membro | Concluído |
 | **3 — Backend** | UserService + Controller | CRUD de membros: listar, convidar, alterar papel, revogar | Concluído |
 | **3 — Backend** | @PreAuthorize | Anotações em todos os controllers existentes e novos | Concluído |
@@ -476,13 +498,13 @@ O `TenantFilter` existente será modificado para, após extrair o `X-Institution
 | **4 — Frontend** | User management page | Tela de gestão de usuários conforme design (1b) | Concluído |
 | **4 — Frontend** | Institutions page | Grid de cards com instituições (todos vêem as suas, admin vê todas) | Pendente |
 | **4 — Frontend** | Frontend role gating | Ocultar ações de escrita para RESEARCHER nas páginas existentes | Pendente |
-| **4 — Frontend** | Login/Register Google | Adicionar botão "Continuar com Google" nas telas 1a e 1c | Pendente |
+| **4 — Frontend** | Login/Register Google | Botão "Continuar com Google" na tela de login; OAuth callback handler | Concluído |
 | **4 — Frontend** | Layout updates | Nome do usuário no topbar, item Usuários na sidebar, logout | Concluído |
 | **5 — Testes** | Testes de integração | Auth endpoints, @PreAuthorize, cross-tenant validation | Pendente |
 | **5 — Testes** | Testes unitários | JWT service, validações de negócio | Pendente |
 
 **Tarefas restantes:**
-1. Google OAuth2 (backend + frontend)
+1. ~~Google OAuth2 (backend + frontend)~~ — Concluído (condicional, ativado via env vars)
 2. Tela de instituições com listagem em grid de cards
 3. Frontend role gating (ocultar botões de criação/edição/exclusão para RESEARCHER)
 4. Testes de integração e unitários

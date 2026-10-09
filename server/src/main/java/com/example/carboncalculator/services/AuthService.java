@@ -14,6 +14,7 @@ import com.example.carboncalculator.dto.AuthResult;
 import com.example.carboncalculator.dto.InviteValidationResponse;
 import com.example.carboncalculator.dto.UserProfileDTO;
 import com.example.carboncalculator.entities.AppUser;
+import com.example.carboncalculator.entities.InstitutionRole;
 import com.example.carboncalculator.entities.MembershipStatus;
 import com.example.carboncalculator.entities.UserInstitution;
 import com.example.carboncalculator.exceptions.EmailAlreadyExistsException;
@@ -107,6 +108,8 @@ public class AuthService {
             throw new EmailAlreadyExistsException(email);
         }
 
+        boolean shouldPromote = membership.getRole() == InstitutionRole.ADMIN;
+
         AppUser user = AppUser.builder()
                 .name(name)
                 .email(email)
@@ -115,16 +118,25 @@ public class AuthService {
         user = userRepository.save(user);
         log.info("User registered via invite: id={}", user.getId());
 
-        // Activate this invite
+        // Activate this invite; downgrade ADMIN marker to MANAGER
         membership.setUser(user);
         membership.setUserEmail(null);
         membership.setStatus(MembershipStatus.ACTIVE);
         membership.setInviteTokenHash(null);
         membership.setInviteExpiresAt(null);
+        if (shouldPromote) {
+            membership.setRole(InstitutionRole.MANAGER);
+        }
         membershipRepository.save(membership);
 
         // Activate other pending invites for the same email
-        activatePendingInvitations(user);
+        shouldPromote |= activatePendingInvitations(user);
+
+        if (shouldPromote) {
+            user.setAdmin(true);
+            userRepository.save(user);
+            log.info("User promoted to admin via invite: id={}", user.getId());
+        }
 
         return buildAuthResult(user);
     }
@@ -144,10 +156,19 @@ public class AuthService {
         return membership;
     }
 
-    private void activatePendingInvitations(AppUser user) {
+    /**
+     * Activates all pending invitations for the given user's email.
+     * @return true if any of the activated invitations had the ADMIN role marker
+     */
+    private boolean activatePendingInvitations(AppUser user) {
         List<UserInstitution> pending = membershipRepository
                 .findByUserEmailAndStatus(user.getEmail(), MembershipStatus.PENDING);
+        boolean shouldPromote = false;
         for (UserInstitution membership : pending) {
+            if (membership.getRole() == InstitutionRole.ADMIN) {
+                shouldPromote = true;
+                membership.setRole(InstitutionRole.MANAGER);
+            }
             membership.setUser(user);
             membership.setUserEmail(null);
             membership.setStatus(MembershipStatus.ACTIVE);
@@ -155,6 +176,7 @@ public class AuthService {
             membership.setInviteExpiresAt(null);
             membershipRepository.save(membership);
         }
+        return shouldPromote;
     }
 
     private AuthResult buildAuthResult(AppUser user) {

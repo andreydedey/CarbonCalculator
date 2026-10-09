@@ -29,6 +29,7 @@ import { changeRole, inviteUser, listMembers, type UserMember } from '@/lib/api/
 import { type InviteFormData, inviteSchema } from '@/lib/schemas/inviteSchema'
 
 const ROLE_LABELS: Record<string, string> = {
+  ADMIN: 'Admin Global',
   MANAGER: 'Gestor',
   RESEARCHER: 'Pesquisador',
 }
@@ -158,6 +159,7 @@ export const UsersPage: React.FC = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      {currentUser?.admin && <SelectItem value="ADMIN">Admin Global</SelectItem>}
                       <SelectItem value="MANAGER">Gestor</SelectItem>
                       <SelectItem value="RESEARCHER">Pesquisador</SelectItem>
                     </SelectContent>
@@ -268,9 +270,13 @@ export const UsersPage: React.FC = () => {
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">{member.email}</td>
                         <td className="px-4 py-3">
-                          <Badge variant={member.role === 'MANAGER' ? 'default' : 'secondary'}>
-                            {ROLE_LABELS[member.role] ?? member.role}
-                          </Badge>
+                          {member.admin ? (
+                            <Badge variant="default">Admin Global</Badge>
+                          ) : (
+                            <Badge variant={member.role === 'MANAGER' ? 'default' : 'secondary'}>
+                              {ROLE_LABELS[member.role] ?? member.role}
+                            </Badge>
+                          )}
                         </td>
                         <td className="px-4 py-3">
                           <Badge variant={member.status === 'ACTIVE' ? 'outline' : 'secondary'}>
@@ -281,15 +287,19 @@ export const UsersPage: React.FC = () => {
                           {!isSelf(member) && (
                             <div className="flex gap-2">
                               <Select
-                                value={member.role}
+                                value={member.admin ? 'ADMIN' : member.role}
                                 onValueChange={(role) =>
                                   changeRoleMutation.mutate({ id: member.id, role })
                                 }
+                                disabled={member.admin}
                               >
-                                <SelectTrigger className="h-7 w-[130px] text-xs">
+                                <SelectTrigger className="h-7 w-[140px] text-xs">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
+                                  <SelectItem value="ADMIN" disabled={!currentUser?.admin}>
+                                    Admin Global
+                                  </SelectItem>
                                   <SelectItem value="MANAGER">Gestor</SelectItem>
                                   <SelectItem value="RESEARCHER">Pesquisador</SelectItem>
                                 </SelectContent>
