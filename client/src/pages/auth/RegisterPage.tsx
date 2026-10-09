@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { FormSkeleton } from '@/components/ui/skeletons'
+import { RegisterFormSkeleton } from '@/components/ui/skeletons'
 import { useAuth } from '@/context/AuthContext'
 import { validateInvite } from '@/lib/api/auth'
 import { ApiError } from '@/lib/api/client'
@@ -80,7 +80,7 @@ export const RegisterPage: React.FC = () => {
       <div className="flex min-h-svh">
         <AuthBrandPanel />
         <div className="flex w-full flex-col items-center justify-center px-6 lg:w-1/2">
-          <FormSkeleton />
+          <RegisterFormSkeleton />
         </div>
       </div>
     )

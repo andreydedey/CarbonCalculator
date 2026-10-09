@@ -142,3 +142,63 @@ export function FormSkeleton() {
     </div>
   )
 }
+
+export function LoginFormSkeleton() {
+  return (
+    <div className="w-full max-w-sm space-y-6">
+      <div className="space-y-2 text-center">
+        <Skeleton className="mx-auto h-7 w-20" />
+        <Skeleton className="mx-auto h-4 w-52" />
+      </div>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-10" />
+          <Skeleton className="h-10 w-full rounded-md" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-12" />
+          <Skeleton className="h-10 w-full rounded-md" />
+        </div>
+        <Skeleton className="h-10 w-full rounded-md" />
+      </div>
+      <div className="flex items-center gap-3">
+        <Skeleton className="h-px flex-1" />
+        <Skeleton className="h-3 w-5" />
+        <Skeleton className="h-px flex-1" />
+      </div>
+      <Skeleton className="h-10 w-full rounded-md" />
+      <Skeleton className="mx-auto h-4 w-64" />
+    </div>
+  )
+}
+
+export function RegisterFormSkeleton() {
+  return (
+    <div className="w-full max-w-sm space-y-6">
+      <div className="space-y-2 text-center">
+        <Skeleton className="mx-auto h-7 w-28" />
+        <Skeleton className="mx-auto h-4 w-56" />
+      </div>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-10" />
+          <Skeleton className="h-10 w-full rounded-md opacity-70" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-10 w-full rounded-md" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-12" />
+          <Skeleton className="h-10 w-full rounded-md" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-10 w-full rounded-md" />
+        </div>
+        <Skeleton className="h-10 w-full rounded-md" />
+      </div>
+      <Skeleton className="mx-auto h-4 w-44" />
+    </div>
+  )
+}
