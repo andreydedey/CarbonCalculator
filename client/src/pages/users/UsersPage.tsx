@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { Check, Copy, UserPlus, Users } from 'lucide-react'
+import { Check, Copy, Loader2, UserPlus, Users } from 'lucide-react'
 import type React from 'react'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
@@ -170,6 +170,7 @@ export const UsersPage: React.FC = () => {
               className="w-full"
               disabled={!inviteForm.formState.isDirty || inviteMutation.isPending}
             >
+              {inviteMutation.isPending && <Loader2 className="size-4 animate-spin" />}
               {inviteMutation.isPending ? 'Enviando...' : 'Enviar Convite'}
             </Button>
           </form>
