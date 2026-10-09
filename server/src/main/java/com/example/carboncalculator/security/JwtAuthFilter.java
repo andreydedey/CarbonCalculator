@@ -44,7 +44,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.substring(7);
-        if (!jwtService.isTokenValid(token)) {
+        if (!jwtService.isTokenValid(token) || !"access".equals(jwtService.extractTokenType(token))) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -73,6 +73,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         MDC.put("userId", user.getId().toString());
 
-        filterChain.doFilter(request, response);
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            MDC.remove("userId");
+        }
     }
 }

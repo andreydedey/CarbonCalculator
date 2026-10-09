@@ -29,11 +29,11 @@ public class JwtService {
     }
 
     public String generateAccessToken(AppUser user) {
-        return buildToken(user, ACCESS_TOKEN_VALIDITY_MS);
+        return buildToken(user, ACCESS_TOKEN_VALIDITY_MS, "access");
     }
 
     public String generateRefreshToken(AppUser user) {
-        return buildToken(user, REFRESH_TOKEN_VALIDITY_MS);
+        return buildToken(user, REFRESH_TOKEN_VALIDITY_MS, "refresh");
     }
 
     public Claims parseToken(String token) {
@@ -57,14 +57,19 @@ public class JwtService {
         return UUID.fromString(parseToken(token).getSubject());
     }
 
+    public String extractTokenType(String token) {
+        return parseToken(token).get("type", String.class);
+    }
+
     public long getRefreshTokenValidityMs() {
         return REFRESH_TOKEN_VALIDITY_MS;
     }
 
-    private String buildToken(AppUser user, long validityMs) {
+    private String buildToken(AppUser user, long validityMs, String type) {
         Date now = new Date();
         return Jwts.builder()
                 .subject(user.getId().toString())
+                .claim("type", type)
                 .claim("email", user.getEmail())
                 .claim("name", user.getName())
                 .claim("admin", user.isAdmin())
