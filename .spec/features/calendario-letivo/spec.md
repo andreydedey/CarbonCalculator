@@ -1,7 +1,7 @@
 # Spec: Calendário letivo
 
 > feature: calendario-letivo
-> status: rascunho
+> status: auditada
 
 ## Contexto
 

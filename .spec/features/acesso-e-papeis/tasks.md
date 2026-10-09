@@ -4,7 +4,7 @@
 
 ## T-006 — Migrations e entidades JPA (app_user, user_institution, public_results) [concluida]
 - Refs: US-006, US-007, US-009, US-010
-- Arquivos: server/src/main/resources/db/migration/V4__create_app_user_table.sql, server/src/main/resources/db/migration/V5__create_user_institution_table.sql, server/src/main/resources/db/migration/V6__add_public_results_to_institution.sql, server/src/main/java/com/example/carboncalculator/models/AppUser.java, server/src/main/java/com/example/carboncalculator/models/UserInstitution.java, server/src/main/java/com/example/carboncalculator/models/InstitutionRole.java, server/src/main/java/com/example/carboncalculator/models/MembershipStatus.java, server/src/main/java/com/example/carboncalculator/repositories/AppUserRepository.java, server/src/main/java/com/example/carboncalculator/repositories/UserInstitutionRepository.java
+- Arquivos: server/src/main/resources/db/migration/V4__create_app_user_table.sql, server/src/main/resources/db/migration/V5__create_user_institution_table.sql, server/src/main/resources/db/migration/V6__add_public_results_to_institution.sql, server/src/main/java/com/example/carboncalculator/entities/AppUser.java, server/src/main/java/com/example/carboncalculator/entities/UserInstitution.java, server/src/main/java/com/example/carboncalculator/entities/InstitutionRole.java, server/src/main/java/com/example/carboncalculator/entities/MembershipStatus.java, server/src/main/java/com/example/carboncalculator/repositories/AppUserRepository.java, server/src/main/java/com/example/carboncalculator/repositories/UserInstitutionRepository.java
 - Esforço: medio
 - Notas: Cria as tabelas app_user e user_institution com constraints, adiciona coluna public_results na institution. Entidades JPA + repositories + enums de role e status.
 
@@ -22,7 +22,7 @@
 
 ## T-009 — AuthController (register, login, refresh, me) [concluida]
 - Refs: US-006, US-007, US-011, AC-014, AC-015, AC-016, AC-017, AC-018, AC-019, AC-032, AC-033
-- Arquivos: server/src/main/java/com/example/carboncalculator/controllers/AuthController.java, server/src/main/java/com/example/carboncalculator/services/AuthService.java, server/src/main/java/com/example/carboncalculator/dto/LoginRequest.java, server/src/main/java/com/example/carboncalculator/dto/RegisterRequest.java, server/src/main/java/com/example/carboncalculator/dto/AuthResponse.java, server/src/main/java/com/example/carboncalculator/dto/UserProfileDTO.java
+- Arquivos: server/src/main/java/com/example/carboncalculator/controllers/AuthController.java, server/src/main/java/com/example/carboncalculator/services/AuthService.java, server/src/main/java/com/example/carboncalculator/dto/LoginRequest.java, server/src/main/java/com/example/carboncalculator/dto/AuthResponse.java, server/src/main/java/com/example/carboncalculator/dto/AuthResult.java, server/src/main/java/com/example/carboncalculator/dto/UserProfileDTO.java
 - Esforço: alto
 - Notas: Endpoints de autenticação. BCrypt para hash de senha. Login automático após registro. Ativação de convites pendentes no registro. Depende de T-006 e T-007.
 
@@ -61,14 +61,14 @@
 
 ## T-015 — Frontend: página de login [concluida]
 
-- Refs: US-006, US-008, AC-014, AC-015, AC-020
+- Refs: US-006, AC-014, AC-015
 - Arquivos: client/src/pages/auth/LoginPage.tsx, client/src/lib/schemas/authSchemas.ts
 - Esforço: medio
 - Notas: Tela conforme design 1a — painel esquerdo com brand EcoScope, painel direito com formulário (email, senha). Zod + RHF para validação. Link para registro e nota "Solicite ao gestor".
 
 ## T-016 — Frontend: página de registro [concluida]
 
-- Refs: US-007, US-008, AC-017, AC-018, AC-020
+- Refs: US-007, AC-017, AC-018
 - Arquivos: client/src/pages/auth/RegisterPage.tsx, client/src/lib/schemas/authSchemas.ts
 - Esforço: medio
 - Notas: Tela conforme design 1c — nome completo, email, senha, confirmar senha. Zod + RHF. Validação de senha mínima e confirmação. Link "Já tem conta? Entrar".
@@ -94,9 +94,9 @@
 - Esforço: medio
 - Notas: Nome do usuário e botão logout no topbar. Sidebar: filtra itens por role (Instituições admin-only, Usuários gestor-only). InstitutionSwitcher mostra apenas instituições do usuário. Depende de T-014.
 
-## T-020 — Testes de integração (auth + autorização + cross-tenant) [pendente]
+## T-020 — Testes de integração (auth + autorização + cross-tenant) [concluida]
 
 - Refs: AC-014, AC-015, AC-016, AC-017, AC-018, AC-019, AC-021, AC-022, AC-023, AC-024, AC-025, AC-026, AC-027, AC-028, AC-029, AC-030, AC-031, AC-032, AC-033
-- Arquivos: server/src/test/java/com/example/carboncalculator/controllers/AuthControllerTest.java, server/src/test/java/com/example/carboncalculator/controllers/UserControllerTest.java, server/src/test/java/com/example/carboncalculator/controllers/LaboratoryControllerAuthTest.java
+- Arquivos: server/src/test/java/com/example/carboncalculator/AccessAndRolesIntegrationTest.java
 - Esforço: alto
-- Notas: Testcontainers + PostgreSQL real. Testa fluxos completos de auth, @PreAuthorize em cada endpoint, validação de vínculo cross-tenant.
+- Notas: Testcontainers + PostgreSQL real. 19 testes cobrindo login, registro via convite, autorização por papéis, gestão de membros e refresh token. AC-020 (Google OAuth) excluído — não implementado (T-010 pendente).

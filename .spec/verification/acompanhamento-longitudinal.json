@@ -1,11 +1,11 @@
 {
   "feature": "acompanhamento-longitudinal",
-  "timestamp": "2026-10-07T23:43:57.528Z",
-  "gitRev": "604e86a",
+  "timestamp": "2026-10-09T14:45:03.368Z",
+  "gitRev": "d1fdc85",
   "command": "bash .spec/scripts/run-all-tests.sh",
   "reporter": "tap",
   "exitCode": 0,
-  "testsParsed": 58,
+  "testsParsed": 232,
   "results": {
     "AC-136": {
       "status": "pass",

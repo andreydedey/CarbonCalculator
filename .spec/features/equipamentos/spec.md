@@ -1,7 +1,7 @@
 # Spec: Equipamentos
 
 > feature: equipamentos
-> status: fechada
+> status: auditada
 
 ## Contexto
 

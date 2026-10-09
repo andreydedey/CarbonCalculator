@@ -1,0 +1,107 @@
+{
+  "feature": "acesso-e-papeis",
+  "timestamp": "2026-10-09T14:43:04.897Z",
+  "gitRev": "d1fdc85",
+  "command": "bash .spec/scripts/run-all-tests.sh",
+  "reporter": "tap",
+  "exitCode": 0,
+  "testsParsed": 232,
+  "results": {
+    "AC-014": {
+      "status": "pass",
+      "testName": "@spec:AC-014 loginComCredenciaisValidas_retornaJwt",
+      "method": "tap"
+    },
+    "AC-015": {
+      "status": "pass",
+      "testName": "@spec:AC-015 loginComCredenciaisInvalidas_recusado",
+      "method": "tap"
+    },
+    "AC-016": {
+      "status": "pass",
+      "testName": "@spec:AC-016 acessoSemAutenticacao_bloqueado",
+      "method": "tap"
+    },
+    "AC-017": {
+      "status": "pass",
+      "testName": "@spec:AC-017 registroViaConvite_criaContaRetornaJwt",
+      "method": "tap"
+    },
+    "AC-018": {
+      "status": "pass",
+      "testName": "@spec:AC-018 registroComEmailExistente_recusado",
+      "method": "tap"
+    },
+    "AC-019": {
+      "status": "pass",
+      "testName": "@spec:AC-019 convitesPendentes_ativadosNoRegistro",
+      "method": "tap"
+    },
+    "AC-021": {
+      "status": "pass",
+      "testName": "@spec:AC-021 adminAcessaTodasInstituicoes",
+      "method": "tap"
+    },
+    "AC-022": {
+      "status": "pass",
+      "testName": "@spec:AC-022 gestorCriaEditaExcluiDados",
+      "method": "tap"
+    },
+    "AC-023": {
+      "status": "pass",
+      "testName": "@spec:AC-023 pesquisadorApenasLeitura",
+      "method": "tap"
+    },
+    "AC-024": {
+      "status": "pass",
+      "testName": "@spec:AC-024 usuarioSemVinculo_acessoNegado",
+      "method": "tap"
+    },
+    "AC-025": {
+      "status": "pass",
+      "testName": "@spec:AC-025 hierarquiaDePapeis_funciona",
+      "method": "tap"
+    },
+    "AC-026": {
+      "status": "pass",
+      "testName": "@spec:AC-026 gestorConvidaUsuario",
+      "method": "tap"
+    },
+    "AC-027": {
+      "status": "pass",
+      "testName": "@spec:AC-027 conviteDuplicado_recusado",
+      "method": "tap"
+    },
+    "AC-028": {
+      "status": "pass",
+      "testName": "@spec:AC-028 gestorAlteraPapelDeMembro",
+      "method": "tap"
+    },
+    "AC-029": {
+      "status": "pass",
+      "testName": "@spec:AC-029 gestorRevogaAcesso",
+      "method": "tap"
+    },
+    "AC-030": {
+      "status": "pass",
+      "testName": "@spec:AC-030 gestorNaoPodeRevogarProprio",
+      "method": "tap"
+    },
+    "AC-031": {
+      "status": "pass",
+      "testName": "@spec:AC-031 gestorNaoPodeAlterarProprioPapel",
+      "method": "tap"
+    },
+    "AC-032": {
+      "status": "pass",
+      "testName": "@spec:AC-032 refreshToken_renovaAccessToken",
+      "method": "tap"
+    },
+    "AC-033": {
+      "status": "pass",
+      "testName": "@spec:AC-033 refreshComTokenInvalido_recusado",
+      "method": "tap"
+    }
+  },
+  "principles": {}
+}

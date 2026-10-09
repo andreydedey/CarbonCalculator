@@ -1,7 +1,7 @@
 # Spec: Cálculo e apresentação das emissões
 
 > feature: calculo-de-emissoes
-> status: rascunho
+> status: auditada
 
 ## Contexto
 

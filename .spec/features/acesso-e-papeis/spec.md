@@ -1,7 +1,7 @@
 # Spec: Acesso e papéis
 
 > feature: acesso-e-papeis
-> status: rascunho
+> status: auditada
 
 ## Contexto
 
