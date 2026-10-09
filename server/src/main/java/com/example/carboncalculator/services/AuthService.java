@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.carboncalculator.dto.AuthResponse;
+import com.example.carboncalculator.dto.AuthResult;
 import com.example.carboncalculator.dto.InviteValidationResponse;
 import com.example.carboncalculator.dto.UserProfileDTO;
 import com.example.carboncalculator.entities.AppUser;
@@ -38,7 +39,7 @@ public class AuthService {
     private final InviteTokenService inviteTokenService;
 
     @Transactional(readOnly = true)
-    public AuthResponse login(String email, String password) {
+    public AuthResult login(String email, String password) {
         AppUser user = userRepository.findByEmail(email)
                 .filter(u -> u.getPasswordHash() != null)
                 .filter(u -> passwordEncoder.matches(password, u.getPasswordHash()))
@@ -49,12 +50,13 @@ public class AuthService {
         }
 
         log.info("User logged in: id={}", user.getId());
-        return buildAuthResponse(user);
+        return buildAuthResult(user);
     }
 
     @Transactional(readOnly = true)
     public AuthResponse refresh(String refreshToken) {
-        if (!jwtService.isTokenValid(refreshToken)) {
+        if (!jwtService.isTokenValid(refreshToken)
+                || !"refresh".equals(jwtService.extractTokenType(refreshToken))) {
             throw new InvalidCredentialsException();
         }
 
@@ -63,12 +65,9 @@ public class AuthService {
                 .filter(AppUser::isActive)
                 .orElseThrow(InvalidCredentialsException::new);
 
-        return buildAuthResponse(user);
-    }
-
-    @Transactional(readOnly = true)
-    public AppUser findByEmail(String email) {
-        return userRepository.findByEmail(email).orElseThrow(InvalidCredentialsException::new);
+        String accessToken = jwtService.generateAccessToken(user);
+        List<UserInstitution> memberships = membershipRepository.findByUserId(user.getId());
+        return new AuthResponse(accessToken, UserProfileMapper.toProfileDTO(user, memberships));
     }
 
     @Transactional(readOnly = true)
@@ -87,7 +86,14 @@ public class AuthService {
     }
 
     @Transactional
-    public AuthResponse acceptInvite(String rawToken, String name, String password) {
+    public AuthResult acceptInvite(String rawToken, String name, String password) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Name is required");
+        }
+        if (password == null || password.length() < 6) {
+            throw new IllegalArgumentException("Password must be at least 6 characters");
+        }
+
         UserInstitution membership = findValidInvite(rawToken);
         String email = membership.getUserEmail();
 
@@ -114,7 +120,7 @@ public class AuthService {
         // Activate other pending invites for the same email
         activatePendingInvitations(user);
 
-        return buildAuthResponse(user);
+        return buildAuthResult(user);
     }
 
     private UserInstitution findValidInvite(String rawToken) {
@@ -139,13 +145,17 @@ public class AuthService {
             membership.setUser(user);
             membership.setUserEmail(null);
             membership.setStatus(MembershipStatus.ACTIVE);
+            membership.setInviteTokenHash(null);
+            membership.setInviteExpiresAt(null);
             membershipRepository.save(membership);
         }
     }
 
-    private AuthResponse buildAuthResponse(AppUser user) {
+    private AuthResult buildAuthResult(AppUser user) {
         String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
         List<UserInstitution> memberships = membershipRepository.findByUserId(user.getId());
-        return new AuthResponse(accessToken, UserProfileMapper.toProfileDTO(user, memberships));
+        AuthResponse response = new AuthResponse(accessToken, UserProfileMapper.toProfileDTO(user, memberships));
+        return new AuthResult(response, refreshToken);
     }
 }
