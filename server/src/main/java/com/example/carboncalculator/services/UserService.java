@@ -56,13 +56,12 @@ public class UserService {
     public UserMemberDTO invite(String email, String roleName, AppUser inviter) {
         UUID institutionId = currentInstitutionId();
 
-        boolean isAdminInvite = "ADMIN".equalsIgnoreCase(roleName);
+        InstitutionRole role = parseRole(roleName);
+        boolean isAdminInvite = role == InstitutionRole.ADMIN;
+
         if (isAdminInvite && !inviter.isAdmin()) {
             throw new AdminRequiredException();
         }
-
-        // Admin invitees get MANAGER as their institution role
-        InstitutionRole role = isAdminInvite ? InstitutionRole.MANAGER : parseRole(roleName);
 
         AppUser user = userRepository.findByEmail(email).orElse(null);
 
@@ -77,21 +76,24 @@ public class UserService {
                 .orElseThrow(() -> new InstitutionNotFoundException(institutionId));
 
         // If user already exists and this is an admin invite, promote immediately
+        // and use MANAGER as the actual institution role
         if (isAdminInvite && user != null) {
             user.setAdmin(true);
             userRepository.save(user);
+            role = InstitutionRole.MANAGER;
         }
 
         String rawToken = null;
         String inviteLink = null;
         boolean isPending = user == null;
 
+        // For pending admin invites, role is still ADMIN (temporary marker);
+        // it will be resolved to MANAGER when the invite is accepted.
         var builder = UserInstitution.builder()
                 .user(user)
                 .userEmail(isPending ? email : null)
                 .institution(institution)
                 .role(role)
-                .promoteToAdmin(isAdminInvite && isPending)
                 .status(isPending ? MembershipStatus.PENDING : MembershipStatus.ACTIVE);
 
         if (isPending) {
@@ -110,6 +112,9 @@ public class UserService {
     @Transactional
     public UserMemberDTO changeRole(UUID membershipId, String roleName, AppUser requester) {
         InstitutionRole role = parseRole(roleName);
+        if (role == InstitutionRole.ADMIN) {
+            throw new InvalidRoleException(roleName);
+        }
         UUID institutionId = currentInstitutionId();
 
         UserInstitution membership = membershipRepository.findById(membershipId)

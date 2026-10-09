@@ -15,6 +15,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 
 import com.example.carboncalculator.entities.AppUser;
+import com.example.carboncalculator.entities.InstitutionRole;
 import com.example.carboncalculator.entities.MembershipStatus;
 import com.example.carboncalculator.entities.UserInstitution;
 import com.example.carboncalculator.repositories.AppUserRepository;
@@ -112,22 +113,22 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     /**
      * Activates all pending invitations for the given user's email.
-     * @return true if any of the activated invitations had promoteToAdmin set
+     * @return true if any of the activated invitations had the ADMIN role marker
      */
     private boolean activatePendingInvitations(AppUser user) {
         List<UserInstitution> pending = membershipRepository
                 .findByUserEmailAndStatus(user.getEmail(), MembershipStatus.PENDING);
         boolean shouldPromote = false;
         for (UserInstitution membership : pending) {
-            if (membership.isPromoteToAdmin()) {
+            if (membership.getRole() == InstitutionRole.ADMIN) {
                 shouldPromote = true;
+                membership.setRole(InstitutionRole.MANAGER);
             }
             membership.setUser(user);
             membership.setUserEmail(null);
             membership.setStatus(MembershipStatus.ACTIVE);
             membership.setInviteTokenHash(null);
             membership.setInviteExpiresAt(null);
-            membership.setPromoteToAdmin(false);
             membershipRepository.save(membership);
         }
         return shouldPromote;

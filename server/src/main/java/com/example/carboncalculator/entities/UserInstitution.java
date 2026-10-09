@@ -54,10 +54,6 @@ public class UserInstitution {
     @Column(nullable = false, length = 20)
     private MembershipStatus status = MembershipStatus.PENDING;
 
-    @Builder.Default
-    @Column(name = "promote_to_admin", nullable = false)
-    private boolean promoteToAdmin = false;
-
     @Column(name = "invite_token_hash", length = 64)
     private String inviteTokenHash;
 
