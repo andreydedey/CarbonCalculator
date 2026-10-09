@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { MetricCardSkeleton, TableSkeleton } from '@/components/ui/skeletons'
 import { RevokeAccessDialog } from '@/components/users/RevokeAccessDialog'
 import { useAuth } from '@/context/AuthContext'
 import { useDialog } from '@/hooks/use-dialog'
@@ -44,7 +45,11 @@ export const UsersPage: React.FC = () => {
   const [inviteLink, setInviteLink] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
-  const { data: membersPage, refetch } = useQuery({
+  const {
+    data: membersPage,
+    refetch,
+    isLoading,
+  } = useQuery({
     queryKey: ['users'],
     queryFn: listMembers,
   })
@@ -198,120 +203,133 @@ export const UsersPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total de Membros
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{members.length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Gestores</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{managerCount}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Pesquisadores
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{researcherCount}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left">
-                  <th className="px-4 py-3 font-medium">Nome</th>
-                  <th className="px-4 py-3 font-medium">Email</th>
-                  <th className="px-4 py-3 font-medium">Papel</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((member) => (
-                  <tr key={member.id} className="border-b last:border-0">
-                    <td className="px-4 py-3">
-                      {member.name ?? '—'}
-                      {isSelf(member) && <span className="ml-1 text-muted-foreground">(você)</span>}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">{member.email}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant={member.role === 'MANAGER' ? 'default' : 'secondary'}>
-                        {ROLE_LABELS[member.role] ?? member.role}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge variant={member.status === 'ACTIVE' ? 'outline' : 'secondary'}>
-                        {STATUS_LABELS[member.status] ?? member.status}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3">
-                      {!isSelf(member) && (
-                        <div className="flex gap-2">
-                          <Select
-                            value={member.role}
-                            onValueChange={(role) =>
-                              changeRoleMutation.mutate({ id: member.id, role })
-                            }
-                          >
-                            <SelectTrigger className="h-7 w-[130px] text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="MANAGER">Gestor</SelectItem>
-                              <SelectItem value="RESEARCHER">Pesquisador</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className="h-7 text-xs"
-                            onClick={() => revokeDialog.openDialog(member)}
-                          >
-                            Revogar
-                          </Button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-                {members.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8">
-                      <Empty>
-                        <EmptyHeader>
-                          <EmptyMedia>
-                            <Users className="size-6 text-muted-foreground" />
-                          </EmptyMedia>
-                          <EmptyTitle>Nenhum membro cadastrado</EmptyTitle>
-                          <EmptyDescription>
-                            Convide o primeiro membro para a instituição.
-                          </EmptyDescription>
-                        </EmptyHeader>
-                      </Empty>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+      {isLoading ? (
+        <div className="space-y-6">
+          <MetricCardSkeleton count={3} />
+          <TableSkeleton rows={5} columns={5} />
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total de Membros
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{members.length}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Gestores
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{managerCount}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Pesquisadores
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{researcherCount}</p>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-left">
+                      <th className="px-4 py-3 font-medium">Nome</th>
+                      <th className="px-4 py-3 font-medium">Email</th>
+                      <th className="px-4 py-3 font-medium">Papel</th>
+                      <th className="px-4 py-3 font-medium">Status</th>
+                      <th className="px-4 py-3 font-medium">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {members.map((member) => (
+                      <tr key={member.id} className="border-b last:border-0">
+                        <td className="px-4 py-3">
+                          {member.name ?? '—'}
+                          {isSelf(member) && (
+                            <span className="ml-1 text-muted-foreground">(você)</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">{member.email}</td>
+                        <td className="px-4 py-3">
+                          <Badge variant={member.role === 'MANAGER' ? 'default' : 'secondary'}>
+                            {ROLE_LABELS[member.role] ?? member.role}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge variant={member.status === 'ACTIVE' ? 'outline' : 'secondary'}>
+                            {STATUS_LABELS[member.status] ?? member.status}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3">
+                          {!isSelf(member) && (
+                            <div className="flex gap-2">
+                              <Select
+                                value={member.role}
+                                onValueChange={(role) =>
+                                  changeRoleMutation.mutate({ id: member.id, role })
+                                }
+                              >
+                                <SelectTrigger className="h-7 w-[130px] text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="MANAGER">Gestor</SelectItem>
+                                  <SelectItem value="RESEARCHER">Pesquisador</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => revokeDialog.openDialog(member)}
+                              >
+                                Revogar
+                              </Button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {members.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8">
+                          <Empty>
+                            <EmptyHeader>
+                              <EmptyMedia>
+                                <Users className="size-6 text-muted-foreground" />
+                              </EmptyMedia>
+                              <EmptyTitle>Nenhum membro cadastrado</EmptyTitle>
+                              <EmptyDescription>
+                                Convide o primeiro membro para a instituição.
+                              </EmptyDescription>
+                            </EmptyHeader>
+                          </Empty>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   )
 }
