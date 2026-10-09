@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import type React from 'react'
 import { useForm } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AuthBrandPanel } from '@/components/auth/AuthBrandPanel'
 import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,8 @@ import { type LoginFormData, loginSchema } from '@/lib/schemas/authSchemas'
 export const LoginPage: React.FC = () => {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const oauthError = searchParams.get('error')
 
   const {
     register,
@@ -46,6 +48,12 @@ export const LoginPage: React.FC = () => {
             <h2 className="font-heading text-2xl font-bold">Entrar</h2>
             <p className="text-muted-foreground text-sm">Acesse sua conta para continuar</p>
           </div>
+
+          {oauthError === 'no_invite' && (
+            <div className="rounded-md border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              Seu e-mail não possui convite. Solicite acesso a um gestor da sua instituição.
+            </div>
+          )}
 
           {errors.root && (
             <div className="rounded-md border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
