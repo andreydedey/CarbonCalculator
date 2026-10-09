@@ -274,14 +274,15 @@ export const UsersPage: React.FC = () => {
                             onValueChange={(role) =>
                               changeRoleMutation.mutate({ id: member.id, role })
                             }
+                            disabled={member.admin}
                           >
                             <SelectTrigger className="h-7 w-[140px] text-xs">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              {currentUser?.admin && (
-                                <SelectItem value="ADMIN">Admin Global</SelectItem>
-                              )}
+                              <SelectItem value="ADMIN" disabled={!currentUser?.admin}>
+                                Admin Global
+                              </SelectItem>
                               <SelectItem value="MANAGER">Gestor</SelectItem>
                               <SelectItem value="RESEARCHER">Pesquisador</SelectItem>
                             </SelectContent>
