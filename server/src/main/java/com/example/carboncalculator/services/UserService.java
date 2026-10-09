@@ -17,6 +17,7 @@ import com.example.carboncalculator.entities.InstitutionRole;
 import com.example.carboncalculator.entities.MembershipStatus;
 import com.example.carboncalculator.entities.UserInstitution;
 import com.example.carboncalculator.exceptions.AdminRequiredException;
+import com.example.carboncalculator.exceptions.CannotDemoteAdminException;
 import com.example.carboncalculator.exceptions.CannotModifySelfException;
 import com.example.carboncalculator.exceptions.DuplicateInviteException;
 import com.example.carboncalculator.exceptions.InstitutionNotFoundException;
@@ -128,9 +129,13 @@ public class UserService {
             throw new CannotModifySelfException();
         }
 
+        AppUser target = membership.getUser();
+        if (!isAdminPromotion && target != null && target.isAdmin()) {
+            throw new CannotDemoteAdminException();
+        }
+
         if (isAdminPromotion) {
             // Promote user to global admin; keep MANAGER as institution role
-            AppUser target = membership.getUser();
             if (target != null && !target.isAdmin()) {
                 target.setAdmin(true);
                 userRepository.save(target);

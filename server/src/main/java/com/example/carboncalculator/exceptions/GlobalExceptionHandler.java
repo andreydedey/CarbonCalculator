@@ -76,6 +76,12 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), request);
     }
 
+    @ExceptionHandler(CannotDemoteAdminException.class)
+    public ResponseEntity<ErrorResponse> handleCannotDemoteAdmin(CannotDemoteAdminException ex, HttpServletRequest request) {
+        log.warn("Cannot demote admin on {} {}", request.getMethod(), request.getRequestURI());
+        return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), request);
+    }
+
     // --- 404 Not Found ---
 
     @ExceptionHandler({
