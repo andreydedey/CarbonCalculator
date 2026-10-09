@@ -5,6 +5,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { AcademicPeriodCard } from '@/components/academic-periods/AcademicPeriodCard'
+import { CardGridSkeleton } from '@/components/ui/skeletons'
 import { AcademicPeriodForm } from '@/components/academic-periods/AcademicPeriodForm'
 import { CopyPeriodDialog } from '@/components/academic-periods/CopyPeriodDialog'
 import { HolidayEditor } from '@/components/academic-periods/HolidayEditor'
@@ -124,7 +125,7 @@ export const AcademicPeriodsPage: React.FC = () => {
 
       {/* Period cards — 2 column grid */}
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando...</p>
+        <CardGridSkeleton count={4} columns={2} />
       ) : periods.length === 0 ? (
         <Empty>
           <EmptyHeader>

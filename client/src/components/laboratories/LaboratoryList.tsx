@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { CardListSkeleton, SummaryCardsSkeleton } from '@/components/ui/skeletons'
 import { useInstitution } from '@/context/InstitutionContext'
 import { useDialog } from '@/hooks/use-dialog'
 import { listAcademicPeriods } from '@/lib/api/academic-periods'
@@ -187,32 +188,36 @@ export const LaboratoryList: React.FC = () => {
         onSaved={handleSaved}
       />
 
-      <div className="flex gap-4">
-        <SummaryCard
-          value={String(totalLabs)}
-          label="Total de Laboratórios"
-          icon={<Cpu className="size-[18px] text-primary-foreground" />}
-          variant="accent"
-        />
-        <SummaryCard
-          value={String(totalStations)}
-          label="Estações Ativas"
-          icon={<Monitor className="size-[18px] text-primary-foreground" />}
-        />
-        <SummaryCard
-          value={
-            emissionResult
-              ? `${Math.round(emissionResult.totalEmissionKg).toLocaleString('pt-BR')} kg`
-              : '-'
-          }
-          label={
-            emissionResult?.realizedUntil
-              ? `Emissão realizada · ${period?.name} até ${formatDate(emissionResult.realizedUntil)}`
-              : 'Emissão realizada'
-          }
-          icon={<Leaf className="size-[18px] text-primary-foreground" />}
-        />
-      </div>
+      {isLoading ? (
+        <SummaryCardsSkeleton count={3} />
+      ) : (
+        <div className="flex gap-4">
+          <SummaryCard
+            value={String(totalLabs)}
+            label="Total de Laboratórios"
+            icon={<Cpu className="size-[18px] text-primary-foreground" />}
+            variant="accent"
+          />
+          <SummaryCard
+            value={String(totalStations)}
+            label="Estações Ativas"
+            icon={<Monitor className="size-[18px] text-primary-foreground" />}
+          />
+          <SummaryCard
+            value={
+              emissionResult
+                ? `${Math.round(emissionResult.totalEmissionKg).toLocaleString('pt-BR')} kg`
+                : '-'
+            }
+            label={
+              emissionResult?.realizedUntil
+                ? `Emissão realizada · ${period?.name} até ${formatDate(emissionResult.realizedUntil)}`
+                : 'Emissão realizada'
+            }
+            icon={<Leaf className="size-[18px] text-primary-foreground" />}
+          />
+        </div>
+      )}
 
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
@@ -239,7 +244,7 @@ export const LaboratoryList: React.FC = () => {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando...</p>
+        <CardListSkeleton count={3} />
       ) : laboratories.length === 0 ? (
         search.length > 0 || statusFilter !== 'all' ? (
           <Empty>

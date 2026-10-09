@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useDebounce } from 'use-debounce'
 import { DeleteEquipmentModelDialog } from '@/components/equipment-models/DeleteEquipmentModelDialog'
 import { EquipmentModelCard } from '@/components/equipment-models/EquipmentModelCard'
+import { CardListSkeleton } from '@/components/ui/skeletons'
 import { EquipmentModelForm } from '@/components/equipment-models/EquipmentModelForm'
 import { Button } from '@/components/ui/button'
 import {
@@ -99,7 +100,7 @@ export const EquipmentModelList: React.FC<EquipmentModelListProps> = ({
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando...</p>
+        <CardListSkeleton count={3} />
       ) : models.length === 0 ? (
         search.length > 0 ? (
           <Empty>

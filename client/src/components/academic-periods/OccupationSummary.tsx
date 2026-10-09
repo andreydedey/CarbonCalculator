@@ -1,6 +1,7 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
 import type React from 'react'
 import { useMemo } from 'react'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   getSchedule,
   type ScheduleEntry,
@@ -99,9 +100,13 @@ function LabRow({
     return (
       <tr className="border-b last:border-0">
         <td className="px-4 py-2.5 font-medium text-sm">{lab.name}</td>
-        <td colSpan={DAY_COLUMNS.length + 2} className="px-3 py-2.5 text-sm text-muted-foreground">
-          Carregando...
-        </td>
+        {DAY_COLUMNS.map(({ day }) => (
+          <td key={day} className="px-3 py-2.5">
+            <Skeleton className="h-4 w-full" />
+          </td>
+        ))}
+        <td className="px-3 py-2.5"><Skeleton className="h-4 w-8 mx-auto" /></td>
+        <td className="px-3 py-2.5"><Skeleton className="h-4 w-16 ml-auto" /></td>
       </tr>
     )
   }

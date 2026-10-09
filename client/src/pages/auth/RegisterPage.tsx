@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
+import { Loader2 } from 'lucide-react'
 import type React from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
@@ -8,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { RegisterFormSkeleton } from '@/components/ui/skeletons'
 import { useAuth } from '@/context/AuthContext'
 import { validateInvite } from '@/lib/api/auth'
 import { ApiError } from '@/lib/api/client'
@@ -74,13 +76,12 @@ export const RegisterPage: React.FC = () => {
     )
   }
 
-  // Loading validation
   if (isLoading) {
     return (
       <div className="flex min-h-svh">
         <AuthBrandPanel />
         <div className="flex w-full flex-col items-center justify-center px-6 lg:w-1/2">
-          <p className="text-sm text-muted-foreground">Validando convite...</p>
+          <RegisterFormSkeleton />
         </div>
       </div>
     )
@@ -164,6 +165,7 @@ export const RegisterPage: React.FC = () => {
             </div>
 
             <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="size-4 animate-spin" />}
               {isSubmitting ? 'Criando conta...' : 'Criar Conta'}
             </Button>
           </form>
