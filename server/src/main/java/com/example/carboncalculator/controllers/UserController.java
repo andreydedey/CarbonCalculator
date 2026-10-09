@@ -46,6 +46,12 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(member);
     }
 
+    @PostMapping("/{id}/resend-invite")
+    @PreAuthorize("hasRole('MANAGER')")
+    public UserMemberDTO resendInvite(@PathVariable UUID id) {
+        return userService.resendInvite(id);
+    }
+
     @PatchMapping("/{id}/role")
     @PreAuthorize("hasRole('MANAGER')")
     public UserMemberDTO changeRole(@PathVariable UUID id,

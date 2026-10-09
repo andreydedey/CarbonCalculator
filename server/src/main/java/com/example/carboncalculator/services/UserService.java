@@ -22,6 +22,7 @@ import com.example.carboncalculator.exceptions.InstitutionNotFoundException;
 import com.example.carboncalculator.exceptions.InvalidRoleException;
 import com.example.carboncalculator.exceptions.LastManagerException;
 import com.example.carboncalculator.exceptions.MemberNotFoundException;
+import com.example.carboncalculator.exceptions.MemberNotPendingException;
 import com.example.carboncalculator.mappers.UserMemberMapper;
 import com.example.carboncalculator.repositories.AppUserRepository;
 import com.example.carboncalculator.repositories.InstitutionRepository;
@@ -89,6 +90,28 @@ public class UserService {
         UserInstitution membership = membershipRepository.save(builder.build());
         log.info("User invited: email={}, role={}, pending={}", email, role, isPending);
 
+        return UserMemberMapper.toDTO(membership, inviteLink);
+    }
+
+    @Transactional
+    public UserMemberDTO resendInvite(UUID membershipId) {
+        UUID institutionId = currentInstitutionId();
+
+        UserInstitution membership = membershipRepository.findById(membershipId)
+                .filter(m -> m.getInstitution().getId().equals(institutionId))
+                .orElseThrow(() -> new MemberNotFoundException(membershipId));
+
+        if (membership.getStatus() != MembershipStatus.PENDING) {
+            throw new MemberNotPendingException(membershipId);
+        }
+
+        String rawToken = inviteTokenService.generateToken();
+        membership.setInviteTokenHash(inviteTokenService.hash(rawToken));
+        membership.setInviteExpiresAt(OffsetDateTime.now().plusDays(INVITE_EXPIRATION_DAYS));
+        membership = membershipRepository.save(membership);
+
+        String inviteLink = "/register?token=" + rawToken;
+        log.info("Invite resent: membershipId={}", membershipId);
         return UserMemberMapper.toDTO(membership, inviteLink);
     }
 
