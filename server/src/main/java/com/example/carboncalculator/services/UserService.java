@@ -112,9 +112,12 @@ public class UserService {
     @Transactional
     public UserMemberDTO changeRole(UUID membershipId, String roleName, AppUser requester) {
         InstitutionRole role = parseRole(roleName);
-        if (role == InstitutionRole.ADMIN) {
-            throw new InvalidRoleException(roleName);
+        boolean isAdminPromotion = role == InstitutionRole.ADMIN;
+
+        if (isAdminPromotion && !requester.isAdmin()) {
+            throw new AdminRequiredException();
         }
+
         UUID institutionId = currentInstitutionId();
 
         UserInstitution membership = membershipRepository.findById(membershipId)
@@ -123,6 +126,17 @@ public class UserService {
 
         if (isSelf(membership, requester)) {
             throw new CannotModifySelfException();
+        }
+
+        if (isAdminPromotion) {
+            // Promote user to global admin; keep MANAGER as institution role
+            AppUser target = membership.getUser();
+            if (target != null && !target.isAdmin()) {
+                target.setAdmin(true);
+                userRepository.save(target);
+                log.info("User promoted to admin: userId={}", target.getId());
+            }
+            role = InstitutionRole.MANAGER;
         }
 
         membership.setRole(role);
