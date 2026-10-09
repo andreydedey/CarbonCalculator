@@ -31,6 +31,10 @@ export function changeRole(id: string, payload: ChangeRolePayload): Promise<User
   return api.patch(`/users/${id}/role`, payload).then((r) => r.data)
 }
 
+export function resendInvite(id: string): Promise<UserMember> {
+  return api.post(`/users/${id}/resend-invite`).then((r) => r.data)
+}
+
 export function revokeAccess(id: string): Promise<void> {
   return api.delete(`/users/${id}`).then(() => undefined)
 }
