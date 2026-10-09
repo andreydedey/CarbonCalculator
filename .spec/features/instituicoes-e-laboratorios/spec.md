@@ -1,7 +1,7 @@
 # Spec: Instituições e Laboratórios
 
 > feature: instituicoes-e-laboratorios
-> status: rascunho
+> status: auditada
 
 ## Contexto
 

@@ -1,11 +1,11 @@
 {
   "feature": "instituicoes-e-laboratorios",
-  "timestamp": "2026-10-06T18:38:23.913Z",
-  "gitRev": "7dce11b",
+  "timestamp": "2026-10-09T14:13:08.129Z",
+  "gitRev": "3c624a5",
   "command": "bash .spec/scripts/run-all-tests.sh",
   "reporter": "tap",
   "exitCode": 0,
-  "testsParsed": 153,
+  "testsParsed": 212,
   "results": {
     "AC-001": {
       "status": "pass",

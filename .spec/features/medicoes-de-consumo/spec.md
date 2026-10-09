@@ -1,7 +1,7 @@
 # Spec: Medições de consumo
 
 > feature: medicoes-de-consumo
-> status: implementada
+> status: auditada
 
 ## Contexto
 

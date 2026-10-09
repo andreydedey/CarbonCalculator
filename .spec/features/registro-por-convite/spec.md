@@ -1,7 +1,7 @@
 # Spec: Registro por convite
 
 > feature: registro-por-convite
-> status: rascunho
+> status: auditada
 
 ## Contexto
 

@@ -1,7 +1,7 @@
 {
   "feature": "registro-por-convite",
-  "timestamp": "2026-10-08T22:32:51.182Z",
-  "gitRev": "bf98ce8",
+  "timestamp": "2026-10-09T14:14:02.879Z",
+  "gitRev": "3c624a5",
   "command": "bash .spec/scripts/run-all-tests.sh",
   "reporter": "tap",
   "exitCode": 0,
@@ -64,7 +64,7 @@
     },
     "AC-166": {
       "status": "pass",
-      "testName": "@spec:AC-166 shows \"Convite necessário\" message 20ms",
+      "testName": "@spec:AC-166 shows \"Convite necessário\" message 19ms",
       "method": "tap"
     },
     "AC-167": {
@@ -84,7 +84,7 @@
     },
     "AC-170": {
       "status": "pass",
-      "testName": "@spec:AC-170 copies invite link to clipboard on button click 100ms",
+      "testName": "@spec:AC-170 copies invite link to clipboard on button click 102ms",
       "method": "tap"
     }
   },

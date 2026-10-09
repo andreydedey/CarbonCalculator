@@ -1,11 +1,11 @@
 {
   "feature": "medicoes-de-consumo",
-  "timestamp": "2026-10-07T00:38:26.888Z",
-  "gitRev": "7dce11b",
+  "timestamp": "2026-10-09T14:11:18.876Z",
+  "gitRev": "3c624a5",
   "command": "bash .spec/scripts/run-all-tests.sh",
   "reporter": "tap",
   "exitCode": 0,
-  "testsParsed": 171,
+  "testsParsed": 212,
   "results": {
     "AC-119": {
       "status": "pass",
