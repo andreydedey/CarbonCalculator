@@ -1,11 +1,11 @@
 {
   "feature": "calendario-letivo",
-  "timestamp": "2026-10-09T14:12:13.407Z",
-  "gitRev": "3c624a5",
+  "timestamp": "2026-10-09T14:46:02.848Z",
+  "gitRev": "d1fdc85",
   "command": "bash .spec/scripts/run-all-tests.sh",
   "reporter": "tap",
   "exitCode": 0,
-  "testsParsed": 212,
+  "testsParsed": 232,
   "results": {
     "AC-051": {
       "status": "pass",

@@ -1,11 +1,11 @@
 {
   "feature": "registro-por-convite",
-  "timestamp": "2026-10-09T14:14:02.879Z",
-  "gitRev": "3c624a5",
+  "timestamp": "2026-10-09T14:51:00.161Z",
+  "gitRev": "d1fdc85",
   "command": "bash .spec/scripts/run-all-tests.sh",
   "reporter": "tap",
   "exitCode": 0,
-  "testsParsed": 212,
+  "testsParsed": 232,
   "results": {
     "AC-155": {
       "status": "pass",
@@ -59,12 +59,12 @@
     },
     "AC-165": {
       "status": "pass",
-      "testName": "@spec:AC-165 shows readonly email field after token validation 15ms",
+      "testName": "@spec:AC-165 shows readonly email field after token validation 16ms",
       "method": "tap"
     },
     "AC-166": {
       "status": "pass",
-      "testName": "@spec:AC-166 shows \"Convite necessário\" message 19ms",
+      "testName": "@spec:AC-166 shows \"Convite necessário\" message 20ms",
       "method": "tap"
     },
     "AC-167": {
@@ -79,12 +79,12 @@
     },
     "AC-169": {
       "status": "pass",
-      "testName": "@spec:AC-169 shows copyable link dialog when inviting a new user 169ms",
+      "testName": "@spec:AC-169 shows copyable link dialog when inviting a new user 174ms",
       "method": "tap"
     },
     "AC-170": {
       "status": "pass",
-      "testName": "@spec:AC-170 copies invite link to clipboard on button click 102ms",
+      "testName": "@spec:AC-170 copies invite link to clipboard on button click 104ms",
       "method": "tap"
     }
   },

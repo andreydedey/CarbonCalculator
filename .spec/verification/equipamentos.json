@@ -1,11 +1,11 @@
 {
   "feature": "equipamentos",
-  "timestamp": "2026-10-09T14:08:27.252Z",
-  "gitRev": "3c624a5",
+  "timestamp": "2026-10-09T14:47:02.640Z",
+  "gitRev": "d1fdc85",
   "command": "bash .spec/scripts/run-all-tests.sh",
   "reporter": "tap",
   "exitCode": 0,
-  "testsParsed": 212,
+  "testsParsed": 232,
   "results": {
     "AC-034": {
       "status": "pass",

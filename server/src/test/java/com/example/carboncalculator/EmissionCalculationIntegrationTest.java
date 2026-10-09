@@ -604,6 +604,22 @@ class EmissionCalculationIntegrationTest {
         assertEquals(65, config.consumptionWatts());
     }
 
+    // @spec:AC-087 Decomposição computador vs. monitor soma igual ao total
+    @Test
+    void deveDecomposicaoComputadorMonitorSomarIgualAoTotal() {
+        setupStandardScenario();
+
+        EmissionResultDTO result = getEmissions(periodId);
+
+        double equipmentTotal = result.byEquipmentModel().stream()
+                .mapToDouble(EmissionResultDTO.EquipmentModelEmission::emissionKg).sum();
+        double monitorTotal = result.byMonitorModel().stream()
+                .mapToDouble(EmissionResultDTO.MonitorModelEmission::emissionKg).sum();
+
+        // Computer part + monitor part must equal the total emission
+        assertEquals(result.totalEmissionKg(), equipmentTotal + monitorTotal, 0.02);
+    }
+
     // @spec:AC-088 Decomposição por modelo de equipamento soma igual ao total do lab
     @Test
     void deveDecomposicaoPorModeloSomarIgualAoTotal() {
@@ -715,8 +731,8 @@ class EmissionCalculationIntegrationTest {
         String csv = response.getBody();
         assertNotNull(csv);
 
-        // Verify CSV header
-        assertTrue(csv.startsWith("Laboratório,Mês,Energia (kWh),Emissão (kgCO₂),Fator (kgCO₂/kWh),Dias Letivos"));
+        // Verify CSV header (monthly section comes first)
+        assertTrue(csv.startsWith("Mês,Energia (kWh),Emissão (kgCO₂),Fator (kgCO₂/kWh),Dias Letivos"));
 
         // Verify CSV has data rows
         String[] lines = csv.split("\n");

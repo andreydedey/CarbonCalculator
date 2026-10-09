@@ -1,11 +1,11 @@
 {
   "feature": "fatores-de-emissao",
-  "timestamp": "2026-10-06T18:37:10.489Z",
-  "gitRev": "7dce11b",
+  "timestamp": "2026-10-09T14:48:02.359Z",
+  "gitRev": "d1fdc85",
   "command": "bash .spec/scripts/run-all-tests.sh",
   "reporter": "tap",
   "exitCode": 0,
-  "testsParsed": 153,
+  "testsParsed": 232,
   "results": {
     "AC-103": {
       "status": "pass",
