@@ -6,6 +6,7 @@ import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useDebounce } from 'use-debounce'
 import { InstitutionCard } from '@/components/institutions/InstitutionCard'
+import { CardGridSkeleton } from '@/components/ui/skeletons'
 import { InstitutionFormDialog } from '@/components/institutions/InstitutionFormDialog'
 import {
   AlertDialog,
@@ -132,7 +133,7 @@ export const InstitutionsPage: React.FC = () => {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando...</p>
+        <CardGridSkeleton count={4} columns={2} />
       ) : institutions.length === 0 ? (
         search.length > 0 ? (
           <Empty>

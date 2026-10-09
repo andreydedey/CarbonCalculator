@@ -7,6 +7,7 @@ import { EquivalenceCards } from '@/components/emissions/EquivalenceCards'
 import { ExportButton } from '@/components/emissions/ExportButton'
 import { ReadinessCheck } from '@/components/emissions/ReadinessCheck'
 import { Badge } from '@/components/ui/badge'
+import { MetricCardSkeleton, TableSkeleton } from '@/components/ui/skeletons'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import {
@@ -346,7 +347,11 @@ export function EmissionsDashboardPage() {
           Nenhum período letivo cadastrado. Cadastre um período para calcular emissões.
         </p>
       ) : readinessLoading ? (
-        <p className="text-sm text-muted-foreground">Verificando pré-requisitos...</p>
+        <div className="flex flex-col gap-6">
+          <MetricCardSkeleton count={2} />
+          <MetricCardSkeleton count={3} />
+          <TableSkeleton rows={5} columns={6} />
+        </div>
       ) : (
         <>
           {readiness && <ReadinessCheck readiness={readiness} />}
@@ -356,7 +361,11 @@ export function EmissionsDashboardPage() {
               Corrija os pré-requisitos acima para calcular as emissões deste período.
             </p>
           ) : resultLoading ? (
-            <p className="text-sm text-muted-foreground">Calculando emissões...</p>
+            <div className="flex flex-col gap-6">
+              <MetricCardSkeleton count={2} />
+              <MetricCardSkeleton count={3} />
+              <TableSkeleton rows={5} columns={6} />
+            </div>
           ) : result ? (
             <div className="flex flex-col gap-6">
               <MethodologyCard />

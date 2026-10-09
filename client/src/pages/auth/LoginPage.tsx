@@ -8,12 +8,13 @@ import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { FormSkeleton } from '@/components/ui/skeletons'
 import { useAuth } from '@/context/AuthContext'
 import { ApiError } from '@/lib/api/client'
 import { type LoginFormData, loginSchema } from '@/lib/schemas/authSchemas'
 
 export const LoginPage: React.FC = () => {
-  const { login } = useAuth()
+  const { login, isLoading: authLoading } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const oauthError = searchParams.get('error')
@@ -36,6 +37,17 @@ export const LoginPage: React.FC = () => {
     } catch (err) {
       setError('root', { message: err instanceof ApiError ? err.message : 'Erro inesperado' })
     }
+  }
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-svh">
+        <AuthBrandPanel />
+        <div className="flex w-full flex-col items-center justify-center px-6 lg:w-1/2">
+          <FormSkeleton />
+        </div>
+      </div>
+    )
   }
 
   return (

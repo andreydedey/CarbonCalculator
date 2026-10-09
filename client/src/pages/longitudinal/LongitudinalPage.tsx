@@ -3,6 +3,7 @@ import { CalendarDays } from 'lucide-react'
 import { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
+import { ChartSkeleton, MetricCardSkeleton, TableSkeleton } from '@/components/ui/skeletons'
 import {
   Select,
   SelectContent,
@@ -123,7 +124,12 @@ export function LongitudinalPage() {
         ))}
       </div>
 
-      {isEmpty ? (
+      {isChartLoading ? (
+        <div className="flex flex-col gap-6">
+          <ChartSkeleton />
+          <TableSkeleton rows={5} columns={5} />
+        </div>
+      ) : isEmpty ? (
         <div className="rounded-lg border p-8 flex items-center justify-center">
           <p className="text-sm text-muted-foreground text-center max-w-sm">{EMPTY_STATE_MESSAGE}</p>
         </div>

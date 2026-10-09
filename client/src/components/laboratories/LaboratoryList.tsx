@@ -8,6 +8,7 @@ import { useDebounce } from 'use-debounce'
 import { DeactivateDialog } from '@/components/laboratories/DeactivateDialog'
 import { DeleteDialog } from '@/components/laboratories/DeleteDialog'
 import { LabCard, SummaryCard } from '@/components/laboratories/LabCard'
+import { CardListSkeleton, SummaryCardsSkeleton } from '@/components/ui/skeletons'
 import { LaboratoryForm } from '@/components/laboratories/LaboratoryForm'
 import { Button } from '@/components/ui/button'
 import {
@@ -239,7 +240,7 @@ export const LaboratoryList: React.FC = () => {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando...</p>
+        <CardListSkeleton count={3} />
       ) : laboratories.length === 0 ? (
         search.length > 0 || statusFilter !== 'all' ? (
           <Empty>

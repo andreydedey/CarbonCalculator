@@ -4,6 +4,7 @@ import type React from 'react'
 import { toast } from 'sonner'
 import { ConfigurationForm } from '@/components/configurations/ConfigurationForm'
 import { Badge } from '@/components/ui/badge'
+import { TableSkeleton } from '@/components/ui/skeletons'
 import { Button } from '@/components/ui/button'
 import {
   Empty,
@@ -93,7 +94,7 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
       />
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando...</p>
+        <TableSkeleton rows={4} columns={5} />
       ) : configurations.length === 0 ? (
         <Empty>
           <EmptyHeader>

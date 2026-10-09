@@ -4,6 +4,7 @@ import type React from 'react'
 import { toast } from 'sonner'
 import { ConsumptionMeasurementForm } from '@/components/consumption-measurements/ConsumptionMeasurementForm'
 import { Badge } from '@/components/ui/badge'
+import { TableSkeleton } from '@/components/ui/skeletons'
 import { Button } from '@/components/ui/button'
 import {
   Empty,
@@ -97,7 +98,7 @@ export const ConsumptionMeasurementList: React.FC<ConsumptionMeasurementListProp
       />
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando...</p>
+        <TableSkeleton rows={4} columns={6} />
       ) : measurements.length === 0 ? (
         <Empty>
           <EmptyHeader>

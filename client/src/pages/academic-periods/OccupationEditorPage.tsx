@@ -11,6 +11,7 @@ import { OccurrencesView } from '@/components/academic-periods/OccurrencesView'
 import { StationsField } from '@/components/academic-periods/StationsField'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { TableSkeleton } from '@/components/ui/skeletons'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Progress } from '@/components/ui/progress'
 import {
@@ -315,7 +316,7 @@ export const OccupationEditorPage: React.FC = () => {
   }, [enabledShifts, occupancy, capacity])
 
   if (periodLoading) {
-    return <p className="text-sm text-muted-foreground">Carregando...</p>
+    return <TableSkeleton rows={6} columns={7} />
   }
 
   if (!period) {
@@ -410,7 +411,7 @@ export const OccupationEditorPage: React.FC = () => {
           {laboratories.map((lab) => (
             <TabsContent key={lab.id} value={lab.id} className="mt-4">
               {scheduleLoading ? (
-                <p className="text-sm text-muted-foreground">Carregando grade...</p>
+                <TableSkeleton rows={6} columns={7} />
               ) : mode === 'occurrences' ? (
                 <OccurrencesView
                   period={period}

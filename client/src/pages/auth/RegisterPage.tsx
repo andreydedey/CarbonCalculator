@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { FormSkeleton } from '@/components/ui/skeletons'
 import { useAuth } from '@/context/AuthContext'
 import { validateInvite } from '@/lib/api/auth'
 import { ApiError } from '@/lib/api/client'
@@ -74,13 +75,12 @@ export const RegisterPage: React.FC = () => {
     )
   }
 
-  // Loading validation
   if (isLoading) {
     return (
       <div className="flex min-h-svh">
         <AuthBrandPanel />
         <div className="flex w-full flex-col items-center justify-center px-6 lg:w-1/2">
-          <p className="text-sm text-muted-foreground">Validando convite...</p>
+          <FormSkeleton />
         </div>
       </div>
     )
