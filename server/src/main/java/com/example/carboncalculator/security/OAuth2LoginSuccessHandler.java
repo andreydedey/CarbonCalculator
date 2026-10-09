@@ -71,6 +71,17 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
             activatePendingInvitations(user);
         } else {
+            boolean hasAccess = user.isAdmin()
+                    || membershipRepository.findByUserId(user.getId()).stream()
+                            .anyMatch(m -> m.getStatus() == MembershipStatus.ACTIVE);
+
+            if (!hasAccess) {
+                log.info("OAuth login rejected — no active membership for email={}", email);
+                response.sendRedirect(frontendRedirectUrl.replace("/oauth/callback", "/login")
+                        + "?error=no_invite");
+                return;
+            }
+
             if (user.getOauth2Provider() == null) {
                 user.setOauth2Provider("google");
                 userRepository.save(user);

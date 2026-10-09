@@ -65,8 +65,14 @@ public class AuthService {
                 .filter(AppUser::isActive)
                 .orElseThrow(InvalidCredentialsException::new);
 
-        String accessToken = jwtService.generateAccessToken(user);
         List<UserInstitution> memberships = membershipRepository.findByUserId(user.getId());
+        boolean hasAccess = user.isAdmin()
+                || memberships.stream().anyMatch(m -> m.getStatus() == MembershipStatus.ACTIVE);
+        if (!hasAccess) {
+            throw new InvalidCredentialsException();
+        }
+
+        String accessToken = jwtService.generateAccessToken(user);
         return new AuthResponse(accessToken, UserProfileMapper.toProfileDTO(user, memberships));
     }
 
