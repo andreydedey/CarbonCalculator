@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import type React from 'react'
+import { TableSkeleton } from '@/components/ui/skeletons'
 import { getPeriodSummary } from '@/lib/api/academic-periods'
 
 interface PeriodSummaryProps {
@@ -12,7 +13,7 @@ export const PeriodSummary: React.FC<PeriodSummaryProps> = ({ periodId }) => {
     queryFn: () => getPeriodSummary(periodId),
   })
 
-  if (isLoading) return <p className="text-sm text-muted-foreground">Calculando resumo...</p>
+  if (isLoading) return <TableSkeleton rows={6} columns={2} />
 
   if (!summary) return null
 

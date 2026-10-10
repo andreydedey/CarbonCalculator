@@ -9,6 +9,7 @@ import { StatusBadge } from '@/components/academic-periods/OccurrencesView'
 import { StationsField } from '@/components/academic-periods/StationsField'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { TableSkeleton } from '@/components/ui/skeletons'
 import { FieldError } from '@/components/ui/field-error'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
@@ -299,7 +300,7 @@ export function TodayClassesCard({
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando aulas...</p>
+        <TableSkeleton rows={4} columns={5} />
       ) : !data?.periodId ? (
         <p className="text-sm text-muted-foreground italic">Nenhum período letivo nesta data.</p>
       ) : !data.schoolDay ? (

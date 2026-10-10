@@ -1,4 +1,6 @@
+import { Loader2 } from 'lucide-react'
 import type React from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 
 const GoogleIcon: React.FC = () => (
@@ -22,24 +24,32 @@ const GoogleIcon: React.FC = () => (
   </svg>
 )
 
-export const GoogleAuthButton: React.FC = () => (
-  <>
-    <div className="flex items-center gap-3">
-      <div className="h-px flex-1 bg-border" />
-      <span className="text-xs text-muted-foreground">ou</span>
-      <div className="h-px flex-1 bg-border" />
-    </div>
+export const GoogleAuthButton: React.FC = () => {
+  const [loading, setLoading] = useState(false)
 
-    <Button
-      type="button"
-      variant="outline"
-      className="w-full gap-2.5"
-      onClick={() => {
-        window.location.href = '/api/v1/oauth2/authorization/google'
-      }}
-    >
-      <GoogleIcon />
-      Continuar com Google
-    </Button>
-  </>
-)
+  function handleClick() {
+    setLoading(true)
+    window.location.href = '/api/v1/oauth2/authorization/google'
+  }
+
+  return (
+    <>
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-border" />
+        <span className="text-xs text-muted-foreground">ou</span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
+
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full gap-2.5"
+        disabled={loading}
+        onClick={handleClick}
+      >
+        {loading ? <Loader2 className="size-4 animate-spin" /> : <GoogleIcon />}
+        {loading ? 'Redirecionando...' : 'Continuar com Google'}
+      </Button>
+    </>
+  )
+}

@@ -40,5 +40,6 @@ Daí três papéis: quem administra a plataforma, quem gerencia uma instituiçã
 
 - Supõe-se que uma instituição tem poucos usuários e que um único nível de gestão basta — não há sub-perfis por laboratório.
 - Supõe-se que o administrador da plataforma é papel do próprio autor ou de quem hospedar a instância, não uma função comercial.
-- Em aberto: um mesmo usuário pode estar vinculado a mais de uma instituição? Isso interessa a pesquisadores que estudem várias, mas complica o isolamento.
+- ~~Em aberto: um mesmo usuário pode estar vinculado a mais de uma instituição?~~ **Resolvido:** sim, um usuário pode pertencer a mais de uma instituição via tabela associativa `user_institution` com papel por vínculo. Útil para pesquisadores que atuam em várias universidades.
 - Em aberto: os resultados agregados de uma instituição podem ser públicos, de forma anônima, para permitir comparação entre instituições? Seria um ganho acadêmico, mas levanta uma discussão de consentimento que hoje não existe no pré-projeto.
+- Um administrador global pode convidar outro administrador global pela tela de Gestão de Usuários. O convite segue o fluxo normal (token + link), e ao aceitar o convidado recebe `is_admin = true`.

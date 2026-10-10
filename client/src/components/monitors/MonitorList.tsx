@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useDebounce } from 'use-debounce'
 import { DeleteMonitorDialog } from '@/components/monitors/DeleteMonitorDialog'
 import { MonitorCard } from '@/components/monitors/MonitorCard'
+import { CardListSkeleton } from '@/components/ui/skeletons'
 import { MonitorForm } from '@/components/monitors/MonitorForm'
 import { Button } from '@/components/ui/button'
 import {
@@ -96,7 +97,7 @@ export const MonitorList: React.FC<MonitorListProps> = ({ formOpen, onFormOpenCh
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando...</p>
+        <CardListSkeleton count={3} />
       ) : monitors.length === 0 ? (
         search.length > 0 ? (
           <Empty>

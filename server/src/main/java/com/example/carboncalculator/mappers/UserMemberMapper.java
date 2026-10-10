@@ -16,12 +16,14 @@ public final class UserMemberMapper {
         String email = membership.getUser() != null
                 ? membership.getUser().getEmail()
                 : membership.getUserEmail();
+        boolean isAdmin = membership.getUser() != null && membership.getUser().isAdmin();
         return new UserMemberDTO(
                 membership.getId(),
                 name,
                 email,
                 membership.getRole().name(),
                 membership.getStatus().name(),
+                isAdmin,
                 inviteLink);
     }
 }

@@ -15,6 +15,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 
 import com.example.carboncalculator.entities.AppUser;
+import com.example.carboncalculator.entities.InstitutionRole;
 import com.example.carboncalculator.entities.MembershipStatus;
 import com.example.carboncalculator.entities.UserInstitution;
 import com.example.carboncalculator.repositories.AppUserRepository;
@@ -69,7 +70,12 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             user = userRepository.save(user);
             log.info("User created via Google OAuth: id={}, email={}", user.getId(), email);
 
-            activatePendingInvitations(user);
+            boolean shouldPromote = activatePendingInvitations(user);
+            if (shouldPromote) {
+                user.setAdmin(true);
+                userRepository.save(user);
+                log.info("User promoted to admin via OAuth invite: id={}", user.getId());
+            }
         } else {
             boolean hasAccess = user.isAdmin()
                     || membershipRepository.findByUserId(user.getId()).stream()
@@ -105,10 +111,19 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         response.sendRedirect(redirectUrl);
     }
 
-    private void activatePendingInvitations(AppUser user) {
+    /**
+     * Activates all pending invitations for the given user's email.
+     * @return true if any of the activated invitations had the ADMIN role marker
+     */
+    private boolean activatePendingInvitations(AppUser user) {
         List<UserInstitution> pending = membershipRepository
                 .findByUserEmailAndStatus(user.getEmail(), MembershipStatus.PENDING);
+        boolean shouldPromote = false;
         for (UserInstitution membership : pending) {
+            if (membership.getRole() == InstitutionRole.ADMIN) {
+                shouldPromote = true;
+                membership.setRole(InstitutionRole.MANAGER);
+            }
             membership.setUser(user);
             membership.setUserEmail(null);
             membership.setStatus(MembershipStatus.ACTIVE);
@@ -116,5 +131,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             membership.setInviteExpiresAt(null);
             membershipRepository.save(membership);
         }
+        return shouldPromote;
     }
 }
