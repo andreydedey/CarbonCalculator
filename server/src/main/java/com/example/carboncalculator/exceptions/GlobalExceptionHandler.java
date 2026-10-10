@@ -36,6 +36,7 @@ public class GlobalExceptionHandler {
             OccurrenceValidationException.class,
             InvalidEmissionFactorException.class,
             InvalidInviteTokenException.class,
+            MemberNotPendingException.class,
             IllegalArgumentException.class
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException ex, HttpServletRequest request) {

@@ -24,6 +24,7 @@ import com.example.carboncalculator.exceptions.InstitutionNotFoundException;
 import com.example.carboncalculator.exceptions.InvalidRoleException;
 import com.example.carboncalculator.exceptions.LastManagerException;
 import com.example.carboncalculator.exceptions.MemberNotFoundException;
+import com.example.carboncalculator.exceptions.MemberNotPendingException;
 import com.example.carboncalculator.mappers.UserMemberMapper;
 import com.example.carboncalculator.repositories.AppUserRepository;
 import com.example.carboncalculator.repositories.InstitutionRepository;
@@ -84,7 +85,6 @@ public class UserService {
             role = InstitutionRole.MANAGER;
         }
 
-        String rawToken = null;
         String inviteLink = null;
         boolean isPending = user == null;
 
@@ -98,16 +98,37 @@ public class UserService {
                 .status(isPending ? MembershipStatus.PENDING : MembershipStatus.ACTIVE);
 
         if (isPending) {
-            rawToken = inviteTokenService.generateToken();
-            builder.inviteTokenHash(inviteTokenService.hash(rawToken))
-                   .inviteExpiresAt(OffsetDateTime.now().plusDays(INVITE_EXPIRATION_DAYS));
-            inviteLink = "/register?token=" + rawToken;
+            InviteToken token = generateInviteToken();
+            builder.inviteTokenHash(token.hash())
+                   .inviteExpiresAt(token.expiresAt());
+            inviteLink = token.link();
         }
 
         UserInstitution membership = membershipRepository.save(builder.build());
         log.info("User invited: email={}, role={}, admin={}, pending={}", email, role, isAdminInvite, isPending);
 
         return UserMemberMapper.toDTO(membership, inviteLink);
+    }
+
+    @Transactional
+    public UserMemberDTO resendInvite(UUID membershipId) {
+        UUID institutionId = currentInstitutionId();
+
+        UserInstitution membership = membershipRepository.findById(membershipId)
+                .filter(m -> m.getInstitution().getId().equals(institutionId))
+                .orElseThrow(() -> new MemberNotFoundException(membershipId));
+
+        if (membership.getStatus() != MembershipStatus.PENDING) {
+            throw new MemberNotPendingException(membershipId);
+        }
+
+        InviteToken token = generateInviteToken();
+        membership.setInviteTokenHash(token.hash());
+        membership.setInviteExpiresAt(token.expiresAt());
+        membership = membershipRepository.save(membership);
+
+        log.info("Invite resent: membershipId={}", membershipId);
+        return UserMemberMapper.toDTO(membership, token.link());
     }
 
     @Transactional
@@ -191,5 +212,15 @@ public class UserService {
         } catch (IllegalArgumentException e) {
             throw new InvalidRoleException(roleName);
         }
+    }
+
+    private record InviteToken(String hash, OffsetDateTime expiresAt, String link) {}
+
+    private InviteToken generateInviteToken() {
+        String rawToken = inviteTokenService.generateToken();
+        return new InviteToken(
+                inviteTokenService.hash(rawToken),
+                OffsetDateTime.now().plusDays(INVITE_EXPIRATION_DAYS),
+                "/register?token=" + rawToken);
     }
 }

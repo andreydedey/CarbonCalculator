@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { Check, Copy, Loader2, UserPlus, Users } from 'lucide-react'
+import { Check, Copy, Loader2, RotateCw, UserPlus, Users } from 'lucide-react'
 import type React from 'react'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
@@ -25,7 +25,7 @@ import { RevokeAccessDialog } from '@/components/users/RevokeAccessDialog'
 import { useAuth } from '@/context/AuthContext'
 import { useDialog } from '@/hooks/use-dialog'
 import { ApiError } from '@/lib/api/client'
-import { changeRole, inviteUser, listMembers, type UserMember } from '@/lib/api/users'
+import { changeRole, inviteUser, listMembers, resendInvite, type UserMember } from '@/lib/api/users'
 import { type InviteFormData, inviteSchema } from '@/lib/schemas/inviteSchema'
 
 const ROLE_LABELS: Record<string, string> = {
@@ -95,6 +95,21 @@ export const UsersPage: React.FC = () => {
     },
     onError: (err) => {
       toast.error(err instanceof ApiError ? err.message : 'Erro ao alterar papel')
+    },
+  })
+
+  const resendInviteMutation = useMutation({
+    mutationFn: (id: string) => resendInvite(id),
+    onSuccess: (result) => {
+      refetch()
+      if (result.inviteLink) {
+        const fullLink = `${window.location.origin}${result.inviteLink}`
+        setInviteLink(fullLink)
+        setCopied(false)
+      }
+    },
+    onError: (err) => {
+      toast.error(err instanceof ApiError ? err.message : 'Erro ao reenviar convite')
     },
   })
 
@@ -286,24 +301,42 @@ export const UsersPage: React.FC = () => {
                         <td className="px-4 py-3">
                           {!isSelf(member) && (
                             <div className="flex gap-2">
-                              <Select
-                                value={member.admin ? 'ADMIN' : member.role}
-                                onValueChange={(role) =>
-                                  changeRoleMutation.mutate({ id: member.id, role })
-                                }
-                                disabled={member.admin}
-                              >
-                                <SelectTrigger className="h-7 w-[140px] text-xs">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="ADMIN" disabled={!currentUser?.admin}>
-                                    Admin Global
-                                  </SelectItem>
-                                  <SelectItem value="MANAGER">Gestor</SelectItem>
-                                  <SelectItem value="RESEARCHER">Pesquisador</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              {member.status === 'PENDING' ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 text-xs"
+                                  disabled={resendInviteMutation.isPending}
+                                  onClick={() => resendInviteMutation.mutate(member.id)}
+                                >
+                                  {resendInviteMutation.isPending &&
+                                  resendInviteMutation.variables === member.id ? (
+                                    <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <RotateCw className="mr-1 h-3 w-3" />
+                                  )}
+                                  Reenviar
+                                </Button>
+                              ) : (
+                                <Select
+                                  value={member.admin ? 'ADMIN' : member.role}
+                                  onValueChange={(role) =>
+                                    changeRoleMutation.mutate({ id: member.id, role })
+                                  }
+                                  disabled={member.admin}
+                                >
+                                  <SelectTrigger className="h-7 w-[140px] text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="ADMIN" disabled={!currentUser?.admin}>
+                                      Admin Global
+                                    </SelectItem>
+                                    <SelectItem value="MANAGER">Gestor</SelectItem>
+                                    <SelectItem value="RESEARCHER">Pesquisador</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              )}
                               <Button
                                 variant="destructive"
                                 size="sm"
