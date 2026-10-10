@@ -69,7 +69,6 @@ public class UserService {
         Institution institution = institutionRepository.findById(institutionId)
                 .orElseThrow(() -> new InstitutionNotFoundException(institutionId));
 
-        String rawToken = null;
         String inviteLink = null;
         boolean isPending = user == null;
 
@@ -81,10 +80,10 @@ public class UserService {
                 .status(isPending ? MembershipStatus.PENDING : MembershipStatus.ACTIVE);
 
         if (isPending) {
-            rawToken = inviteTokenService.generateToken();
-            builder.inviteTokenHash(inviteTokenService.hash(rawToken))
-                   .inviteExpiresAt(OffsetDateTime.now().plusDays(INVITE_EXPIRATION_DAYS));
-            inviteLink = "/register?token=" + rawToken;
+            InviteToken token = generateInviteToken();
+            builder.inviteTokenHash(token.hash())
+                   .inviteExpiresAt(token.expiresAt());
+            inviteLink = token.link();
         }
 
         UserInstitution membership = membershipRepository.save(builder.build());
@@ -105,14 +104,13 @@ public class UserService {
             throw new MemberNotPendingException(membershipId);
         }
 
-        String rawToken = inviteTokenService.generateToken();
-        membership.setInviteTokenHash(inviteTokenService.hash(rawToken));
-        membership.setInviteExpiresAt(OffsetDateTime.now().plusDays(INVITE_EXPIRATION_DAYS));
+        InviteToken token = generateInviteToken();
+        membership.setInviteTokenHash(token.hash());
+        membership.setInviteExpiresAt(token.expiresAt());
         membership = membershipRepository.save(membership);
 
-        String inviteLink = "/register?token=" + rawToken;
         log.info("Invite resent: membershipId={}", membershipId);
-        return UserMemberMapper.toDTO(membership, inviteLink);
+        return UserMemberMapper.toDTO(membership, token.link());
     }
 
     @Transactional
@@ -175,5 +173,15 @@ public class UserService {
         } catch (IllegalArgumentException e) {
             throw new InvalidRoleException(roleName);
         }
+    }
+
+    private record InviteToken(String hash, OffsetDateTime expiresAt, String link) {}
+
+    private InviteToken generateInviteToken() {
+        String rawToken = inviteTokenService.generateToken();
+        return new InviteToken(
+                inviteTokenService.hash(rawToken),
+                OffsetDateTime.now().plusDays(INVITE_EXPIRATION_DAYS),
+                "/register?token=" + rawToken);
     }
 }
