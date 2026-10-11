@@ -82,6 +82,39 @@
   --sidebar-ring: #24744d;
 }
 
+.dark {
+  --background: #0f1510;
+  --foreground: #e4e9e4;
+  --card: #171e18;
+  --card-foreground: #e4e9e4;
+  --popover: #171e18;
+  --popover-foreground: #e4e9e4;
+  --primary: #4ead7a;
+  --primary-foreground: #0f1510;
+  --secondary: #252e26;
+  --secondary-foreground: #e4e9e4;
+  --muted: #1e261f;
+  --muted-foreground: #96a296;
+  --accent: #1e3328;
+  --accent-foreground: #e4e9e4;
+  --destructive: #ef4444;
+  --warning: #f59e0b;
+  --success: #4ead7a;
+  --border: #2a352b;
+  --input: #2a352b;
+  --ring: #4ead7a;
+  --chart-1: #4ead7a;
+  --chart-2: #d4944e;
+  --sidebar: #171e18;
+  --sidebar-foreground: #e4e9e4;
+  --sidebar-primary: #4ead7a;
+  --sidebar-primary-foreground: #0f1510;
+  --sidebar-accent: #1e3328;
+  --sidebar-accent-foreground: #e4e9e4;
+  --sidebar-border: #2a352b;
+  --sidebar-ring: #4ead7a;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

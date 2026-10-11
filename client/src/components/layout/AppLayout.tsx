@@ -6,6 +6,8 @@ import {
   LayoutDashboard,
   LogOut,
   Monitor,
+  Moon,
+  Sun,
   Table2,
   TrendingUp,
   Users,
@@ -32,6 +34,7 @@ import {
 } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useAuth } from '@/context/AuthContext'
+import { useTheme } from '@/hooks/use-theme'
 
 type NavItem = {
   label: string
@@ -79,6 +82,7 @@ const NAV_GROUPS: NavGroup[] = [
 const AppSidebar: React.FC = () => {
   const location = useLocation()
   const { user, logout } = useAuth()
+  const { resolvedTheme, setTheme } = useTheme()
   const [logoutOpen, setLogoutOpen] = useState(false)
 
   const filterItems = (items: NavItem[]) =>
@@ -134,6 +138,15 @@ const AppSidebar: React.FC = () => {
               <p className="truncate text-sm font-medium">{user.name}</p>
               <p className="truncate text-xs text-muted-foreground">{user.email}</p>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 shrink-0"
+              onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+              title={resolvedTheme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+            >
+              {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
             <Button
               variant="ghost"
               size="icon"
