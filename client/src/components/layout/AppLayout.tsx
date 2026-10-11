@@ -11,7 +11,9 @@ import {
   Users,
 } from 'lucide-react'
 import type React from 'react'
+import { useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
+import { LogoutDialog } from '@/components/layout/LogoutDialog'
 import { Button } from '@/components/ui/button'
 import {
   Sidebar,
@@ -76,7 +78,8 @@ const NAV_GROUPS: NavGroup[] = [
 
 const AppSidebar: React.FC = () => {
   const location = useLocation()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
+  const [logoutOpen, setLogoutOpen] = useState(false)
 
   const filterItems = (items: NavItem[]) =>
     items.filter((item) => {
@@ -121,14 +124,34 @@ const AppSidebar: React.FC = () => {
           )
         })}
       </SidebarContent>
-      <SidebarFooter />
+      <SidebarFooter>
+        {user && (
+          <div className="flex items-center gap-2 px-2 py-1">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium">
+              {user.name.charAt(0).toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="truncate text-sm font-medium">{user.name}</p>
+              <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => setLogoutOpen(true)}
+              title="Sair"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+            <LogoutDialog open={logoutOpen} onOpenChange={setLogoutOpen} onConfirm={logout} />
+          </div>
+        )}
+      </SidebarFooter>
     </Sidebar>
   )
 }
 
 export const AppLayout: React.FC = () => {
-  const { user, logout } = useAuth()
-
   return (
     <TooltipProvider>
       <SidebarProvider>
@@ -136,22 +159,6 @@ export const AppLayout: React.FC = () => {
         <SidebarInset className="min-w-0">
           <header className="flex items-center gap-2 border-b px-4 py-3">
             <SidebarTrigger className="-ml-1" />
-            <div className="ml-auto flex items-center gap-3">
-              {user && (
-                <div className="flex items-center gap-2 border-l pl-3">
-                  <span className="text-sm text-muted-foreground">{user.name}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={logout}
-                    title="Sair"
-                  >
-                    <LogOut className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
           </header>
           <main className="flex-1 p-4">
             <Outlet />
