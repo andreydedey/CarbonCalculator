@@ -1,11 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
-import { CalendarDays, Factory, FlaskConical, Leaf, Zap } from 'lucide-react'
+import { CalendarDays, Factory, FlaskConical, LayoutDashboard, Leaf, Zap } from 'lucide-react'
 import type React from 'react'
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { TodayClassesCard } from '@/components/dashboard/TodayClassesCard'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { Progress } from '@/components/ui/progress'
 import { CardGridSkeleton, MetricCardSkeleton, TableSkeleton } from '@/components/ui/skeletons'
 import { useCanManage } from '@/hooks/useCanManage'
@@ -78,10 +86,7 @@ export function DashboardPage() {
   return (
     <div className="flex flex-col gap-7">
       <div className="flex items-center justify-between">
-        <div className="flex flex-col gap-1">
-          <p className="text-xs text-muted-foreground">Dashboard</p>
-          <h1 className="font-heading text-2xl font-bold">Visão Geral de Emissões</h1>
-        </div>
+        <h1 className="font-heading text-2xl font-bold">Visão Geral de Emissões</h1>
         {period && (
           <div className="flex items-center gap-1.5 rounded-md bg-accent px-3.5 py-1.5 text-xs font-medium text-primary">
             <CalendarDays className="size-3.5" />
@@ -97,10 +102,22 @@ export function DashboardPage() {
           <CardGridSkeleton count={3} columns={3} />
         </div>
       ) : !period ? (
-        <p className="text-sm text-muted-foreground italic">
-          Nenhum período letivo cadastrado. Cadastre um período no Calendário para acompanhar as
-          emissões.
-        </p>
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia>
+              <LayoutDashboard className="size-6 text-muted-foreground" />
+            </EmptyMedia>
+            <EmptyTitle>Nenhum período letivo ativo</EmptyTitle>
+            <EmptyDescription>
+              Cadastre um período no Calendário Letivo para visualizar as emissões.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button asChild>
+              <Link to="/academic-periods">Ir para Calendário Letivo</Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
       ) : (
         <>
           <div className="flex gap-4">
