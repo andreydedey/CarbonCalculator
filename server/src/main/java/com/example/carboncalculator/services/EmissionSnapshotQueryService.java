@@ -15,28 +15,34 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.carboncalculator.dto.DailyEmissionDTO;
 import com.example.carboncalculator.dto.SnapshotAggregateDTO;
+import com.example.carboncalculator.dto.SnapshotFilter;
 import com.example.carboncalculator.entities.AcademicPeriod;
 import com.example.carboncalculator.entities.EmissionSnapshot;
 import com.example.carboncalculator.entities.SnapshotGranularity;
 import com.example.carboncalculator.repositories.AcademicPeriodRepository;
 import com.example.carboncalculator.repositories.EmissionPeriodSnapshotRepository;
 import com.example.carboncalculator.repositories.EmissionSnapshotRepository;
+import com.example.carboncalculator.specifications.EmissionSnapshotSpecification;
 
 import lombok.RequiredArgsConstructor;
 
 /**
  * Longitudinal series of realized emissions. Ended periods come from their frozen snapshot;
- * periods still running are calculated on demand. Every granularity is aggregated from days.
+ * periods still running are calculated on demand. Rows are per day and laboratory, so the
+ * laboratory filter applies to both; every granularity is aggregated from them.
  */
 @Service
 @RequiredArgsConstructor
@@ -55,34 +61,33 @@ public class EmissionSnapshotQueryService {
     private final EmissionCalculationService calculationService;
     private final Clock clock;
 
-    private record PeriodDay(AcademicPeriod period, DailyEmissionDTO day) {}
+    private record PeriodRow(AcademicPeriod period, DailyEmissionDTO row) {}
 
     private record Bucket(String label, LocalDate startDate, LocalDate endDate, AcademicPeriod period,
-                          List<DailyEmissionDTO> days) {}
+                          List<DailyEmissionDTO> rows) {}
 
     @Transactional(readOnly = true)
-    public List<SnapshotAggregateDTO> list(String granularity, LocalDate startDate, LocalDate endDate) {
-        return aggregate(SnapshotGranularity.from(granularity), startDate, endDate);
+    public List<SnapshotAggregateDTO> list(String granularity, SnapshotFilter filter) {
+        return aggregate(SnapshotGranularity.from(granularity), filter);
     }
 
     @Transactional(readOnly = true)
     public Page<SnapshotAggregateDTO> listHistory(
-            String granularity, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+            String granularity, SnapshotFilter filter, Pageable pageable) {
         int size = Math.min(pageable.getPageSize(), MAX_HISTORY_PAGE_SIZE);
         PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), size);
 
         List<SnapshotAggregateDTO> mostRecentFirst =
-                aggregate(SnapshotGranularity.from(granularity), startDate, endDate).reversed();
+                aggregate(SnapshotGranularity.from(granularity), filter).reversed();
         int from = (int) Math.min(pageRequest.getOffset(), mostRecentFirst.size());
         int to = Math.min(from + size, mostRecentFirst.size());
         return new PageImpl<>(mostRecentFirst.subList(from, to), pageRequest, mostRecentFirst.size());
     }
 
-    private List<SnapshotAggregateDTO> aggregate(SnapshotGranularity granularity, LocalDate startDate,
-                                                 LocalDate endDate) {
+    private List<SnapshotAggregateDTO> aggregate(SnapshotGranularity granularity, SnapshotFilter filter) {
         Map<Object, Bucket> buckets = new LinkedHashMap<>();
-        for (PeriodDay periodDay : loadDays(startDate, endDate)) {
-            LocalDate date = periodDay.day().date();
+        for (PeriodRow periodRow : loadRows(filter)) {
+            LocalDate date = periodRow.row().date();
             Bucket bucket = switch (granularity) {
                 case DAILY -> buckets.computeIfAbsent(date,
                         k -> new Bucket(date.toString(), date, date, null, new ArrayList<>()));
@@ -100,70 +105,84 @@ public class EmissionSnapshotQueryService {
                             null, new ArrayList<>()));
                 }
                 case PERIOD -> {
-                    AcademicPeriod period = periodDay.period();
+                    AcademicPeriod period = periodRow.period();
                     yield buckets.computeIfAbsent(period.getId(), k -> new Bucket(
                             period.getName(), period.getStartDate(), period.getEndDate(), period,
                             new ArrayList<>()));
                 }
             };
-            bucket.days().add(periodDay.day());
+            bucket.rows().add(periodRow.row());
         }
 
         List<SnapshotAggregateDTO> result = new ArrayList<>(buckets.size());
         BigDecimal previousEmission = null;
         for (Bucket bucket : buckets.values()) {
-            BigDecimal emission = sum(bucket.days(), DailyEmissionDTO::emissionKg);
+            Map<LocalDate, List<DailyEmissionDTO>> rowsByDate = bucket.rows().stream()
+                    .collect(Collectors.groupingBy(DailyEmissionDTO::date, LinkedHashMap::new, Collectors.toList()));
+            BigDecimal emission = sum(bucket.rows(), DailyEmissionDTO::emissionKg);
             result.add(new SnapshotAggregateDTO(
                     bucket.label(),
                     bucket.startDate(),
                     bucket.endDate(),
                     bucket.period() != null ? bucket.period().getId() : null,
                     emission,
-                    sum(bucket.days(), DailyEmissionDTO::energyKwh),
-                    (int) bucket.days().stream().filter(DailyEmissionDTO::schoolDay).count(),
-                    bucket.days().stream().mapToInt(DailyEmissionDTO::stationCount).max().orElse(0),
-                    sum(bucket.days(), DailyEmissionDTO::emissionFactor)
-                            .divide(BigDecimal.valueOf(bucket.days().size()), 6, RoundingMode.HALF_UP),
+                    sum(bucket.rows(), DailyEmissionDTO::energyKwh),
+                    (int) rowsByDate.values().stream().filter(rows -> rows.get(0).schoolDay()).count(),
+                    rowsByDate.values().stream()
+                            .mapToInt(rows -> rows.stream().mapToInt(DailyEmissionDTO::stationCount).sum())
+                            .max().orElse(0),
+                    rowsByDate.values().stream()
+                            .map(rows -> rows.get(0).emissionFactor())
+                            .reduce(BigDecimal.ZERO, BigDecimal::add)
+                            .divide(BigDecimal.valueOf(rowsByDate.size()), 6, RoundingMode.HALF_UP),
                     variationPct(emission, previousEmission)));
             previousEmission = emission;
         }
         return result;
     }
 
-    /** Realized days of every period, in chronological order, within the optional date range. */
-    private List<PeriodDay> loadDays(LocalDate startDate, LocalDate endDate) {
-        boolean filtered = startDate != null && endDate != null;
+    /** Realized rows of every period, in chronological order, matching the filter. */
+    private List<PeriodRow> loadRows(SnapshotFilter filter) {
         LocalDate yesterday = LocalDate.now(clock).minusDays(1);
+        LocalDate to = filter.hasDateRange() && filter.endDate().isBefore(yesterday) ? filter.endDate() : yesterday;
+        LocalDate from = filter.hasDateRange() ? filter.startDate() : null;
 
-        List<PeriodDay> days = new ArrayList<>();
+        List<PeriodRow> rows = new ArrayList<>();
         List<AcademicPeriod> periods = periodRepository.findAll().stream()
                 .sorted(Comparator.comparing(AcademicPeriod::getStartDate))
                 .toList();
         for (AcademicPeriod period : periods) {
-            if (period.getStartDate().isAfter(yesterday)) continue;
-            if (filtered && (period.getEndDate().isBefore(startDate) || period.getStartDate().isAfter(endDate))) {
-                continue;
-            }
-            for (DailyEmissionDTO day : daysOf(period, yesterday)) {
-                if (filtered && (day.date().isBefore(startDate) || day.date().isAfter(endDate))) continue;
-                days.add(new PeriodDay(period, day));
+            if (period.getStartDate().isAfter(to)) continue;
+            if (from != null && period.getEndDate().isBefore(from)) continue;
+            for (DailyEmissionDTO row : rowsOf(period, filter, from, to)) {
+                rows.add(new PeriodRow(period, row));
             }
         }
-        return days;
+        return rows;
     }
 
-    private List<DailyEmissionDTO> daysOf(AcademicPeriod period, LocalDate yesterday) {
+    private List<DailyEmissionDTO> rowsOf(AcademicPeriod period, SnapshotFilter filter, LocalDate from, LocalDate to) {
         if (!periodSnapshotRepository.existsById(period.getId())) {
-            return calculationService.calculateDaily(period.getId(), yesterday);
+            return calculationService.calculateDaily(period.getId(), from, to, filter.laboratoryId());
         }
-        return snapshotRepository.findByAcademicPeriodIdOrderBySnapshotDate(period.getId()).stream()
-                .map(EmissionSnapshotQueryService::toDay)
+
+        Specification<EmissionSnapshot> spec = Specification.unrestricted();
+        spec = spec.and(EmissionSnapshotSpecification.ofPeriod(period.getId()));
+        if (filter.hasDateRange()) {
+            spec = spec.and(EmissionSnapshotSpecification.withinDateRange(filter.startDate(), filter.endDate()));
+        }
+        if (filter.laboratoryId() != null) {
+            spec = spec.and(EmissionSnapshotSpecification.ofLaboratory(filter.laboratoryId()));
+        }
+        return snapshotRepository.findAll(spec, Sort.by("snapshotDate")).stream()
+                .map(EmissionSnapshotQueryService::toRow)
                 .toList();
     }
 
-    private static DailyEmissionDTO toDay(EmissionSnapshot snapshot) {
+    private static DailyEmissionDTO toRow(EmissionSnapshot snapshot) {
         return new DailyEmissionDTO(
                 snapshot.getSnapshotDate(),
+                snapshot.getLaboratory() != null ? snapshot.getLaboratory().getId() : null,
                 snapshot.getDailyEnergyKwh(),
                 snapshot.getDailyEmissionKg(),
                 snapshot.getEmissionFactorValue(),
@@ -171,9 +190,9 @@ public class EmissionSnapshotQueryService {
                 snapshot.isSchoolDay());
     }
 
-    private static BigDecimal sum(List<DailyEmissionDTO> days,
+    private static BigDecimal sum(List<DailyEmissionDTO> rows,
                                   Function<DailyEmissionDTO, BigDecimal> value) {
-        return days.stream().map(value).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return rows.stream().map(value).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private static BigDecimal variationPct(BigDecimal current, BigDecimal previous) {

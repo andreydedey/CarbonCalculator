@@ -26,6 +26,7 @@ import com.example.carboncalculator.repositories.AcademicPeriodRepository;
 import com.example.carboncalculator.repositories.EmissionPeriodSnapshotRepository;
 import com.example.carboncalculator.repositories.EmissionSnapshotRepository;
 import com.example.carboncalculator.repositories.InstitutionRepository;
+import com.example.carboncalculator.repositories.LaboratoryRepository;
 
 /**
  * Freezes the daily emissions of each academic period once it ends, so later edits to the
@@ -41,6 +42,7 @@ public class EmissionPeriodSnapshotService {
     private final AcademicPeriodRepository periodRepository;
     private final EmissionPeriodSnapshotRepository periodSnapshotRepository;
     private final EmissionSnapshotRepository snapshotRepository;
+    private final LaboratoryRepository laboratoryRepository;
     private final EmissionCalculationService calculationService;
     private final JdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
@@ -50,6 +52,7 @@ public class EmissionPeriodSnapshotService {
             AcademicPeriodRepository periodRepository,
             EmissionPeriodSnapshotRepository periodSnapshotRepository,
             EmissionSnapshotRepository snapshotRepository,
+            LaboratoryRepository laboratoryRepository,
             EmissionCalculationService calculationService,
             DataSource dataSource,
             PlatformTransactionManager transactionManager,
@@ -58,6 +61,7 @@ public class EmissionPeriodSnapshotService {
         this.periodRepository = periodRepository;
         this.periodSnapshotRepository = periodSnapshotRepository;
         this.snapshotRepository = snapshotRepository;
+        this.laboratoryRepository = laboratoryRepository;
         this.calculationService = calculationService;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.transactionTemplate = new TransactionTemplate(transactionManager);
@@ -104,26 +108,28 @@ public class EmissionPeriodSnapshotService {
 
     private void capture(UUID institutionId, AcademicPeriod period) {
         Institution institution = institutionRepository.getReferenceById(institutionId);
-        List<DailyEmissionDTO> days = calculationService.calculateDaily(period.getId(), period.getEndDate());
+        List<DailyEmissionDTO> rows = calculationService.calculateDaily(
+                period.getId(), null, period.getEndDate(), null);
 
         periodSnapshotRepository.saveAndFlush(EmissionPeriodSnapshot.builder()
                 .academicPeriodId(period.getId())
                 .institution(institution)
                 .build());
-        snapshotRepository.saveAll(days.stream()
-                .map(day -> EmissionSnapshot.builder()
+        snapshotRepository.saveAll(rows.stream()
+                .map(row -> EmissionSnapshot.builder()
                         .institution(institution)
                         .academicPeriod(period)
-                        .snapshotDate(day.date())
-                        .dayOfWeek(day.date().getDayOfWeek())
-                        .schoolDay(day.schoolDay())
-                        .dailyEnergyKwh(day.energyKwh())
-                        .dailyEmissionKg(day.emissionKg())
-                        .emissionFactorValue(day.emissionFactor())
-                        .stationCount(day.stationCount())
+                        .laboratory(laboratoryRepository.getReferenceById(row.laboratoryId()))
+                        .snapshotDate(row.date())
+                        .dayOfWeek(row.date().getDayOfWeek())
+                        .schoolDay(row.schoolDay())
+                        .dailyEnergyKwh(row.energyKwh())
+                        .dailyEmissionKg(row.emissionKg())
+                        .emissionFactorValue(row.emissionFactor())
+                        .stationCount(row.stationCount())
                         .build())
                 .toList());
 
-        log.info("Period snapshot captured: periodId={} days={}", period.getId(), days.size());
+        log.info("Period snapshot captured: periodId={} rows={}", period.getId(), rows.size());
     }
 }

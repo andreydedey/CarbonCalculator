@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { BarChart3, CalendarDays } from 'lucide-react'
+import { BarChart3, CalendarDays, Cpu } from 'lucide-react'
 import { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
@@ -22,6 +22,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { listAcademicPeriods } from '@/lib/api/academic-periods.ts'
+import { listLaboratories } from '@/lib/api/laboratories.ts'
 import { listSnapshotHistory, listSnapshots } from '@/lib/api/snapshots.ts'
 import {
   computeKpiCards,
@@ -46,12 +47,20 @@ export {
 export function LongitudinalPage() {
   const [granularity, setGranularity] = useState<Granularity>('monthly')
   const [selectedPeriodId, setSelectedPeriodId] = useState<string>('all')
+  const [selectedLabId, setSelectedLabId] = useState<string>('all')
 
   const { data: periodsPage } = useQuery({
     queryKey: ['academic-periods-all'],
     queryFn: () => listAcademicPeriods(0, 50),
   })
   const periods = periodsPage?.content ?? []
+
+  const { data: labsPage } = useQuery({
+    queryKey: ['laboratories-all'],
+    queryFn: () => listLaboratories({ size: 100 }),
+  })
+  const labs = labsPage?.content ?? []
+  const labFilter = selectedLabId === 'all' ? {} : { laboratoryId: selectedLabId }
 
   const selectedPeriod = periods.find((p) => p.id === selectedPeriodId)
   const dateFilter = selectedPeriod
@@ -69,8 +78,8 @@ export function LongitudinalPage() {
   })
 
   const { items: historyRows, fetchNextPage, hasNextPage, isFetchingNextPage } = usePagedQuery({
-    queryKey: ['snapshots-history', granularity, selectedPeriodId],
-    queryFn: (page) => listSnapshotHistory({ granularity, page, ...dateFilter }),
+    queryKey: ['snapshots-history', granularity, selectedPeriodId, selectedLabId],
+    queryFn: (page) => listSnapshotHistory({ granularity, page, ...dateFilter, ...labFilter }),
   })
 
   const kpiCards = computeKpiCards(monthlyData)
@@ -183,8 +192,24 @@ export function LongitudinalPage() {
           </div>
 
           <div className="rounded-lg border">
-            <div className="px-4 py-3 border-b">
+            <div className="px-4 py-3 border-b flex items-center justify-between">
               <p className="text-sm font-medium">Histórico de Emissões</p>
+              {labs.length > 0 && (
+                <Select value={selectedLabId} onValueChange={setSelectedLabId}>
+                  <SelectTrigger className="w-auto h-8 text-xs gap-1.5 border-dashed">
+                    <Cpu className="size-3 text-primary" />
+                    <SelectValue placeholder="Todos os laboratórios" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os laboratórios</SelectItem>
+                    {labs.map((lab) => (
+                      <SelectItem key={lab.id} value={lab.id}>
+                        {lab.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             <Table>
               <TableHeader>

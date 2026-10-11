@@ -9,7 +9,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -316,60 +315,65 @@ public class EmissionCalculationService {
     }
 
     /**
-     * Realized emissions of each day of the period up to {@code until}, with the same formula as
-     * {@link #calculate}. Days with no class and no school activity, or whose month has no emission
-     * factor, are left out.
+     * Realized emissions of each day and laboratory of the period between {@code from} and {@code to}
+     * (inclusive, clamped to the period), with the same formula as {@link #calculate}. A laboratory
+     * gets a row on every school day, with zero when it had no class; days whose month has no emission
+     * factor are left out. {@code from} and {@code laboratoryId} are optional.
      */
     @Transactional(readOnly = true)
-    public List<DailyEmissionDTO> calculateDaily(UUID periodId, LocalDate until) {
+    public List<DailyEmissionDTO> calculateDaily(UUID periodId, LocalDate from, LocalDate to, UUID laboratoryId) {
         AcademicPeriod period = getPeriod(periodId);
-        LocalDate end = until.isBefore(period.getEndDate()) ? until : period.getEndDate();
-        if (end.isBefore(period.getStartDate())) {
+        LocalDate start = from != null && from.isAfter(period.getStartDate()) ? from : period.getStartDate();
+        LocalDate end = to.isBefore(period.getEndDate()) ? to : period.getEndDate();
+        if (end.isBefore(start)) {
             return List.of();
         }
 
         Map<String, EmissionFactor> factorsByMonth = loadFactorsByMonth();
-        Map<UUID, LabAccumulator> labAcc = loadLabAccumulators();
-        List<ClassSessionExpander.Session> sessions = ClassSessionExpander.expand(period,
+        List<LabAccumulator> labs = loadLabAccumulators().values().stream()
+                .filter(lab -> lab.capacity() > 0)
+                .filter(lab -> laboratoryId == null || lab.lab.getId().equals(laboratoryId))
+                .toList();
+        Map<UUID, LabAccumulator> labsById = labs.stream()
+                .collect(Collectors.toMap(lab -> lab.lab.getId(), Function.identity()));
+
+        Map<DayLab, double[]> energyByDayLab = new HashMap<>();
+        for (ClassSessionExpander.Session session : ClassSessionExpander.expand(period,
                 scheduleRepository.findByPeriodId(periodId),
                 occurrenceRepository.findByPeriodId(periodId),
-                period.getStartDate(), end);
-
-        Map<LocalDate, double[]> energyByDay = new HashMap<>();
-        Map<LocalDate, Set<UUID>> labsByDay = new HashMap<>();
-        for (ClassSessionExpander.Session session : sessions) {
-            LabAccumulator lab = labAcc.get(session.laboratoryId());
+                start, end)) {
+            LabAccumulator lab = labsById.get(session.laboratoryId());
             if (lab == null) continue;
             SessionEnergy energy = sessionEnergy(session, lab, factorsByMonth);
             if (energy == null) continue;
             for (ConfigEnergy part : energy.parts()) {
-                add(energyByDay, session.date(), part.energyKwh(), part.emissionKg());
+                add(energyByDayLab, new DayLab(session.date(), session.laboratoryId()),
+                        part.energyKwh(), part.emissionKg());
             }
-            labsByDay.computeIfAbsent(session.date(), d -> new HashSet<>()).add(session.laboratoryId());
         }
 
-        List<DailyEmissionDTO> days = new ArrayList<>();
-        for (LocalDate date = period.getStartDate(); !date.isAfter(end); date = date.plusDays(1)) {
+        List<DailyEmissionDTO> rows = new ArrayList<>();
+        for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
             LocalDate day = date;
-            boolean schoolDay = period.getShifts().stream()
-                    .anyMatch(s -> ClassSessionExpander.isSchoolDayForShift(period, s, day));
-            double[] totals = energyByDay.get(day);
-            if (!schoolDay && totals == null) continue;
             EmissionFactor factor = factorsByMonth.get(YearMonth.from(day).format(MONTH_FMT));
             if (factor == null) continue;
+            boolean schoolDay = period.getShifts().stream()
+                    .anyMatch(s -> ClassSessionExpander.isSchoolDayForShift(period, s, day));
 
-            int stationCount = labsByDay.getOrDefault(day, Set.of()).stream()
-                    .mapToInt(labId -> labAcc.get(labId).capacity())
-                    .sum();
-            days.add(new DailyEmissionDTO(
-                    day,
-                    totals != null ? round4(totals[0]) : BigDecimal.ZERO.setScale(4),
-                    totals != null ? round4(totals[1]) : BigDecimal.ZERO.setScale(4),
-                    factor.getValue(),
-                    stationCount,
-                    schoolDay));
+            for (LabAccumulator lab : labs) {
+                double[] totals = energyByDayLab.get(new DayLab(day, lab.lab.getId()));
+                if (!schoolDay && totals == null) continue;
+                rows.add(new DailyEmissionDTO(
+                        day,
+                        lab.lab.getId(),
+                        round4(totals != null ? totals[0] : 0),
+                        round4(totals != null ? totals[1] : 0),
+                        factor.getValue(),
+                        totals != null ? lab.capacity() : 0,
+                        schoolDay));
+            }
         }
-        return days;
+        return rows;
     }
 
     public String exportCsv(UUID periodId) {
@@ -403,6 +407,8 @@ public class EmissionCalculationService {
                                 double computerEmissionKg, double monitorEmissionKg) {}
 
     private record SessionEnergy(int stations, int capacity, List<ConfigEnergy> parts) {}
+
+    private record DayLab(LocalDate date, UUID laboratoryId) {}
 
     /**
      * Energy and emission of one class, split by configuration. Returns {@code null} when the class

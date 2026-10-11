@@ -2,6 +2,7 @@ package com.example.carboncalculator.controllers;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.carboncalculator.dto.PageResponse;
 import com.example.carboncalculator.dto.SnapshotAggregateDTO;
+import com.example.carboncalculator.dto.SnapshotFilter;
 import com.example.carboncalculator.services.EmissionSnapshotQueryService;
 
 import lombok.RequiredArgsConstructor;
@@ -29,8 +31,9 @@ public class EmissionSnapshotController {
     public List<SnapshotAggregateDTO> list(
             @RequestParam(defaultValue = "monthly") String granularity,
             @RequestParam(required = false) LocalDate startDate,
-            @RequestParam(required = false) LocalDate endDate) {
-        return queryService.list(granularity, startDate, endDate);
+            @RequestParam(required = false) LocalDate endDate,
+            @RequestParam(required = false) UUID laboratoryId) {
+        return queryService.list(granularity, new SnapshotFilter(startDate, endDate, laboratoryId));
     }
 
     @GetMapping("/history")
@@ -39,7 +42,9 @@ public class EmissionSnapshotController {
             @RequestParam(defaultValue = "monthly") String granularity,
             @RequestParam(required = false) LocalDate startDate,
             @RequestParam(required = false) LocalDate endDate,
+            @RequestParam(required = false) UUID laboratoryId,
             @PageableDefault(size = 20) Pageable pageable) {
-        return PageResponse.from(queryService.listHistory(granularity, startDate, endDate, pageable));
+        return PageResponse.from(queryService.listHistory(
+                granularity, new SnapshotFilter(startDate, endDate, laboratoryId), pageable));
     }
 }

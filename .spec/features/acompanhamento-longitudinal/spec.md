@@ -67,6 +67,12 @@ Como gestor da instituição, quero consultar o histórico de emissões com cont
 - **Quando** faz `GET /api/v1/snapshots?granularity=monthly`
 - **Então** recebe 200 OK (não 403)
 
+#### AC-176 — Filtro por laboratório restringe a série às aulas do laboratório
+
+- **Dado** que dois laboratórios tiveram aulas no mesmo período, em andamento ou encerrado
+- **Quando** faço `GET /api/v1/snapshots?granularity=period&laboratoryId={id}`
+- **Então** o total retornado considera apenas as aulas desse laboratório, e a soma dos totais por laboratório é igual ao total sem filtro
+
 ---
 
 ### US-051 — Série ao vivo e congelamento ao fim do período letivo

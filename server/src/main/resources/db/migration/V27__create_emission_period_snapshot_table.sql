@@ -18,3 +18,11 @@ ALTER TABLE emission_snapshot
     DROP CONSTRAINT emission_snapshot_academic_period_id_fkey,
     ADD CONSTRAINT emission_snapshot_period_snapshot_fkey
         FOREIGN KEY (academic_period_id) REFERENCES emission_period_snapshot (academic_period_id) ON DELETE CASCADE;
+
+ALTER TABLE emission_snapshot
+    ADD COLUMN laboratory_id UUID REFERENCES laboratory (id) ON DELETE SET NULL,
+    DROP CONSTRAINT uq_emission_snapshot_institution_date,
+    ADD CONSTRAINT uq_emission_snapshot_period_date_laboratory
+        UNIQUE (academic_period_id, snapshot_date, laboratory_id);
+
+CREATE INDEX idx_emission_snapshot_laboratory ON emission_snapshot (laboratory_id);

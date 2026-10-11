@@ -207,11 +207,15 @@ class EmissionSnapshotIntegrationTest {
     }
 
     private void replaceSchedule(UUID instId, Scenario scenario, List<Integer> slots) {
+        replaceSchedule(instId, scenario, scenario.labId(), slots);
+    }
+
+    private void replaceSchedule(UUID instId, Scenario scenario, UUID labId, List<Integer> slots) {
         List<ReplaceScheduleRequest.ScheduleInput> entries = List.of(1, 2, 3, 4, 5).stream()
                 .map(day -> new ReplaceScheduleRequest.ScheduleInput(scenario.shiftId(), day, slots))
                 .toList();
         ResponseEntity<String> response = restTemplate.exchange(
-                "/academic-periods/" + scenario.periodId() + "/laboratories/" + scenario.labId() + "/schedule",
+                "/academic-periods/" + scenario.periodId() + "/laboratories/" + labId + "/schedule",
                 HttpMethod.PUT,
                 new HttpEntity<>(new ReplaceScheduleRequest(entries), headersFor(instId)),
                 String.class);
@@ -239,9 +243,15 @@ class EmissionSnapshotIntegrationTest {
 
     private List<SnapshotAggregateDTO> getSnapshots(UUID instId, String token, String granularity,
             LocalDate startDate, LocalDate endDate) {
+        return getSnapshots(instId, token, granularity, startDate, endDate, null);
+    }
+
+    private List<SnapshotAggregateDTO> getSnapshots(UUID instId, String token, String granularity,
+            LocalDate startDate, LocalDate endDate, UUID laboratoryId) {
         StringBuilder url = new StringBuilder("/snapshots?granularity=").append(granularity);
         if (startDate != null) url.append("&startDate=").append(startDate);
         if (endDate != null) url.append("&endDate=").append(endDate);
+        if (laboratoryId != null) url.append("&laboratoryId=").append(laboratoryId);
         ResponseEntity<List<SnapshotAggregateDTO>> response = restTemplate.exchange(
                 url.toString(), HttpMethod.GET,
                 new HttpEntity<>(headersFor(instId, token)),
@@ -340,6 +350,47 @@ class EmissionSnapshotIntegrationTest {
         assertEquals(0, periodTotal.compareTo(total(getSnapshots(institutionId, "monthly"))));
         assertEquals(0, periodTotal.compareTo(total(getSnapshots(institutionId, "weekly"))));
         assertEquals(0, periodTotal.compareTo(total(getSnapshots(institutionId, "daily"))));
+    }
+
+    // ========================= Laboratory filter =========================
+
+    private void assertLaboratoryFilterSplitsTotal(Scenario scenario, UUID otherLabId) {
+        BigDecimal all = periodTotal(institutionId);
+        BigDecimal fullGridLab = total(getSnapshots(institutionId, adminToken, "period", null, null, scenario.labId()));
+        BigDecimal oneSlotLab = total(getSnapshots(institutionId, adminToken, "period", null, null, otherLabId));
+
+        assertTrue(oneSlotLab.signum() > 0);
+        assertEquals(fullGridLab.doubleValue() / 5, oneSlotLab.doubleValue(), 0.01);
+        assertEquals(0, all.compareTo(fullGridLab.add(oneSlotLab)));
+    }
+
+    // @spec:AC-176 Filtro por laboratório restringe a série às aulas do laboratório
+    @Test
+    void deveFiltrarPorLaboratorioEmPeriodoEmAndamento() {
+        LocalDate today = LocalDate.now(clock);
+        LocalDate start = today.minusDays(21);
+        LocalDate end = today.plusDays(60);
+        createEmissionFactors(institutionId, start, end, "0.0500");
+        Scenario scenario = createScenario(institutionId, start, end);
+        UUID otherLabId = createLabWithStations(institutionId, 10);
+        replaceSchedule(institutionId, scenario, otherLabId, List.of(1));
+
+        assertLaboratoryFilterSplitsTotal(scenario, otherLabId);
+    }
+
+    // @spec:AC-176 Filtro por laboratório restringe a série às aulas do laboratório
+    @Test
+    void deveFiltrarPorLaboratorioEmPeriodoCongelado() {
+        Scenario scenario = endedMarch2025(institutionId);
+        UUID otherLabId = createLabWithStations(institutionId, 10);
+        replaceSchedule(institutionId, scenario, otherLabId, List.of(1));
+        assertEquals(1, capture(institutionId));
+
+        assertLaboratoryFilterSplitsTotal(scenario, otherLabId);
+
+        List<SnapshotAggregateDTO> labDays = getSnapshots(institutionId, adminToken, "daily", null, null, otherLabId);
+        List<SnapshotAggregateDTO> allDays = getSnapshots(institutionId, "daily");
+        assertEquals(allDays.size(), labDays.size(), "every school day is listed for the laboratory");
     }
 
     // ========================= Aggregation =========================

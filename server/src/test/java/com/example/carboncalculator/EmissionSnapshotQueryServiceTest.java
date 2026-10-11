@@ -20,9 +20,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
 import com.example.carboncalculator.dto.DailyEmissionDTO;
 import com.example.carboncalculator.dto.SnapshotAggregateDTO;
+import com.example.carboncalculator.dto.SnapshotFilter;
 import com.example.carboncalculator.entities.AcademicPeriod;
 import com.example.carboncalculator.entities.EmissionSnapshot;
 import com.example.carboncalculator.repositories.AcademicPeriodRepository;
@@ -57,15 +60,23 @@ class EmissionSnapshotQueryServiceTest {
         return AcademicPeriod.builder().id(UUID.randomUUID()).name(name).startDate(start).endDate(end).build();
     }
 
+    private static final UUID LAB_A = UUID.randomUUID();
+    private static final UUID LAB_B = UUID.randomUUID();
+
     private static DailyEmissionDTO day(LocalDate date, String emissionKg) {
-        return new DailyEmissionDTO(date, new BigDecimal(emissionKg).multiply(BigDecimal.TEN),
+        return row(date, LAB_A, emissionKg);
+    }
+
+    private static DailyEmissionDTO row(LocalDate date, UUID laboratoryId, String emissionKg) {
+        return new DailyEmissionDTO(date, laboratoryId, new BigDecimal(emissionKg).multiply(BigDecimal.TEN),
                 new BigDecimal(emissionKg), new BigDecimal("0.050000"), 10, true);
     }
 
     private void givenLivePeriod(AcademicPeriod period, DailyEmissionDTO... days) {
         when(periodRepository.findAll()).thenReturn(List.of(period));
         when(periodSnapshotRepository.existsById(period.getId())).thenReturn(false);
-        when(calculationService.calculateDaily(period.getId(), TODAY.minusDays(1))).thenReturn(List.of(days));
+        when(calculationService.calculateDaily(period.getId(), null, TODAY.minusDays(1), null))
+                .thenReturn(List.of(days));
     }
 
     @Test
@@ -76,7 +87,7 @@ class EmissionSnapshotQueryServiceTest {
                 day(LocalDate.of(2025, 10, 7), "120"),
                 day(LocalDate.of(2025, 10, 8), "330"));
 
-        List<SnapshotAggregateDTO> result = service.list("monthly", null, null);
+        List<SnapshotAggregateDTO> result = service.list("monthly", SnapshotFilter.none());
 
         assertEquals(1, result.size());
         assertEquals(0, new BigDecimal("550").compareTo(result.get(0).totalEmissionKg()));
@@ -91,7 +102,7 @@ class EmissionSnapshotQueryServiceTest {
                 day(LocalDate.of(2025, 9, 15), "1000"),
                 day(LocalDate.of(2025, 10, 15), "1120"));
 
-        List<SnapshotAggregateDTO> result = service.list("monthly", null, null);
+        List<SnapshotAggregateDTO> result = service.list("monthly", SnapshotFilter.none());
 
         assertEquals(2, result.size());
         assertNull(result.get(0).variationPct());
@@ -103,7 +114,7 @@ class EmissionSnapshotQueryServiceTest {
         AcademicPeriod p = period("2025.1", LocalDate.of(2025, 3, 1), LocalDate.of(2025, 7, 15));
         when(periodRepository.findAll()).thenReturn(List.of(p));
         when(periodSnapshotRepository.existsById(p.getId())).thenReturn(true);
-        when(snapshotRepository.findByAcademicPeriodIdOrderBySnapshotDate(p.getId())).thenReturn(List.of(
+        when(snapshotRepository.findAll(any(Specification.class), any(Sort.class))).thenReturn(List.of(
                 EmissionSnapshot.builder()
                         .snapshotDate(LocalDate.of(2025, 3, 10))
                         .dailyEnergyKwh(new BigDecimal("100"))
@@ -113,9 +124,9 @@ class EmissionSnapshotQueryServiceTest {
                         .schoolDay(true)
                         .build()));
 
-        List<SnapshotAggregateDTO> result = service.list("period", null, null);
+        List<SnapshotAggregateDTO> result = service.list("period", SnapshotFilter.none());
 
-        verify(calculationService, never()).calculateDaily(any(), any());
+        verify(calculationService, never()).calculateDaily(any(), any(), any(), any());
         assertEquals(1, result.size());
         assertEquals("2025.1", result.get(0).label());
         assertEquals(p.getId(), result.get(0).periodId());
@@ -127,23 +138,39 @@ class EmissionSnapshotQueryServiceTest {
         AcademicPeriod future = period("2027.1", TODAY.plusDays(10), TODAY.plusDays(120));
         when(periodRepository.findAll()).thenReturn(List.of(future));
 
-        assertEquals(List.of(), service.list("monthly", null, null));
-        verify(calculationService, never()).calculateDaily(any(), any());
+        assertEquals(List.of(), service.list("monthly", SnapshotFilter.none()));
+        verify(calculationService, never()).calculateDaily(any(), any(), any(), any());
     }
 
     @Test
-    void deveFiltrarDiasForaDoIntervalo() {
+    void deveRepassarIntervaloELaboratorioAoCalculoAoVivo() {
         AcademicPeriod p = period("2025.1", LocalDate.of(2025, 3, 1), LocalDate.of(2025, 5, 31));
-        givenLivePeriod(p,
-                day(LocalDate.of(2025, 3, 10), "100"),
-                day(LocalDate.of(2025, 4, 10), "200"),
-                day(LocalDate.of(2025, 5, 10), "300"));
+        when(periodRepository.findAll()).thenReturn(List.of(p));
+        when(calculationService.calculateDaily(p.getId(), LocalDate.of(2025, 4, 1), LocalDate.of(2025, 4, 30), LAB_B))
+                .thenReturn(List.of(row(LocalDate.of(2025, 4, 10), LAB_B, "200")));
 
         List<SnapshotAggregateDTO> result = service.list("monthly",
-                LocalDate.of(2025, 4, 1), LocalDate.of(2025, 4, 30));
+                new SnapshotFilter(LocalDate.of(2025, 4, 1), LocalDate.of(2025, 4, 30), LAB_B));
 
         assertEquals(1, result.size());
         assertEquals(0, new BigDecimal("200").compareTo(result.get(0).totalEmissionKg()));
+    }
+
+    @Test
+    void deveContarDiasLetivosEEstacoesPorDataComVariosLaboratorios() {
+        AcademicPeriod p = period("2025.1", LocalDate.of(2025, 3, 1), LocalDate.of(2025, 5, 31));
+        givenLivePeriod(p,
+                row(LocalDate.of(2025, 3, 10), LAB_A, "100"),
+                row(LocalDate.of(2025, 3, 10), LAB_B, "50"),
+                row(LocalDate.of(2025, 3, 11), LAB_A, "100"));
+
+        List<SnapshotAggregateDTO> result = service.list("monthly", SnapshotFilter.none());
+
+        assertEquals(1, result.size());
+        assertEquals(0, new BigDecimal("250").compareTo(result.get(0).totalEmissionKg()));
+        assertEquals(2, result.get(0).schoolDays());
+        assertEquals(20, result.get(0).stationCount());
+        assertEquals(0, new BigDecimal("0.05").compareTo(result.get(0).avgEmissionFactor()));
     }
 
     @Test
@@ -154,7 +181,7 @@ class EmissionSnapshotQueryServiceTest {
                 day(LocalDate.of(2025, 2, 10), "200"),
                 day(LocalDate.of(2025, 3, 10), "300"));
 
-        Page<SnapshotAggregateDTO> page = service.listHistory("monthly", null, null, PageRequest.of(0, 20));
+        Page<SnapshotAggregateDTO> page = service.listHistory("monthly", SnapshotFilter.none(), PageRequest.of(0, 20));
 
         assertEquals(3, page.getContent().size());
         assertEquals(0, new BigDecimal("300").compareTo(page.getContent().get(0).totalEmissionKg()));
@@ -171,8 +198,8 @@ class EmissionSnapshotQueryServiceTest {
         }
         givenLivePeriod(p, days.toArray(DailyEmissionDTO[]::new));
 
-        Page<SnapshotAggregateDTO> first = service.listHistory("monthly", null, null, PageRequest.of(0, 50));
-        Page<SnapshotAggregateDTO> second = service.listHistory("monthly", null, null, PageRequest.of(1, 50));
+        Page<SnapshotAggregateDTO> first = service.listHistory("monthly", SnapshotFilter.none(), PageRequest.of(0, 50));
+        Page<SnapshotAggregateDTO> second = service.listHistory("monthly", SnapshotFilter.none(), PageRequest.of(1, 50));
 
         assertEquals(20, first.getContent().size());
         assertEquals(20, first.getSize());
