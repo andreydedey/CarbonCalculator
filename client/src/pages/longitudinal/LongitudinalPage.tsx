@@ -2,8 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { BarChart3, CalendarDays, Cpu } from 'lucide-react'
 import { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
-import { usePagedQuery } from '@/hooks/use-paged-query'
 import {
   Select,
   SelectContent,
@@ -11,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { ChartSkeleton, MetricCardSkeleton, TableSkeleton } from '@/components/ui/skeletons'
 import {
   Table,
@@ -21,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { usePagedQuery } from '@/hooks/use-paged-query'
 import { listAcademicPeriods } from '@/lib/api/academic-periods.ts'
 import { listLaboratories } from '@/lib/api/laboratories.ts'
 import { listSnapshotHistory, listSnapshots } from '@/lib/api/snapshots.ts'
@@ -67,19 +67,27 @@ export function LongitudinalPage() {
     ? { startDate: selectedPeriod.startDate, endDate: selectedPeriod.endDate }
     : {}
 
+  const filters = { ...dateFilter, ...labFilter }
+  const isFiltered = selectedPeriodId !== 'all' || selectedLabId !== 'all'
+
   const { data: chartData = [], isLoading: isChartLoading } = useQuery({
-    queryKey: ['snapshots', granularity, selectedPeriodId],
-    queryFn: () => listSnapshots({ granularity, ...dateFilter }),
+    queryKey: ['snapshots', granularity, selectedPeriodId, selectedLabId],
+    queryFn: () => listSnapshots({ granularity, ...filters }),
   })
 
   const { data: monthlyData = [], isLoading: isKpiLoading } = useQuery({
-    queryKey: ['snapshots', KPI_GRANULARITY, selectedPeriodId],
-    queryFn: () => listSnapshots({ granularity: KPI_GRANULARITY, ...dateFilter }),
+    queryKey: ['snapshots', KPI_GRANULARITY, selectedPeriodId, selectedLabId],
+    queryFn: () => listSnapshots({ granularity: KPI_GRANULARITY, ...filters }),
   })
 
-  const { items: historyRows, fetchNextPage, hasNextPage, isFetchingNextPage } = usePagedQuery({
+  const {
+    items: historyRows,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = usePagedQuery({
     queryKey: ['snapshots-history', granularity, selectedPeriodId, selectedLabId],
-    queryFn: (page) => listSnapshotHistory({ granularity, page, ...dateFilter, ...labFilter }),
+    queryFn: (page) => listSnapshotHistory({ granularity, page, ...filters }),
   })
 
   const kpiCards = computeKpiCards(monthlyData)
@@ -109,21 +117,58 @@ export function LongitudinalPage() {
         </div>
       )}
 
-      <div className="flex items-center gap-1 rounded-lg border bg-muted/30 p-1 w-fit">
-        {GRANULARITY_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => setGranularity(opt.value)}
-            className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
-              granularity === opt.value
-                ? 'bg-foreground text-background'
-                : 'text-muted-foreground hover:bg-muted'
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-1 rounded-lg border bg-muted/30 p-1 w-fit">
+          {GRANULARITY_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setGranularity(opt.value)}
+              className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+                granularity === opt.value
+                  ? 'bg-foreground text-background'
+                  : 'text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {periods.length > 0 && (
+            <Select value={selectedPeriodId} onValueChange={setSelectedPeriodId}>
+              <SelectTrigger className="w-auto h-8 text-xs gap-1.5 border-dashed">
+                <CalendarDays className="size-3 text-primary" />
+                <SelectValue placeholder="Todos os períodos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os períodos</SelectItem>
+                {periods.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {labs.length > 0 && (
+            <Select value={selectedLabId} onValueChange={setSelectedLabId}>
+              <SelectTrigger className="w-auto h-8 text-xs gap-1.5 border-dashed">
+                <Cpu className="size-3 text-primary" />
+                <SelectValue placeholder="Todos os laboratórios" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os laboratórios</SelectItem>
+                {labs.map((lab) => (
+                  <SelectItem key={lab.id} value={lab.id}>
+                    {lab.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </div>
 
       {isChartLoading ? (
@@ -137,14 +182,20 @@ export function LongitudinalPage() {
             <EmptyMedia>
               <BarChart3 className="size-6 text-muted-foreground" />
             </EmptyMedia>
-            <EmptyTitle>Nenhum dado histórico disponível</EmptyTitle>
-            <EmptyDescription>{EMPTY_STATE_MESSAGE}</EmptyDescription>
+            <EmptyTitle>
+              {isFiltered
+                ? 'Nenhum dado para os filtros selecionados'
+                : 'Nenhum dado histórico disponível'}
+            </EmptyTitle>
+            <EmptyDescription>
+              {isFiltered ? 'Escolha outro período ou laboratório.' : EMPTY_STATE_MESSAGE}
+            </EmptyDescription>
           </EmptyHeader>
         </Empty>
       ) : (
         <>
           <div className="rounded-lg border p-4">
-            <div className="flex items-start justify-between mb-4">
+            <div className="mb-4">
               <div>
                 <p className="text-sm font-medium">Evolução de Emissões</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -158,22 +209,6 @@ export function LongitudinalPage() {
                         : 'por período'}
                 </p>
               </div>
-              {periods.length > 0 && (
-                <Select value={selectedPeriodId} onValueChange={setSelectedPeriodId}>
-                  <SelectTrigger className="w-auto h-8 text-xs gap-1.5 border-dashed">
-                    <CalendarDays className="size-3 text-primary" />
-                    <SelectValue placeholder="Todos os períodos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os períodos</SelectItem>
-                    {periods.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
             </div>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
@@ -192,24 +227,8 @@ export function LongitudinalPage() {
           </div>
 
           <div className="rounded-lg border">
-            <div className="px-4 py-3 border-b flex items-center justify-between">
+            <div className="px-4 py-3 border-b">
               <p className="text-sm font-medium">Histórico de Emissões</p>
-              {labs.length > 0 && (
-                <Select value={selectedLabId} onValueChange={setSelectedLabId}>
-                  <SelectTrigger className="w-auto h-8 text-xs gap-1.5 border-dashed">
-                    <Cpu className="size-3 text-primary" />
-                    <SelectValue placeholder="Todos os laboratórios" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os laboratórios</SelectItem>
-                    {labs.map((lab) => (
-                      <SelectItem key={lab.id} value={lab.id}>
-                        {lab.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
             </div>
             <Table>
               <TableHeader>
