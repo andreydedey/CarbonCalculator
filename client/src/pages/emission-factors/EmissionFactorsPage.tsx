@@ -4,12 +4,10 @@ import { Info, Leaf, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
+import { EmissionFactorFormDialog } from '@/components/emission-factors/EmissionFactorFormDialog'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { TableSkeleton } from '@/components/ui/skeletons'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -116,14 +114,7 @@ export function EmissionFactorsPage() {
   const rows = computeEmissionFactorRows(factors, new Date(), yearFilter ?? CURRENT_YEAR)
   const activeRow = rows.find((r) => r.status === 'em-uso')
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm<EmissionFactorFormValues>({
+  const form = useForm<EmissionFactorFormValues>({
     resolver: zodResolver(emissionFactorFormSchema),
     defaultValues: { year: CURRENT_YEAR, month: 1, value: 0, source: '' },
   })
@@ -160,27 +151,27 @@ export function EmissionFactorsPage() {
   }
 
   function openAdd() {
-    reset({ year: yearFilter ?? CURRENT_YEAR, month: 1, value: 0, source: '' })
+    form.reset({ year: yearFilter ?? CURRENT_YEAR, month: 1, value: 0, source: '' })
     saveMutation.reset()
     openDialog(null)
   }
 
   function openEdit(factor: EmissionFactor) {
     const { year, month } = fromReferenceMonth(factor.referenceMonth)
-    reset({ year, month, value: factor.value, source: factor.source })
+    form.reset({ year, month, value: factor.value, source: factor.source })
     saveMutation.reset()
     openDialog(factor)
   }
 
   function openAddForMonth(referenceMonth: string) {
     const { year, month } = fromReferenceMonth(referenceMonth)
-    reset({ year, month, value: 0, source: '' })
+    form.reset({ year, month, value: 0, source: '' })
     saveMutation.reset()
     openDialog(null)
   }
 
   function handleClose() {
-    reset()
+    form.reset()
     saveMutation.reset()
     closeDialog()
   }
@@ -198,7 +189,6 @@ export function EmissionFactorsPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-1">
-          <p className="text-xs text-[#6D786D]">Administração &rsaquo; Fatores de Emissão</p>
           <h1 className="font-heading text-2xl font-bold text-[#192219]">
             Fatores de Emissão — MCTI/SIRENE
           </h1>
@@ -240,93 +230,16 @@ export function EmissionFactorsPage() {
         </div>
       </div>
 
-      {/* Add / edit modal */}
-      <Dialog
+      <EmissionFactorFormDialog
         open={modalOpen}
         onOpenChange={(open) => {
           if (!open) handleClose()
         }}
-      >
-        <DialogContent className="sm:max-w-[440px]">
-          <DialogHeader>
-            <DialogTitle>
-              {editingFactor !== null ? 'Editar fator de emissão' : 'Novo fator de emissão'}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 pt-2">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1.5">
-                <Label>Ano</Label>
-                <Select
-                  value={watch('year')?.toString()}
-                  onValueChange={(v) => setValue('year', Number(v), { shouldValidate: true })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Ano" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {YEAR_OPTIONS.map((y) => (
-                      <SelectItem key={y} value={y.toString()}>
-                        {y}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.year && (
-                  <span className="text-xs text-destructive">{errors.year.message}</span>
-                )}
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label>Mês</Label>
-                <Select
-                  value={watch('month')?.toString()}
-                  onValueChange={(v) => setValue('month', Number(v), { shouldValidate: true })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Mês" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MONTH_SHORT.slice(1).map((name, idx) => (
-                      <SelectItem key={name} value={(idx + 1).toString()}>
-                        {name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.month && (
-                  <span className="text-xs text-destructive">{errors.month.message}</span>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label>Valor (kgCO₂/kWh)</Label>
-              <Input type="number" step="0.000001" placeholder="0.000000" {...register('value')} />
-              {errors.value && (
-                <span className="text-xs text-destructive">{errors.value.message}</span>
-              )}
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label>Fonte</Label>
-              <Input placeholder="ex: MCTI — Fator médio SIN" {...register('source')} />
-              {errors.source && (
-                <span className="text-xs text-destructive">{errors.source.message}</span>
-              )}
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={handleClose}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={saveMutation.isPending}>
-                {saveMutation.isPending
-                  ? 'Salvando…'
-                  : editingFactor !== null
-                    ? 'Salvar'
-                    : 'Cadastrar'}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+        form={form}
+        onSubmit={onSubmit}
+        isEditing={editingFactor !== null}
+        isPending={saveMutation.isPending}
+      />
 
       {/* Hero card — active factor */}
       {activeRow?.factor && (

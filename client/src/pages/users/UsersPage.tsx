@@ -1,18 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { Check, Copy, Loader2, RotateCw, UserPlus, Users } from 'lucide-react'
+import { Loader2, RotateCw, UserPlus, Users } from 'lucide-react'
 import type React from 'react'
 import { useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
-import { FieldError } from '@/components/ui/field-error'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -21,6 +17,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { MetricCardSkeleton, TableSkeleton } from '@/components/ui/skeletons'
+import { InviteDialog } from '@/components/users/InviteDialog'
+import { InviteLinkDialog } from '@/components/users/InviteLinkDialog'
 import { RevokeAccessDialog } from '@/components/users/RevokeAccessDialog'
 import { useAuth } from '@/context/AuthContext'
 import { useDialog } from '@/hooks/use-dialog'
@@ -44,7 +42,6 @@ export const UsersPage: React.FC = () => {
   const inviteDialog = useDialog()
   const revokeDialog = useDialog<UserMember>()
   const [inviteLink, setInviteLink] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
 
   const {
     data: membersPage,
@@ -70,7 +67,6 @@ export const UsersPage: React.FC = () => {
       if (result.inviteLink) {
         const fullLink = `${window.location.origin}${result.inviteLink}`
         setInviteLink(fullLink)
-        setCopied(false)
       } else {
         toast.success('Membro adicionado')
       }
@@ -79,13 +75,6 @@ export const UsersPage: React.FC = () => {
       toast.error(err instanceof ApiError ? err.message : 'Erro ao enviar convite')
     },
   })
-
-  const handleCopy = async () => {
-    if (!inviteLink) return
-    await navigator.clipboard.writeText(inviteLink)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
 
   const changeRoleMutation = useMutation({
     mutationFn: ({ id, role }: { id: string; role: string }) => changeRole(id, { role }),
@@ -105,7 +94,6 @@ export const UsersPage: React.FC = () => {
       if (result.inviteLink) {
         const fullLink = `${window.location.origin}${result.inviteLink}`
         setInviteLink(fullLink)
-        setCopied(false)
       }
     },
     onError: (err) => {
@@ -134,7 +122,7 @@ export const UsersPage: React.FC = () => {
         </Button>
       </div>
 
-      <Dialog
+      <InviteDialog
         open={inviteDialog.open}
         onOpenChange={(open) => {
           if (!open) {
@@ -142,57 +130,11 @@ export const UsersPage: React.FC = () => {
             inviteForm.reset()
           }
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Convidar Membro</DialogTitle>
-          </DialogHeader>
-          <form
-            onSubmit={inviteForm.handleSubmit((data) => inviteMutation.mutate(data))}
-            className="space-y-4"
-          >
-            <div className="space-y-2">
-              <Label htmlFor="invite-email">Email</Label>
-              <Input
-                id="invite-email"
-                type="email"
-                placeholder="email@universidade.br"
-                {...inviteForm.register('email')}
-              />
-              {inviteForm.formState.errors.email && (
-                <FieldError message={inviteForm.formState.errors.email.message} />
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="invite-role">Papel</Label>
-              <Controller
-                control={inviteForm.control}
-                name="role"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {currentUser?.admin && <SelectItem value="ADMIN">Admin Global</SelectItem>}
-                      <SelectItem value="MANAGER">Gestor</SelectItem>
-                      <SelectItem value="RESEARCHER">Pesquisador</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div>
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={!inviteForm.formState.isDirty || inviteMutation.isPending}
-            >
-              {inviteMutation.isPending && <Loader2 className="size-4 animate-spin" />}
-              {inviteMutation.isPending ? 'Enviando...' : 'Enviar Convite'}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
+        form={inviteForm}
+        onSubmit={(data) => inviteMutation.mutate(data)}
+        isPending={inviteMutation.isPending}
+        isAdmin={currentUser?.admin ?? false}
+      />
 
       {revokeDialog.data && (
         <RevokeAccessDialog
@@ -203,23 +145,7 @@ export const UsersPage: React.FC = () => {
         />
       )}
 
-      <Dialog open={!!inviteLink} onOpenChange={(open) => !open && setInviteLink(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Convite criado</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Envie o link abaixo para o convidado. O link expira em 7 dias.
-          </p>
-          <div className="flex items-center gap-2">
-            <Input value={inviteLink ?? ''} readOnly className="font-mono text-xs" />
-            <Button variant="outline" size="icon" onClick={handleCopy}>
-              {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-            </Button>
-          </div>
-          {copied && <p className="text-xs text-muted-foreground">Copiado!</p>}
-        </DialogContent>
-      </Dialog>
+      <InviteLinkDialog link={inviteLink} onOpenChange={(open) => !open && setInviteLink(null)} />
 
       {isLoading ? (
         <div className="space-y-6">

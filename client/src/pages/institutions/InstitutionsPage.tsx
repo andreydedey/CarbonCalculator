@@ -6,18 +6,9 @@ import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useDebounce } from 'use-debounce'
 import { InstitutionCard } from '@/components/institutions/InstitutionCard'
-import { CardGridSkeleton } from '@/components/ui/skeletons'
 import { InstitutionFormDialog } from '@/components/institutions/InstitutionFormDialog'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { SwitchInstitutionDialog } from '@/components/institutions/SwitchInstitutionDialog'
+import { CardGridSkeleton } from '@/components/ui/skeletons'
 import { Button } from '@/components/ui/button'
 import {
   Empty,
@@ -188,27 +179,11 @@ export const InstitutionsPage: React.FC = () => {
         onSaved={handleSaved}
       />
 
-      <AlertDialog
-        open={!!pendingInstitution}
+      <SwitchInstitutionDialog
+        institution={pendingInstitution}
         onOpenChange={(open) => !open && setPendingInstitution(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Trocar de instituição</AlertDialogTitle>
-            <AlertDialogDescription>
-              Você está prestes a trocar para{' '}
-              <span className="font-medium text-foreground">
-                {pendingInstitution?.acronym} — {pendingInstitution?.name}
-              </span>
-              . Deseja continuar?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmSwitch}>Trocar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        onConfirm={confirmSwitch}
+      />
     </div>
   )
 }

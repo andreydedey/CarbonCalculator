@@ -5,9 +5,9 @@ import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { AcademicPeriodCard } from '@/components/academic-periods/AcademicPeriodCard'
-import { CardGridSkeleton } from '@/components/ui/skeletons'
 import { AcademicPeriodForm } from '@/components/academic-periods/AcademicPeriodForm'
 import { CopyPeriodDialog } from '@/components/academic-periods/CopyPeriodDialog'
+import { DeletePeriodDialog } from '@/components/academic-periods/DeletePeriodDialog'
 import { HolidayEditor } from '@/components/academic-periods/HolidayEditor'
 import { OccupationSummary } from '@/components/academic-periods/OccupationSummary'
 import { ShiftConfigModal } from '@/components/academic-periods/ShiftConfigModal'
@@ -21,14 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { CardGridSkeleton } from '@/components/ui/skeletons'
 import {
   Empty,
   EmptyContent,
@@ -112,9 +105,6 @@ export const AcademicPeriodsPage: React.FC = () => {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-0.5">
-          <p className="text-xs font-normal text-muted-foreground">
-            Cadastro &rsaquo; Calendário Letivo
-          </p>
           <h1 className="font-heading text-2xl font-bold">Calendário Letivo</h1>
         </div>
         <Button onClick={() => form.openDialog()}>
@@ -262,32 +252,13 @@ export const AcademicPeriodsPage: React.FC = () => {
       )}
 
       {deleteDialog.data && (
-        <Dialog
+        <DeletePeriodDialog
+          periodName={deleteDialog.data.name}
           open={deleteDialog.open}
           onOpenChange={(open) => !open && deleteDialog.closeDialog()}
-        >
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Excluir Período</DialogTitle>
-              <DialogDescription>
-                Tem certeza que deseja excluir o período <strong>{deleteDialog.data.name}</strong>?
-                Feriados e grades de ocupação associados também serão removidos.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => deleteDialog.closeDialog()}>
-                Cancelar
-              </Button>
-              <Button
-                variant="destructive"
-                disabled={deleteMutation.isPending}
-                onClick={() => deleteMutation.mutate(deleteDialog.data!.id)}
-              >
-                Excluir
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          onConfirm={() => deleteMutation.mutate(deleteDialog.data!.id)}
+          isPending={deleteMutation.isPending}
+        />
       )}
     </div>
   )
