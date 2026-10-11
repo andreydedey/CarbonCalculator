@@ -3,6 +3,23 @@
 -- Truncates all tables and re-populates from scratch
 -- ============================================================
 
+-- ======================== GRANTS ========================
+-- The 'app' role (non-superuser) is used by the application in dev so that
+-- RLS policies are enforced. Grant DML on all tables and usage on sequences.
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'app') THEN
+    EXECUTE (
+      SELECT string_agg('GRANT SELECT, INSERT, UPDATE, DELETE ON ' || quote_ident(tablename) || ' TO app;', E'\n')
+      FROM pg_tables WHERE schemaname = 'public'
+    );
+    EXECUTE (
+      SELECT coalesce(string_agg('GRANT USAGE, SELECT ON SEQUENCE ' || quote_ident(sequencename) || ' TO app;', E'\n'), '')
+      FROM pg_sequences WHERE schemaname = 'public'
+    );
+  END IF;
+END $$;
+
 -- Reset everything (order respects FK constraints)
 TRUNCATE emission_snapshot,
          emission_factor, consumption_measurement,
@@ -32,7 +49,9 @@ VALUES
   ('11111111-1111-1111-1111-111111111111',
    'Universidade Federal do Pará', 'UFPA', 'Belém', 'PA'),
   ('22222222-2222-2222-2222-222222222222',
-   'Universidade Estadual de Campinas', 'UNICAMP', 'Campinas', 'SP');
+   'Universidade Estadual de Campinas', 'UNICAMP', 'Campinas', 'SP'),
+  ('5eed0000-0000-0000-0000-000000000001',
+   'Faculdade de Computação — UFPA', 'FACOMP', 'Belém', 'PA');
 
 -- ================ USER <> INSTITUTION ===================
 
@@ -56,7 +75,11 @@ VALUES
   -- Ana is MANAGER at UNICAMP
   ('bbbbbbbb-0001-0001-0001-000000000005',
    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaad', 'ana@unicamp.br',
-   '22222222-2222-2222-2222-222222222222', 'MANAGER', 'ACTIVE')
+   '22222222-2222-2222-2222-222222222222', 'MANAGER', 'ACTIVE'),
+  -- Admin is MANAGER at FACOMP
+  ('bbbbbbbb-0001-0001-0001-000000000006',
+   'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'admin@admin.com',
+   '5eed0000-0000-0000-0000-000000000001', 'MANAGER', 'ACTIVE')
 ;
 
 -- ============================================================
@@ -655,6 +678,72 @@ BEGIN
 
 END $$;
 
+-- ====================== FACOMP =========================
+-- Data from the FACOMP/UFPA TCC article (Corrêa, Cardoso, Kawasaki)
+
+DO $$
+BEGIN
+  PERFORM set_config('app.current_institution', '5eed0000-0000-0000-0000-000000000001', true);
+
+  -- Equipment models
+  INSERT INTO equipment_model (id, institution_id, name, equipment_type, processor, tdp_watts, core_count, memory_gb, gpu_model, gpu_tdp_watts, has_integrated_screen, description)
+  VALUES
+    ('5eed0001-0001-0001-0001-000000000001', '5eed0000-0000-0000-0000-000000000001',
+     'HP EliteDesk 800 G1 SFF', 'Desktop', 'Intel Core i5-4570 (3.20–3.60 GHz)', 84, NULL, 8,
+     'Intel HD Graphics 4600', 45, false,
+     '"HP 1" no artigo. Labs 1/2/3.'),
+    ('5eed0001-0001-0001-0001-000000000002', '5eed0000-0000-0000-0000-000000000001',
+     'HP EliteDesk 800 G4 SFF', 'Desktop', 'Intel Core i7-8700 (3.20–4.60 GHz)', 65, NULL, 8,
+     'Intel UHD Graphics 630', 15, false,
+     '"HP 2" no artigo. Lab 2.'),
+    ('5eed0001-0001-0001-0001-000000000003', '5eed0000-0000-0000-0000-000000000001',
+     'Mac mini 7,1', 'Desktop', 'Intel Core i5-4278U (2.60–3.10 GHz)', 28, NULL, 8,
+     'Intel Iris Graphics 5100', 30, false,
+     '"MAC" no artigo. Lab 2.'),
+    ('5eed0001-0001-0001-0001-000000000004', '5eed0000-0000-0000-0000-000000000001',
+     'Dell OptiPlex 7000', 'Desktop', 'Intel Core i5-12500 (3.00–4.60 GHz)', 65, NULL, 16,
+     'Intel UHD Graphics 770', 15, false,
+     '"DELL" no artigo. Lab 3.');
+
+  -- Monitors
+  INSERT INTO monitor (id, institution_id, name, watts)
+  VALUES
+    ('5eed0002-0002-0002-0002-000000000001', '5eed0000-0000-0000-0000-000000000001', 'HP EliteDisplay E231 (1920x1080)', 33),
+    ('5eed0002-0002-0002-0002-000000000002', '5eed0000-0000-0000-0000-000000000001', 'HP E233 (1920x1080)', 19),
+    ('5eed0002-0002-0002-0002-000000000003', '5eed0000-0000-0000-0000-000000000001', 'Dell P2422H (1920x1080)', 12),
+    ('5eed0002-0002-0002-0002-000000000004', '5eed0000-0000-0000-0000-000000000001', 'HP V255Hz (1920x1080)', 20),
+    ('5eed0002-0002-0002-0002-000000000005', '5eed0000-0000-0000-0000-000000000001', 'Samsung SA300/SA350 (1366x768)', 29),
+    ('5eed0002-0002-0002-0002-000000000006', '5eed0000-0000-0000-0000-000000000001', 'Dell 2219H (1920x1080)', 14),
+    ('5eed0002-0002-0002-0002-000000000007', '5eed0000-0000-0000-0000-000000000001', 'Samsung BX1940 (1366x768)', 25),
+    ('5eed0002-0002-0002-0002-000000000008', '5eed0000-0000-0000-0000-000000000001', 'AOC E2050s', 18);
+
+  -- Operating systems
+  INSERT INTO operating_system (id, institution_id, name)
+  VALUES
+    ('5eed0003-0003-0003-0003-000000000001', '5eed0000-0000-0000-0000-000000000001', 'Windows 10'),
+    ('5eed0003-0003-0003-0003-000000000002', '5eed0000-0000-0000-0000-000000000001', 'Windows 11'),
+    ('5eed0003-0003-0003-0003-000000000003', '5eed0000-0000-0000-0000-000000000001', 'Kubuntu'),
+    ('5eed0003-0003-0003-0003-000000000004', '5eed0000-0000-0000-0000-000000000001', 'macOS');
+
+  -- Consumption measurements (subset — 8 experimental + first 5 final from Lab 1)
+  INSERT INTO consumption_measurement (id, institution_id, target_type, equipment_model_id, operating_system_id, monitor_id, average_watts, duration_minutes, reading_interval_minutes, measurement_date, conditions)
+  VALUES
+    ('5eed0004-0004-0004-0004-000000000001', '5eed0000-0000-0000-0000-000000000001', 'COMPUTER', '5eed0001-0001-0001-0001-000000000004', '5eed0003-0003-0003-0003-000000000002', NULL, 54.03, 12, 4, '2025-03-28', 'Experimental, Dell, Windows 11, 12 min, sozinho no nobreak.'),
+    ('5eed0004-0004-0004-0004-000000000002', '5eed0000-0000-0000-0000-000000000001', 'COMPUTER', '5eed0001-0001-0001-0001-000000000004', '5eed0003-0003-0003-0003-000000000002', NULL, 56.43, 15, 5, '2025-03-28', 'Experimental, Dell, Windows 11, 15 min, sozinho no nobreak.'),
+    ('5eed0004-0004-0004-0004-000000000003', '5eed0000-0000-0000-0000-000000000001', 'COMPUTER', '5eed0001-0001-0001-0001-000000000004', '5eed0003-0003-0003-0003-000000000002', NULL, 64.00, 12, 4, '2025-03-28', 'Experimental, Dell, Windows 11, 12 min, com outro PC no nobreak.'),
+    ('5eed0004-0004-0004-0004-000000000004', '5eed0000-0000-0000-0000-000000000001', 'COMPUTER', '5eed0001-0001-0001-0001-000000000004', '5eed0003-0003-0003-0003-000000000002', NULL, 54.37, 15, 5, '2025-03-28', 'Experimental, Dell, Windows 11, 15 min, com outro PC no nobreak.'),
+    ('5eed0004-0004-0004-0004-000000000005', '5eed0000-0000-0000-0000-000000000001', 'COMPUTER', '5eed0001-0001-0001-0001-000000000001', '5eed0003-0003-0003-0003-000000000001', NULL, 96.87, 12, 4, '2025-03-28', 'Experimental, HP 1, Windows 10, 12 min, sozinho no nobreak.'),
+    ('5eed0004-0004-0004-0004-000000000006', '5eed0000-0000-0000-0000-000000000001', 'COMPUTER', '5eed0001-0001-0001-0001-000000000001', '5eed0003-0003-0003-0003-000000000001', NULL, 97.47, 15, 5, '2025-03-28', 'Experimental, HP 1, Windows 10, 15 min, sozinho no nobreak.'),
+    ('5eed0004-0004-0004-0004-000000000007', '5eed0000-0000-0000-0000-000000000001', 'COMPUTER', '5eed0001-0001-0001-0001-000000000001', '5eed0003-0003-0003-0003-000000000001', NULL, 102.33, 12, 4, '2025-03-28', 'Experimental, HP 1, Windows 10, 12 min, com outro PC no nobreak.'),
+    ('5eed0004-0004-0004-0004-000000000008', '5eed0000-0000-0000-0000-000000000001', 'COMPUTER', '5eed0001-0001-0001-0001-000000000001', '5eed0003-0003-0003-0003-000000000001', NULL, 99.00, 15, 5, '2025-03-28', 'Experimental, HP 1, Windows 10, 15 min, com outro PC no nobreak.'),
+    ('5eed0004-0004-0004-0004-000000000009', '5eed0000-0000-0000-0000-000000000001', 'COMPUTER', '5eed0001-0001-0001-0001-000000000001', '5eed0003-0003-0003-0003-000000000001', NULL, 77.00, 12, 4, '2025-03-28', 'Lab 1, PC 1.'),
+    ('5eed0004-0004-0004-0004-000000000010', '5eed0000-0000-0000-0000-000000000001', 'COMPUTER', '5eed0001-0001-0001-0001-000000000001', '5eed0003-0003-0003-0003-000000000001', NULL, 71.23, 12, 4, '2025-03-28', 'Lab 1, PC 2.'),
+    ('5eed0004-0004-0004-0004-000000000011', '5eed0000-0000-0000-0000-000000000001', 'COMPUTER', '5eed0001-0001-0001-0001-000000000001', '5eed0003-0003-0003-0003-000000000001', NULL, 101.37, 12, 4, '2025-03-28', 'Lab 1, PC 3.'),
+    ('5eed0004-0004-0004-0004-000000000012', '5eed0000-0000-0000-0000-000000000001', 'COMPUTER', '5eed0001-0001-0001-0001-000000000001', '5eed0003-0003-0003-0003-000000000001', NULL, 100.53, 12, 4, '2025-03-28', 'Lab 1, PC 4.'),
+    ('5eed0004-0004-0004-0004-000000000013', '5eed0000-0000-0000-0000-000000000001', 'COMPUTER', '5eed0001-0001-0001-0001-000000000001', '5eed0003-0003-0003-0003-000000000001', NULL, 70.93, 12, 4, '2025-03-28', 'Lab 1, PC 5.');
+
+END $$;
+
 -- =================== EMISSION FACTORS (SIN — MCTI) ===================
 -- Monthly average CO2 emission factors for the Brazilian National Interconnected System (SIN)
 -- Source: MCTI — Fator medio de emissao de CO2 pela geracao de energia eletrica no SIN
@@ -708,7 +797,9 @@ INSERT INTO emission_factor (reference_month, value, source, institution_id) VAL
   ('2026-09-01', 0.0478, 'MCTI — Fator médio SIN, set/2026', '22222222-2222-2222-2222-222222222222'),
   ('2026-10-01', 0.0425, 'MCTI — Fator médio SIN, out/2026', '22222222-2222-2222-2222-222222222222'),
   ('2026-11-01', 0.0398, 'MCTI — Fator médio SIN, nov/2026', '22222222-2222-2222-2222-222222222222'),
-  ('2026-12-01', 0.0375, 'MCTI — Fator médio SIN, dez/2026', '22222222-2222-2222-2222-222222222222');
+  ('2026-12-01', 0.0375, 'MCTI — Fator médio SIN, dez/2026', '22222222-2222-2222-2222-222222222222'),
+  -- FACOMP — only current month
+  ('2026-10-01', 0.0425, 'MCTI — Fator médio SIN, out/2026', '5eed0000-0000-0000-0000-000000000001');
 
 DO $$
 DECLARE
