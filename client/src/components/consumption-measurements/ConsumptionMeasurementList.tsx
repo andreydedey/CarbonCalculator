@@ -60,7 +60,7 @@ export const ConsumptionMeasurementList: React.FC<ConsumptionMeasurementListProp
     onCreateOpenChange: onFormOpenChange,
   })
 
-  const { items: measurements, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
+  const { items: measurements, data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
     usePagedQuery({
       queryKey: ['consumption-measurements'],
       queryFn: (page) => listConsumptionMeasurements({ page }),

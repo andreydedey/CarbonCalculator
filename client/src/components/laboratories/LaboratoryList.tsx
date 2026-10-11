@@ -107,7 +107,7 @@ export const LaboratoryList: React.FC = () => {
     )
   }, [emissionResult])
 
-  const { items: laboratories, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
+  const { items: laboratories, data: laboratoriesData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
     usePagedQuery({
       queryKey: ['laboratories', debouncedSearch, statusFilter],
       queryFn: (page) => listLaboratories({ status: statusFilter, search: debouncedSearch, page }),

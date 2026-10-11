@@ -46,7 +46,7 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
     onCreateOpenChange: onFormOpenChange,
   })
 
-  const { items: configurations, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
+  const { items: configurations, data: configurationsData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
     usePagedQuery({
       queryKey: ['configurations'],
       queryFn: (page) => listConfigurations({ page }),
