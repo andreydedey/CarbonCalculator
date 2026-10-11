@@ -53,8 +53,8 @@ export const MonitorCard: React.FC<MonitorCardProps> = ({ monitor, onEdit, onDel
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit(monitor)}>Editar</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive" onClick={() => onDelete(monitor)}>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(monitor) }}>Editar</DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(monitor) }}>
               Excluir
             </DropdownMenuItem>
           </DropdownMenuContent>

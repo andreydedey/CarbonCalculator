@@ -108,13 +108,13 @@ export const LabCard: React.FC<LabCardProps> = ({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {laboratory.active ? (
-              <DropdownMenuItem onClick={() => onDeactivate(laboratory)}>
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDeactivate(laboratory) }}>
                 Desativar
               </DropdownMenuItem>
             ) : (
-              <DropdownMenuItem onClick={() => onActivate(laboratory)}>Ativar</DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onActivate(laboratory) }}>Ativar</DropdownMenuItem>
             )}
-            <DropdownMenuItem className="text-destructive" onClick={() => onDelete(laboratory)}>
+            <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(laboratory) }}>
               Excluir
             </DropdownMenuItem>
           </DropdownMenuContent>
