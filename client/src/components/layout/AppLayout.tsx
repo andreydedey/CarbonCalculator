@@ -82,7 +82,6 @@ const NAV_GROUPS: NavGroup[] = [
 const AppSidebar: React.FC = () => {
   const location = useLocation()
   const { user, logout } = useAuth()
-  const { resolvedTheme, setTheme } = useTheme()
   const [logoutOpen, setLogoutOpen] = useState(false)
 
   const filterItems = (items: NavItem[]) =>
@@ -141,15 +140,6 @@ const AppSidebar: React.FC = () => {
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 shrink-0"
-              onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-              title={resolvedTheme === 'dark' ? 'Modo claro' : 'Modo escuro'}
-            >
-              {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
               className="h-7 w-7 shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
               onClick={() => setLogoutOpen(true)}
               title="Sair"
@@ -165,6 +155,8 @@ const AppSidebar: React.FC = () => {
 }
 
 export const AppLayout: React.FC = () => {
+  const { resolvedTheme, setTheme } = useTheme()
+
   return (
     <TooltipProvider>
       <SidebarProvider>
@@ -172,6 +164,17 @@ export const AppLayout: React.FC = () => {
         <SidebarInset className="min-w-0">
           <header className="flex items-center gap-2 border-b px-4 py-3">
             <SidebarTrigger className="-ml-1" />
+            <div className="ml-auto">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+                title={resolvedTheme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+              >
+                {resolvedTheme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+              </Button>
+            </div>
           </header>
           <main className="flex-1 p-4">
             <Outlet />
