@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { CircleCheck } from 'lucide-react'
+import { Calculator, CircleCheck } from 'lucide-react'
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ConsumptionSources } from '@/components/emissions/ConsumptionSources'
@@ -7,6 +7,7 @@ import { EquivalenceCards } from '@/components/emissions/EquivalenceCards'
 import { ExportButton } from '@/components/emissions/ExportButton'
 import { ReadinessCheck } from '@/components/emissions/ReadinessCheck'
 import { Badge } from '@/components/ui/badge'
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { MetricCardSkeleton, TableSkeleton } from '@/components/ui/skeletons'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -316,7 +317,6 @@ export function EmissionsDashboardPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-1">
-          <p className="text-xs text-muted-foreground">Análise &rsaquo; Cálculo de Emissões</p>
           <h1 className="font-heading text-2xl font-bold">
             Cálculo de Emissões{selectedPeriod ? ` — ${selectedPeriod.name}` : ''}
           </h1>
@@ -343,9 +343,17 @@ export function EmissionsDashboardPage() {
       </div>
 
       {periods.length === 0 ? (
-        <p className="text-sm text-muted-foreground italic">
-          Nenhum período letivo cadastrado. Cadastre um período para calcular emissões.
-        </p>
+        <Empty className="border py-12">
+          <EmptyHeader>
+            <EmptyMedia>
+              <Calculator className="size-6 text-muted-foreground" />
+            </EmptyMedia>
+            <EmptyTitle>Nenhum período letivo cadastrado</EmptyTitle>
+            <EmptyDescription>
+              Cadastre um período letivo para começar a calcular as emissões de carbono da sua instituição.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : readinessLoading ? (
         <div className="flex flex-col gap-6">
           <MetricCardSkeleton count={2} />
@@ -357,9 +365,17 @@ export function EmissionsDashboardPage() {
           {readiness && <ReadinessCheck readiness={readiness} />}
 
           {readiness && !readiness.ready ? (
-            <p className="text-sm text-muted-foreground italic">
-              Corrija os pré-requisitos acima para calcular as emissões deste período.
-            </p>
+            <Empty className="border py-10">
+              <EmptyHeader>
+                <EmptyMedia>
+                  <Calculator className="size-6 text-muted-foreground" />
+                </EmptyMedia>
+                <EmptyTitle>Cálculo indisponível</EmptyTitle>
+                <EmptyDescription>
+                  Corrija os pré-requisitos acima para calcular as emissões deste período.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : resultLoading ? (
             <div className="flex flex-col gap-6">
               <MetricCardSkeleton count={2} />

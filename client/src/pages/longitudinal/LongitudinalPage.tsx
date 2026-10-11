@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { CalendarDays } from 'lucide-react'
+import { BarChart3, CalendarDays } from 'lucide-react'
 import { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { ChartSkeleton, MetricCardSkeleton, TableSkeleton } from '@/components/ui/skeletons'
 import {
   Table,
@@ -86,12 +87,7 @@ export function LongitudinalPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <p className="text-xs font-normal text-muted-foreground">
-          Análise &rsaquo; Acompanhamento Longitudinal
-        </p>
-        <h1 className="font-heading text-2xl font-bold">Acompanhamento Longitudinal</h1>
-      </div>
+      <h1 className="font-heading text-2xl font-bold">Acompanhamento Longitudinal</h1>
 
       {isKpiLoading ? (
         <MetricCardSkeleton count={3} />
@@ -136,11 +132,15 @@ export function LongitudinalPage() {
           <TableSkeleton rows={5} columns={5} />
         </div>
       ) : isEmpty ? (
-        <div className="rounded-lg border p-8 flex items-center justify-center">
-          <p className="text-sm text-muted-foreground text-center max-w-sm">
-            {EMPTY_STATE_MESSAGE}
-          </p>
-        </div>
+        <Empty className="border py-12">
+          <EmptyHeader>
+            <EmptyMedia>
+              <BarChart3 className="size-6 text-muted-foreground" />
+            </EmptyMedia>
+            <EmptyTitle>Nenhum dado histórico disponível</EmptyTitle>
+            <EmptyDescription>{EMPTY_STATE_MESSAGE}</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <>
           <div className="rounded-lg border p-4">
