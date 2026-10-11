@@ -1,19 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { CalendarDays, Factory, FlaskConical, LayoutDashboard, Leaf, Zap } from 'lucide-react'
+import { CalendarDays, Factory, FlaskConical, Leaf, TreePine, Zap } from 'lucide-react'
 import type React from 'react'
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { TodayClassesCard } from '@/components/dashboard/TodayClassesCard'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty'
 import { Progress } from '@/components/ui/progress'
 import { CardGridSkeleton, MetricCardSkeleton, TableSkeleton } from '@/components/ui/skeletons'
 import { useCanManage } from '@/hooks/useCanManage'
@@ -102,22 +94,35 @@ export function DashboardPage() {
           <CardGridSkeleton count={3} columns={3} />
         </div>
       ) : !period ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyMedia>
-              <LayoutDashboard className="size-6 text-muted-foreground" />
-            </EmptyMedia>
-            <EmptyTitle>Nenhum período letivo ativo</EmptyTitle>
-            <EmptyDescription>
-              Cadastre um período no Calendário Letivo para visualizar as emissões.
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Button asChild>
-              <Link to="/academic-periods">Ir para Calendário Letivo</Link>
-            </Button>
-          </EmptyContent>
-        </Empty>
+        <div className="flex flex-col items-center justify-center py-16 gap-6">
+          <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10">
+            <TreePine className="size-8 text-primary" />
+          </div>
+          <div className="flex flex-col items-center gap-2 max-w-md text-center">
+            <h2 className="text-xl font-semibold">
+              Bem-vindo ao Carbon Calculator
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Acompanhe e reduza a pegada de carbono dos laboratórios de informática da sua
+              instituição. Para começar, cadastre um período letivo — é ele que define o intervalo
+              de análise das emissões.
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-4 w-full max-w-lg pt-2">
+            <div className="flex flex-col items-center gap-1.5 rounded-lg border p-4">
+              <CalendarDays className="size-5 text-primary" />
+              <span className="text-xs font-medium text-center">Cadastrar período letivo</span>
+            </div>
+            <div className="flex flex-col items-center gap-1.5 rounded-lg border p-4 opacity-50">
+              <Leaf className="size-5 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground text-center">Registrar fatores de emissão</span>
+            </div>
+            <div className="flex flex-col items-center gap-1.5 rounded-lg border p-4 opacity-50">
+              <Zap className="size-5 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground text-center">Visualizar emissões</span>
+            </div>
+          </div>
+        </div>
       ) : (
         <>
           <div className="flex gap-4">
