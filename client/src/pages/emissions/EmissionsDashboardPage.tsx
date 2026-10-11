@@ -210,7 +210,7 @@ function LabDetailTable({ result }: { result: EmissionResult }) {
           {labRows.map((row, i) => {
             const exceptions = exceptionsLabel(row.lab)
             return (
-              <TableRow key={row.lab.laboratoryId} className={i % 2 === 1 ? 'bg-[#fbfcf9]' : ''}>
+              <TableRow key={row.lab.laboratoryId} className={i % 2 === 1 ? 'bg-background' : ''}>
                 <TableCell className="px-6 text-[13px] font-semibold">
                   {row.lab.laboratoryName}
                 </TableCell>

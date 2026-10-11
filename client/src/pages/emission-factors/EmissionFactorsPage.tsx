@@ -64,14 +64,14 @@ function computeVariation(rows: EmissionFactorRow[], referenceMonth: string): st
   const prev = existingRows[idx - 1].factor?.value
   const pct = ((curr - prev) / prev) * 100
   const sign = pct < 0 ? '↓' : '↑'
-  const color = pct < 0 ? 'text-[#24744D]' : 'text-[#DC2626]'
+  const color = pct < 0 ? 'text-primary' : 'text-destructive'
   return `${sign} ${Math.abs(pct).toFixed(1).replace('.', ',')}%|${color}`
 }
 
 function StatusBadge({ status }: { status: EmissionFactorRowStatus }) {
   if (status === 'em-uso') {
     return (
-      <span className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-medium bg-[#DEECE2] text-[#1B5238]">
+      <span className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-medium bg-accent text-primary">
         Em uso
       </span>
     )
@@ -84,7 +84,7 @@ function StatusBadge({ status }: { status: EmissionFactorRowStatus }) {
     )
   }
   return (
-    <span className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-medium bg-[#DDE3DD] text-[#6D786D]">
+    <span className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-medium bg-muted text-muted-foreground">
       Anterior
     </span>
   )
@@ -189,7 +189,7 @@ export function EmissionFactorsPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-1">
-          <h1 className="font-heading text-2xl font-bold text-[#192219]">
+          <h1 className="font-heading text-2xl font-bold text-foreground">
             Fatores de Emissão — MCTI/SIRENE
           </h1>
         </div>
@@ -215,15 +215,15 @@ export function EmissionFactorsPage() {
       </div>
 
       {/* Info banner — SIN context */}
-      <div className="flex items-center gap-3 rounded-[10px] border border-[#C3E1D0] bg-[#DEECE2] px-5 py-4">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#24744D]">
-          <Info className="size-[18px] text-white" />
+      <div className="flex items-center gap-3 rounded-[10px] border border-primary/30 bg-accent px-5 py-4">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary">
+          <Info className="size-[18px] text-primary-foreground" />
         </div>
         <div className="flex flex-col gap-0.5">
-          <p className="text-sm font-semibold text-[#192219]">
+          <p className="text-sm font-semibold text-foreground">
             Fator de emissão do Sistema Interligado Nacional (SIN)
           </p>
-          <p className="text-[13px] text-[#24744D]">
+          <p className="text-[13px] text-primary">
             Os fatores são publicados mensalmente pelo MCTI com base nos dados do Operador Nacional
             do Sistema Elétrico (ONS). Tipo: Mensal (SIN).
           </p>
@@ -243,40 +243,40 @@ export function EmissionFactorsPage() {
 
       {/* Hero card — active factor */}
       {activeRow?.factor && (
-        <div className="flex items-center gap-6 rounded-[10px] border border-[#C3E1D0] bg-[#DEECE2] p-6">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#24744D]">
-            <Leaf className="size-6 text-white" />
+        <div className="flex items-center gap-6 rounded-[10px] border border-primary/30 bg-accent p-6">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary">
+            <Leaf className="size-6 text-primary-foreground" />
           </div>
           <div className="flex-1 flex flex-col gap-1">
-            <p className="text-[12px] font-medium tracking-wide text-[#6D786D] uppercase">
+            <p className="text-[12px] font-medium tracking-wide text-muted-foreground uppercase">
               Fator de emissão em uso — Sistema Interligado Nacional (SIN)
             </p>
-            <p className="font-mono text-[28px] font-bold text-[#192219] leading-none">
+            <p className="font-mono text-[28px] font-bold text-foreground leading-none">
               {activeRow.factor.value.toLocaleString('pt-BR', {
                 minimumFractionDigits: 4,
                 maximumFractionDigits: 6,
               })}{' '}
-              <span className="text-base font-normal text-[#6D786D]">kgCO₂/kWh</span>
+              <span className="text-base font-normal text-muted-foreground">kgCO₂/kWh</span>
             </p>
-            <p className="text-[13px] text-[#24744D]">
+            <p className="text-[13px] text-primary">
               Competência {formatPeriod(activeRow.referenceMonth)} · Aplicado aos cálculos do
               período vigente
             </p>
           </div>
           <div className="flex flex-col gap-2 items-end text-right">
             <div className="flex items-center gap-2">
-              <span className="text-[12px] text-[#6D786D]">Fonte:</span>
-              <span className="text-[12px] font-semibold text-[#192219] max-w-[200px] truncate">
+              <span className="text-[12px] text-muted-foreground">Fonte:</span>
+              <span className="text-[12px] font-semibold text-foreground max-w-[200px] truncate">
                 {activeRow.factor.source}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[12px] text-[#6D786D]">Tipo:</span>
-              <span className="text-[12px] font-semibold text-[#192219]">Mensal (SIN)</span>
+              <span className="text-[12px] text-muted-foreground">Tipo:</span>
+              <span className="text-[12px] font-semibold text-foreground">Mensal (SIN)</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[12px] text-[#6D786D]">Competência:</span>
-              <span className="text-[12px] font-semibold text-[#192219]">
+              <span className="text-[12px] text-muted-foreground">Competência:</span>
+              <span className="text-[12px] font-semibold text-foreground">
                 {formatPeriod(activeRow.referenceMonth)}
               </span>
             </div>
@@ -285,13 +285,13 @@ export function EmissionFactorsPage() {
       )}
 
       {/* Official source card */}
-      <div className="flex items-center gap-3 rounded-lg border border-[#C3E1D0] bg-[#DEECE2] px-5 py-4">
-        <Info className="size-[18px] shrink-0 text-[#24744D]" />
+      <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-accent px-5 py-4">
+        <Info className="size-[18px] shrink-0 text-primary" />
         <div className="flex flex-col gap-0.5">
-          <p className="text-[13px] font-semibold text-[#192219]">
+          <p className="text-[13px] font-semibold text-foreground">
             Fonte oficial: MCTI — Sistema de Registro Nacional de Emissões (SIRENE)
           </p>
-          <p className="text-[12px] text-[#24744D]">
+          <p className="text-[12px] text-primary">
             Os fatores de emissão são atualizados anualmente pelo Ministério da Ciência, Tecnologia
             e Inovação.
           </p>
@@ -299,13 +299,13 @@ export function EmissionFactorsPage() {
       </div>
 
       {/* Table card */}
-      <div className="rounded-[10px] border border-[#DDE3DD] bg-white overflow-hidden">
+      <div className="rounded-[10px] border border-border bg-card overflow-hidden">
         {/* Card header */}
-        <div className="border-b border-[#DDE3DD] px-6 py-5 flex flex-col gap-1">
-          <h2 className="text-base font-semibold text-[#192219]">
+        <div className="border-b border-border px-6 py-5 flex flex-col gap-1">
+          <h2 className="text-base font-semibold text-foreground">
             Histórico de Fatores de Emissão — SIN
           </h2>
-          <p className="text-[13px] text-[#6D786D]">
+          <p className="text-[13px] text-muted-foreground">
             Fatores mensais de emissão de CO₂ pela geração de energia elétrica no Brasil
           </p>
         </div>
@@ -343,23 +343,23 @@ export function EmissionFactorsPage() {
         ) : (
           <Table>
             <TableHeader>
-              <TableRow className="bg-[#EEF1EC] hover:bg-[#EEF1EC]">
-                <TableHead className="w-[130px] px-6 text-[11px] font-medium uppercase tracking-wider text-[#6D786D]">
+              <TableRow className="bg-muted hover:bg-muted">
+                <TableHead className="w-[130px] px-6 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                   Competência
                 </TableHead>
-                <TableHead className="w-[200px] px-4 text-[11px] font-medium uppercase tracking-wider text-[#6D786D]">
+                <TableHead className="w-[200px] px-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                   Fator (kgCO₂/kWh)
                 </TableHead>
-                <TableHead className="w-[140px] px-4 text-[11px] font-medium uppercase tracking-wider text-[#6D786D]">
+                <TableHead className="w-[140px] px-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                   Variação
                 </TableHead>
-                <TableHead className="px-4 text-[11px] font-medium uppercase tracking-wider text-[#6D786D]">
+                <TableHead className="px-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                   Fonte
                 </TableHead>
-                <TableHead className="w-[120px] px-4 text-[11px] font-medium uppercase tracking-wider text-[#6D786D]">
+                <TableHead className="w-[120px] px-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                   Status
                 </TableHead>
-                <TableHead className="w-[96px] px-4 text-right text-[11px] font-medium uppercase tracking-wider text-[#6D786D]">
+                <TableHead className="w-[96px] px-4 text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                   Ações
                 </TableHead>
               </TableRow>
@@ -370,29 +370,29 @@ export function EmissionFactorsPage() {
                 const variation = row.factor ? computeVariation(rows, row.referenceMonth) : null
                 const [varText, varColor] = variation
                   ? variation.split('|')
-                  : ['—', 'text-[#6D786D]']
+                  : ['—', 'text-muted-foreground']
                 const isEven = idx % 2 === 0
 
                 return (
                   <TableRow
                     key={row.referenceMonth}
                     className={[
-                      'relative border-b border-[#DDE3DD] hover:bg-[#f5f7f4]',
-                      isEven ? 'bg-white' : 'bg-[#FBFCF9]',
-                      isActive ? 'border-l-[3px] border-l-[#24744D]' : '',
+                      'relative border-b border-border hover:bg-muted/50',
+                      isEven ? 'bg-card' : 'bg-background',
+                      isActive ? 'border-l-[3px] border-l-primary' : '',
                     ]
                       .filter(Boolean)
                       .join(' ')}
                   >
                     <TableCell
-                      className={`px-6 py-0 h-[52px] text-[13px] ${isActive ? 'font-bold text-[#192219]' : 'font-medium text-[#192219]'}`}
+                      className={`px-6 py-0 h-[52px] text-[13px] ${isActive ? 'font-bold text-foreground' : 'font-medium text-foreground'}`}
                     >
                       {formatPeriod(row.referenceMonth)}
                     </TableCell>
                     <TableCell className="px-4 py-0 h-[52px]">
                       {row.factor ? (
                         <span
-                          className={`font-mono text-[14px] text-[#192219] ${isActive ? 'font-semibold' : 'font-normal'}`}
+                          className={`font-mono text-[14px] text-foreground ${isActive ? 'font-semibold' : 'font-normal'}`}
                         >
                           {row.factor.value.toLocaleString('pt-BR', {
                             minimumFractionDigits: 4,
@@ -400,7 +400,7 @@ export function EmissionFactorsPage() {
                           })}
                         </span>
                       ) : (
-                        <span className="text-[13px] text-[#6D786D]">—</span>
+                        <span className="text-[13px] text-muted-foreground">—</span>
                       )}
                     </TableCell>
                     <TableCell
@@ -409,7 +409,7 @@ export function EmissionFactorsPage() {
                       {varText}
                     </TableCell>
                     <TableCell className="px-4 py-0 h-[52px] max-w-[280px]">
-                      <span className="block truncate text-[12px] text-[#6D786D]">
+                      <span className="block truncate text-[12px] text-muted-foreground">
                         {row.factor ? row.factor.source : '—'}
                       </span>
                     </TableCell>
@@ -423,7 +423,7 @@ export function EmissionFactorsPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="size-7 text-[#6D786D] hover:text-[#192219]"
+                              className="size-7 text-muted-foreground hover:text-foreground"
                               onClick={() => openEdit(row.factor!)}
                               disabled={modalOpen}
                             >
@@ -443,7 +443,7 @@ export function EmissionFactorsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="h-7 text-xs border-[#C3E1D0] text-[#24744D] hover:bg-[#DEECE2]"
+                            className="h-7 text-xs border-primary/30 text-primary hover:bg-accent"
                             onClick={() => openAddForMonth(row.referenceMonth)}
                             disabled={modalOpen}
                           >
