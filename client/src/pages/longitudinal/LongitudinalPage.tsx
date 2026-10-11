@@ -1,8 +1,9 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { BarChart3, CalendarDays } from 'lucide-react'
 import { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
+import { usePagedQuery } from '@/hooks/use-paged-query'
 import {
   Select,
   SelectContent,
@@ -67,20 +68,10 @@ export function LongitudinalPage() {
     queryFn: () => listSnapshots({ granularity: KPI_GRANULARITY, ...dateFilter }),
   })
 
-  const {
-    data: historyData,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
+  const { items: historyRows, fetchNextPage, hasNextPage, isFetchingNextPage } = usePagedQuery({
     queryKey: ['snapshots-history', granularity, selectedPeriodId],
-    queryFn: ({ pageParam }) =>
-      listSnapshotHistory({ granularity, page: pageParam, ...dateFilter }),
-    initialPageParam: 0,
-    getNextPageParam: (lastPage) =>
-      lastPage.page + 1 < lastPage.totalPages ? lastPage.page + 1 : undefined,
+    queryFn: (page) => listSnapshotHistory({ granularity, page, ...dateFilter }),
   })
-  const historyRows = historyData?.pages.flatMap((p) => p.content) ?? []
 
   const kpiCards = computeKpiCards(monthlyData)
   const isEmpty = !isChartLoading && chartData.length === 0 && monthlyData.length === 0

@@ -1,10 +1,9 @@
-import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { Cpu, Leaf, Monitor, Plus, Search } from 'lucide-react'
 import type React from 'react'
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { useDebounce } from 'use-debounce'
 import { DeactivateDialog } from '@/components/laboratories/DeactivateDialog'
 import { DeleteDialog } from '@/components/laboratories/DeleteDialog'
 import { LabCard, SummaryCard } from '@/components/laboratories/LabCard'
@@ -30,6 +29,8 @@ import {
 import { CardListSkeleton, SummaryCardsSkeleton } from '@/components/ui/skeletons'
 import { useInstitution } from '@/context/InstitutionContext'
 import { useDialog } from '@/hooks/use-dialog'
+import { usePagedQuery } from '@/hooks/use-paged-query'
+import { useSearchParam } from '@/hooks/use-search-param'
 import { listAcademicPeriods } from '@/lib/api/academic-periods'
 import { getEmissions } from '@/lib/api/emissions'
 import { getInstitution } from '@/lib/api/institutions'
@@ -58,21 +59,8 @@ export const LaboratoryList: React.FC = () => {
   const deactivateDialog = useDialog<Laboratory>()
   const deleteDialog = useDialog<Laboratory>()
 
-  const search = searchParams.get('q') ?? ''
+  const [search, debouncedSearch, setSearch] = useSearchParam()
   const statusFilter = (searchParams.get('status') ?? 'all') as LabStatusFilter
-
-  const [debouncedSearch] = useDebounce(search, 400)
-
-  function setSearch(value: string) {
-    setSearchParams(
-      (prev) => {
-        if (value) prev.set('q', value)
-        else prev.delete('q')
-        return prev
-      },
-      { replace: true },
-    )
-  }
 
   function setStatusFilter(value: LabStatusFilter) {
     setSearchParams(
@@ -119,23 +107,11 @@ export const LaboratoryList: React.FC = () => {
     )
   }, [emissionResult])
 
-  const {
-    data: laboratoriesData,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    refetch,
-  } = useInfiniteQuery({
-    queryKey: ['laboratories', debouncedSearch, statusFilter],
-    queryFn: ({ pageParam }) =>
-      listLaboratories({ status: statusFilter, search: debouncedSearch, page: pageParam }),
-    initialPageParam: 0,
-    getNextPageParam: (lastPage) =>
-      lastPage.page + 1 < lastPage.totalPages ? lastPage.page + 1 : undefined,
-  })
-
-  const laboratories = laboratoriesData?.pages.flatMap((p) => p.content) ?? []
+  const { items: laboratories, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
+    usePagedQuery({
+      queryKey: ['laboratories', debouncedSearch, statusFilter],
+      queryFn: (page) => listLaboratories({ status: statusFilter, search: debouncedSearch, page }),
+    })
 
   const activateMutation = useMutation({
     mutationFn: (lab: Laboratory) => activateLaboratory(lab.id),

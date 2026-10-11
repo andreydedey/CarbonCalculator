@@ -1,8 +1,5 @@
-import { useInfiniteQuery } from '@tanstack/react-query'
 import { Monitor as MonitorIcon, Search } from 'lucide-react'
 import type React from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { useDebounce } from 'use-debounce'
 import { DeleteMonitorDialog } from '@/components/monitors/DeleteMonitorDialog'
 import { MonitorCard } from '@/components/monitors/MonitorCard'
 import { CardListSkeleton } from '@/components/ui/skeletons'
@@ -19,6 +16,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
 import { useDialog, useFormDialog } from '@/hooks/use-dialog'
+import { usePagedQuery } from '@/hooks/use-paged-query'
+import { useSearchParam } from '@/hooks/use-search-param'
 import { listMonitors, type Monitor } from '@/lib/api/monitors'
 
 interface MonitorListProps {
@@ -27,43 +26,19 @@ interface MonitorListProps {
 }
 
 export const MonitorList: React.FC<MonitorListProps> = ({ formOpen, onFormOpenChange }) => {
-  const [searchParams, setSearchParams] = useSearchParams()
   const formDialog = useFormDialog<Monitor>({
     createOpen: formOpen,
     onCreateOpenChange: onFormOpenChange,
   })
   const deleteDialog = useDialog<Monitor>()
 
-  const search = searchParams.get('q') ?? ''
-  const [debouncedSearch] = useDebounce(search, 400)
+  const [search, debouncedSearch, setSearch] = useSearchParam()
 
-  function setSearch(value: string) {
-    setSearchParams(
-      (prev) => {
-        if (value) prev.set('q', value)
-        else prev.delete('q')
-        return prev
-      },
-      { replace: true },
-    )
-  }
-
-  const {
-    data: monitorsData,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    refetch,
-  } = useInfiniteQuery({
-    queryKey: ['monitors', debouncedSearch],
-    queryFn: ({ pageParam }) => listMonitors({ name: debouncedSearch, page: pageParam }),
-    initialPageParam: 0,
-    getNextPageParam: (lastPage) =>
-      lastPage.page + 1 < lastPage.totalPages ? lastPage.page + 1 : undefined,
-  })
-
-  const monitors = monitorsData?.pages.flatMap((p) => p.content) ?? []
+  const { items: monitors, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
+    usePagedQuery({
+      queryKey: ['monitors', debouncedSearch],
+      queryFn: (page) => listMonitors({ name: debouncedSearch, page }),
+    })
 
   function handleSaved() {
     formDialog.close()

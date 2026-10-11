@@ -1,10 +1,8 @@
-import { useInfiniteQuery, useMutation } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { Building2, Plus, Search } from 'lucide-react'
 import type React from 'react'
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { useDebounce } from 'use-debounce'
 import { InstitutionCard } from '@/components/institutions/InstitutionCard'
 import { InstitutionFormDialog } from '@/components/institutions/InstitutionFormDialog'
 import { SwitchInstitutionDialog } from '@/components/institutions/SwitchInstitutionDialog'
@@ -23,39 +21,23 @@ import { LoadMoreButton } from '@/components/ui/load-more-button'
 import { useAuth } from '@/context/AuthContext'
 import { useInstitution } from '@/context/InstitutionContext'
 import { useDialog } from '@/hooks/use-dialog'
+import { usePagedQuery } from '@/hooks/use-paged-query'
+import { useSearchParam } from '@/hooks/use-search-param'
 import { getInstitution, type Institution, listInstitutions } from '@/lib/api/institutions'
 
 export const InstitutionsPage: React.FC = () => {
   const { user } = useAuth()
   const { institutionId, setInstitutionId } = useInstitution()
-  const [searchParams, setSearchParams] = useSearchParams()
   const formDialog = useDialog<Institution>()
   const [pendingInstitution, setPendingInstitution] = useState<Institution | null>(null)
 
-  const search = searchParams.get('q') ?? ''
-  const [debouncedSearch] = useDebounce(search, 400)
+  const [search, debouncedSearch, setSearch] = useSearchParam()
 
-  function setSearch(value: string) {
-    setSearchParams(
-      (prev) => {
-        if (value) prev.set('q', value)
-        else prev.delete('q')
-        return prev
-      },
-      { replace: true },
-    )
-  }
-
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    useInfiniteQuery({
+  const { items: institutions, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
+    usePagedQuery({
       queryKey: ['institutions', debouncedSearch],
-      queryFn: ({ pageParam }) => listInstitutions({ search: debouncedSearch, page: pageParam }),
-      initialPageParam: 0,
-      getNextPageParam: (lastPage) =>
-        lastPage.page + 1 < lastPage.totalPages ? lastPage.page + 1 : undefined,
+      queryFn: (page) => listInstitutions({ search: debouncedSearch, page }),
     })
-
-  const institutions = data?.pages.flatMap((p) => p.content) ?? []
 
   const selectMutation = useMutation({
     mutationFn: (institution: Institution) => getInstitution(institution.id),

@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Calendar, Plus } from 'lucide-react'
 import type React from 'react'
 import { useCallback, useMemo, useState } from 'react'
@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/empty'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
 import { useDialog } from '@/hooks/use-dialog'
+import { usePagedQuery } from '@/hooks/use-paged-query'
 import {
   type AcademicPeriod,
   deleteAcademicPeriod,
@@ -49,22 +50,11 @@ export const AcademicPeriodsPage: React.FC = () => {
   const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null)
   const [addHolidayOpen, setAddHolidayOpen] = useState(false)
 
-  const {
-    data: periodsData,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    refetch,
-  } = useInfiniteQuery({
-    queryKey: ['academic-periods'],
-    queryFn: ({ pageParam }) => listAcademicPeriods(pageParam),
-    initialPageParam: 0,
-    getNextPageParam: (lastPage) =>
-      lastPage.page + 1 < lastPage.totalPages ? lastPage.page + 1 : undefined,
-  })
-
-  const periods = useMemo(() => periodsData?.pages.flatMap((p) => p.content) ?? [], [periodsData])
+  const { items: periods, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
+    usePagedQuery({
+      queryKey: ['academic-periods'],
+      queryFn: (page) => listAcademicPeriods(page),
+    })
 
   const resolvedPeriodId = useMemo(() => {
     if (selectedPeriodId && periods.some((p) => p.id === selectedPeriodId)) {

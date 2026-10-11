@@ -1,8 +1,5 @@
-import { useInfiniteQuery } from '@tanstack/react-query'
 import { Cpu, Search } from 'lucide-react'
 import type React from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { useDebounce } from 'use-debounce'
 import { DeleteEquipmentModelDialog } from '@/components/equipment-models/DeleteEquipmentModelDialog'
 import { EquipmentModelCard } from '@/components/equipment-models/EquipmentModelCard'
 import { CardListSkeleton } from '@/components/ui/skeletons'
@@ -19,6 +16,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
 import { useDialog, useFormDialog } from '@/hooks/use-dialog'
+import { usePagedQuery } from '@/hooks/use-paged-query'
+import { useSearchParam } from '@/hooks/use-search-param'
 import { type EquipmentModel, listEquipmentModels } from '@/lib/api/equipment-models'
 
 interface EquipmentModelListProps {
@@ -30,43 +29,19 @@ export const EquipmentModelList: React.FC<EquipmentModelListProps> = ({
   formOpen,
   onFormOpenChange,
 }) => {
-  const [searchParams, setSearchParams] = useSearchParams()
   const formDialog = useFormDialog<EquipmentModel>({
     createOpen: formOpen,
     onCreateOpenChange: onFormOpenChange,
   })
   const deleteDialog = useDialog<EquipmentModel>()
 
-  const search = searchParams.get('q') ?? ''
-  const [debouncedSearch] = useDebounce(search, 400)
+  const [search, debouncedSearch, setSearch] = useSearchParam()
 
-  function setSearch(value: string) {
-    setSearchParams(
-      (prev) => {
-        if (value) prev.set('q', value)
-        else prev.delete('q')
-        return prev
-      },
-      { replace: true },
-    )
-  }
-
-  const {
-    data: modelsData,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    refetch,
-  } = useInfiniteQuery({
-    queryKey: ['equipment-models', debouncedSearch],
-    queryFn: ({ pageParam }) => listEquipmentModels({ name: debouncedSearch, page: pageParam }),
-    initialPageParam: 0,
-    getNextPageParam: (lastPage) =>
-      lastPage.page + 1 < lastPage.totalPages ? lastPage.page + 1 : undefined,
-  })
-
-  const models = modelsData?.pages.flatMap((p) => p.content) ?? []
+  const { items: models, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
+    usePagedQuery({
+      queryKey: ['equipment-models', debouncedSearch],
+      queryFn: (page) => listEquipmentModels({ name: debouncedSearch, page }),
+    })
 
   function handleSaved() {
     formDialog.close()
