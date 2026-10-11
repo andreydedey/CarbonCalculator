@@ -330,12 +330,7 @@ export const OccupationEditorPage: React.FC = () => {
         <Button variant="ghost" size="icon" onClick={() => navigate(`/academic-periods/${id}`)}>
           <ArrowLeft className="size-4" />
         </Button>
-        <div className="flex flex-col gap-0.5">
-          <p className="text-xs font-normal text-muted-foreground">
-            Cadastro &rsaquo; Calendário Letivo &rsaquo; {period.name} &rsaquo; Ocupação
-          </p>
-          <h1 className="font-heading text-2xl font-bold">Ocupação dos Laboratórios</h1>
-        </div>
+        <h1 className="font-heading text-2xl font-bold">Ocupação dos Laboratórios</h1>
         {mode === 'grid' && canManage && (
           <div className="ml-auto">
             <Button
