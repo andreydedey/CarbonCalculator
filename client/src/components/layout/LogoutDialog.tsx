@@ -27,10 +27,7 @@ export function LogoutDialog({ open, onOpenChange, onConfirm }: LogoutDialogProp
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            className="bg-destructive text-white hover:bg-destructive/90"
-            onClick={onConfirm}
-          >
+          <AlertDialogAction variant="destructive" onClick={onConfirm}>
             Sair
           </AlertDialogAction>
         </AlertDialogFooter>
