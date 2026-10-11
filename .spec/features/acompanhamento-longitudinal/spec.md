@@ -5,7 +5,7 @@
 
 ## Contexto
 
-Gestor de instituição precisa acompanhar como as emissões de CO₂ evoluem ao longo do tempo, com a granularidade que for mais útil (diária, semanal, mensal ou por período letivo). A interface agrega snapshots diários conforme a granularidade selecionada.
+Gestor de instituição precisa acompanhar como as emissões de CO₂ evoluem ao longo do tempo, com a granularidade que for mais útil (diária, semanal, mensal ou por período letivo). A série é formada por dias: o período em andamento é calculado sob demanda, com a mesma fórmula do cálculo de emissões; o período encerrado tem seus dias congelados em um snapshot. Semanas, meses e períodos são agregados no back-end a partir desses dias.
 
 ## Histórias
 
@@ -69,6 +69,42 @@ Como gestor da instituição, quero consultar o histórico de emissões com cont
 
 ---
 
+### US-051 — Série ao vivo e congelamento ao fim do período letivo
+
+Como gestor da instituição, quero que o período em andamento reflita na hora as alterações de grade e cadastro, e que o período encerrado fique congelado, para que a série histórica não mude quando o cadastro for alterado depois.
+
+#### AC-171 — Período em andamento é calculado sob demanda e reflete alterações na grade
+
+- **Dado** que existe um período letivo em andamento com dias letivos já realizados
+- **Quando** altero a grade de ocupação de um laboratório nesse período
+- **Então** `GET /api/v1/snapshots` passa a refletir a nova grade imediatamente
+
+#### AC-172 — Período encerrado é congelado e alterações posteriores não mudam a série
+
+- **Dado** que um período letivo terminou e seu snapshot foi registrado
+- **Quando** altero a grade ou o cadastro usados por esse período
+- **Então** os valores desse período em `GET /api/v1/snapshots` permanecem os mesmos
+
+#### AC-173 — Congelamento é adiado enquanto faltar fator de emissão de algum mês do período
+
+- **Dado** que um período letivo terminou e falta o fator de emissão de algum de seus meses
+- **Quando** o job de snapshot executa
+- **Então** o período não é congelado, e será congelado na primeira execução após o fator ser cadastrado
+
+#### AC-174 — Congelamento é idempotente
+
+- **Dado** que o snapshot de um período encerrado já foi registrado
+- **Quando** o job de snapshot executa novamente
+- **Então** nenhum novo registro é criado
+
+#### AC-175 — Granularidades são derivadas dos mesmos dias, congelados ou calculados
+
+- **Dado** que existem dias realizados de um período
+- **Quando** consulto as granularidades diária, semanal, mensal e por período
+- **Então** a soma das emissões é a mesma em todas elas
+
+---
+
 ### US-046 — Interface de acompanhamento com toggle de granularidade
 
 Como gestor da instituição, quero visualizar o histórico de emissões em gráfico com toggle de granularidade, KPI cards e tabela histórica, para que eu acompanhe tendências de forma intuitiva.
@@ -99,7 +135,7 @@ Como gestor da instituição, quero visualizar o histórico de emissões em grá
 
 ## Fora de escopo
 
-- Captura automática diária por cron (US-045/AC-145–150 removidas — cron obsoleto, será reimplementado via ConsumptionResolver)
+- Captura automática diária por cron (US-045/AC-145–150 removidas — substituídas pelo cálculo sob demanda e pelo congelamento ao fim do período, US-051)
 - Re-captura forçada de dia passado (V2)
 - Comparação entre instituições
 - Projeção de tendência futura

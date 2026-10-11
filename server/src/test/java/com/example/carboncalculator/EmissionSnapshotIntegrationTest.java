@@ -11,16 +11,13 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.YearMonth;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
-
-import javax.sql.DataSource;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,17 +31,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.data.domain.Sort;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.example.carboncalculator.dto.AcademicPeriodDTO;
+import com.example.carboncalculator.dto.AcceptInviteRequest;
 import com.example.carboncalculator.dto.AuthResponse;
 import com.example.carboncalculator.dto.ConfigurationDTO;
 import com.example.carboncalculator.dto.CreateAcademicPeriodRequest;
@@ -54,29 +48,23 @@ import com.example.carboncalculator.dto.CreateEquipmentModelRequest;
 import com.example.carboncalculator.dto.CreateInstitutionRequest;
 import com.example.carboncalculator.dto.CreateLaboratoryEquipmentRequest;
 import com.example.carboncalculator.dto.CreateLaboratoryRequest;
+import com.example.carboncalculator.dto.CreateMonitorRequest;
+import com.example.carboncalculator.dto.CreateOperatingSystemRequest;
 import com.example.carboncalculator.dto.EquipmentModelDTO;
-import com.example.carboncalculator.dto.HolidayDTO;
 import com.example.carboncalculator.dto.InstitutionDTO;
 import com.example.carboncalculator.dto.InviteRequest;
 import com.example.carboncalculator.dto.LaboratoryDTO;
 import com.example.carboncalculator.dto.LaboratoryEquipmentDTO;
 import com.example.carboncalculator.dto.LoginRequest;
-import com.example.carboncalculator.dto.AcceptInviteRequest;
-import com.example.carboncalculator.dto.UserMemberDTO;
-import com.example.carboncalculator.dto.ReplaceHolidaysRequest;
+import com.example.carboncalculator.dto.MonitorDTO;
+import com.example.carboncalculator.dto.OperatingSystemDTO;
 import com.example.carboncalculator.dto.ReplaceScheduleRequest;
 import com.example.carboncalculator.dto.ReplaceShiftsRequest;
 import com.example.carboncalculator.dto.ShiftDTO;
 import com.example.carboncalculator.dto.SnapshotAggregateDTO;
-import com.example.carboncalculator.entities.AcademicPeriod;
-import com.example.carboncalculator.entities.EmissionSnapshot;
-import com.example.carboncalculator.entities.HolidayType;
-import com.example.carboncalculator.entities.Institution;
+import com.example.carboncalculator.dto.UserMemberDTO;
 import com.example.carboncalculator.entities.ShiftType;
-import com.example.carboncalculator.repositories.AcademicPeriodRepository;
-import com.example.carboncalculator.repositories.EmissionSnapshotRepository;
-import com.example.carboncalculator.specifications.EmissionSnapshotSpecification;
-import com.example.carboncalculator.repositories.InstitutionRepository;
+import com.example.carboncalculator.services.EmissionPeriodSnapshotService;
 
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -86,6 +74,7 @@ class EmissionSnapshotIntegrationTest {
     private static final String TENANT_HEADER = "X-Institution-Id";
     private static final String APP_ROLE = "app";
     private static final String APP_PASSWORD = "app";
+    private static final List<Integer> ALL_SLOTS = List.of(1, 2, 3, 4, 5);
 
     @Container
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");
@@ -117,29 +106,18 @@ class EmissionSnapshotIntegrationTest {
     private TestRestTemplate restTemplate;
 
     @Autowired
-    private DataSource dataSource;
+    private EmissionPeriodSnapshotService periodSnapshotService;
 
     @Autowired
-    private PlatformTransactionManager transactionManager;
-
-    @Autowired
-    private EmissionSnapshotRepository snapshotRepository;
-
-    @Autowired
-    private InstitutionRepository institutionRepository;
-
-    @Autowired
-    private AcademicPeriodRepository academicPeriodRepository;
-
-    private JdbcTemplate jdbcTemplate;
+    private Clock clock;
 
     private String adminToken;
     private UUID institutionId;
 
+    private record Scenario(UUID periodId, UUID labId, UUID shiftId) {}
+
     @BeforeEach
     void setUp() {
-        jdbcTemplate = new JdbcTemplate(dataSource);
-
         if (adminToken == null) {
             LoginRequest login = new LoginRequest("admin@admin.com", "password");
             ResponseEntity<AuthResponse> authResp = restTemplate.postForEntity(
@@ -148,16 +126,13 @@ class EmissionSnapshotIntegrationTest {
             adminToken = authResp.getBody().accessToken();
         }
 
-        InstitutionDTO institution = createInstitution("TEST-" + System.nanoTime());
-        institutionId = institution.id();
+        institutionId = createInstitution("TEST-" + System.nanoTime()).id();
     }
 
+    // ========================= HTTP helpers =========================
+
     private HttpHeaders headersFor(UUID instId) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set(TENANT_HEADER, instId.toString());
-        headers.set("Content-Type", "application/json");
-        headers.setBearerAuth(adminToken);
-        return headers;
+        return headersFor(instId, adminToken);
     }
 
     private HttpHeaders headersFor(UUID instId, String token) {
@@ -168,147 +143,105 @@ class EmissionSnapshotIntegrationTest {
         return headers;
     }
 
-    private HttpHeaders authHeaders() {
+    private InstitutionDTO createInstitution(String acronym) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(adminToken);
-        return headers;
-    }
-
-    private InstitutionDTO createInstitution(String acronym) {
         CreateInstitutionRequest request = new CreateInstitutionRequest(
                 "Instituição " + acronym, acronym, "Cidade", "PA");
         ResponseEntity<InstitutionDTO> response = restTemplate.exchange(
-                "/institutions", HttpMethod.POST,
-                new HttpEntity<>(request, authHeaders()),
-                InstitutionDTO.class);
+                "/institutions", HttpMethod.POST, new HttpEntity<>(request, headers), InstitutionDTO.class);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         return response.getBody();
     }
 
-    private UUID createLab(UUID instId, String name) {
-        ResponseEntity<LaboratoryDTO> response = restTemplate.exchange(
-                "/laboratories", HttpMethod.POST,
-                new HttpEntity<>(new CreateLaboratoryRequest(name, null), headersFor(instId)),
-                LaboratoryDTO.class);
+    private <T> T post(UUID instId, String url, Object body, Class<T> type) {
+        ResponseEntity<T> response = restTemplate.exchange(
+                url, HttpMethod.POST, new HttpEntity<>(body, headersFor(instId)), type);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        return response.getBody().id();
+        return response.getBody();
     }
 
-    private UUID createEquipmentModel(UUID instId, String name, int tdpWatts) {
-        CreateEquipmentModelRequest request = new CreateEquipmentModelRequest(
-                name, "DESKTOP", "Intel i5", tdpWatts, 4, 8, null, null, false, null);
-        ResponseEntity<EquipmentModelDTO> response = restTemplate.exchange(
-                "/equipment-models", HttpMethod.POST,
-                new HttpEntity<>(request, headersFor(instId)),
-                EquipmentModelDTO.class);
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        return response.getBody().id();
+    private UUID createLabWithStations(UUID instId, int stations) {
+        String suffix = String.valueOf(System.nanoTime());
+        UUID labId = post(instId, "/laboratories",
+                new CreateLaboratoryRequest("LAB-" + suffix, null), LaboratoryDTO.class).id();
+        UUID modelId = post(instId, "/equipment-models", new CreateEquipmentModelRequest(
+                "Desktop-" + suffix, "DESKTOP", "Intel i5", 65, 4, 8, null, null, false, null),
+                EquipmentModelDTO.class).id();
+        UUID monitorId = post(instId, "/monitors",
+                new CreateMonitorRequest("Monitor-" + suffix, 21), MonitorDTO.class).id();
+        UUID osId = post(instId, "/operating-systems",
+                new CreateOperatingSystemRequest("OS-" + suffix), OperatingSystemDTO.class).id();
+        UUID configId = post(instId, "/configurations",
+                new CreateConfigurationRequest(modelId, osId, monitorId), ConfigurationDTO.class).id();
+        post(instId, "/laboratories/" + labId + "/equipment",
+                new CreateLaboratoryEquipmentRequest(configId, stations), LaboratoryEquipmentDTO.class);
+        return labId;
     }
 
-    private UUID createConfiguration(UUID instId, UUID equipmentModelId, UUID operatingSystemId) {
-        CreateConfigurationRequest request = new CreateConfigurationRequest(equipmentModelId, operatingSystemId, null);
-        ResponseEntity<ConfigurationDTO> response = restTemplate.exchange(
-                "/configurations", HttpMethod.POST,
-                new HttpEntity<>(request, headersFor(instId)),
-                ConfigurationDTO.class);
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        return response.getBody().id();
+    private void createEmissionFactors(UUID instId, LocalDate start, LocalDate end, String value) {
+        for (YearMonth month = YearMonth.from(start); !month.isAfter(YearMonth.from(end)); month = month.plusMonths(1)) {
+            post(instId, "/emission-factors",
+                    new CreateEmissionFactorRequest(month, new BigDecimal(value), "MCTI — SIN " + month),
+                    String.class);
+        }
     }
 
-    private void assignEquipment(UUID instId, UUID labId, UUID configId, int quantity) {
-        CreateLaboratoryEquipmentRequest request = new CreateLaboratoryEquipmentRequest(configId, quantity);
-        ResponseEntity<LaboratoryEquipmentDTO> response = restTemplate.exchange(
-                "/laboratories/" + labId + "/equipment", HttpMethod.POST,
-                new HttpEntity<>(request, headersFor(instId)),
-                LaboratoryEquipmentDTO.class);
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-    }
+    /** One lab with 10 stations, a Mon-Fri morning shift of 5 classes and every slot occupied. */
+    private Scenario createScenario(UUID instId, LocalDate start, LocalDate end) {
+        UUID labId = createLabWithStations(instId, 10);
+        UUID periodId = post(instId, "/academic-periods",
+                new CreateAcademicPeriodRequest("P-" + System.nanoTime(), start, end), AcademicPeriodDTO.class).id();
 
-    private UUID createPeriod(UUID instId, String name, LocalDate start, LocalDate end) {
-        CreateAcademicPeriodRequest request = new CreateAcademicPeriodRequest(name, start, end);
-        ResponseEntity<AcademicPeriodDTO> response = restTemplate.exchange(
-                "/academic-periods", HttpMethod.POST,
-                new HttpEntity<>(request, headersFor(instId)),
-                AcademicPeriodDTO.class);
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        return response.getBody().id();
-    }
-
-    private List<ShiftDTO> replaceShifts(UUID instId, UUID periodId, List<ReplaceShiftsRequest.ShiftInput> shifts) {
-        ReplaceShiftsRequest request = new ReplaceShiftsRequest(shifts);
-        ResponseEntity<List<ShiftDTO>> response = restTemplate.exchange(
-                "/academic-periods/" + periodId + "/shifts",
-                HttpMethod.PUT,
-                new HttpEntity<>(request, headersFor(instId)),
+        ResponseEntity<List<ShiftDTO>> shifts = restTemplate.exchange(
+                "/academic-periods/" + periodId + "/shifts", HttpMethod.PUT,
+                new HttpEntity<>(new ReplaceShiftsRequest(List.of(new ReplaceShiftsRequest.ShiftInput(
+                        ShiftType.MORNING, LocalTime.of(7, 30), 5, 50, 10, List.of(1, 2, 3, 4, 5), true))),
+                        headersFor(instId)),
                 new ParameterizedTypeReference<>() {});
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        return response.getBody();
+        assertEquals(HttpStatus.OK, shifts.getStatusCode());
+
+        Scenario scenario = new Scenario(periodId, labId, shifts.getBody().get(0).id());
+        replaceSchedule(instId, scenario, ALL_SLOTS);
+        return scenario;
     }
 
-    private void replaceSchedule(UUID instId, UUID periodId, UUID labId,
-            List<ReplaceScheduleRequest.ScheduleInput> entries) {
-        ReplaceScheduleRequest request = new ReplaceScheduleRequest(entries);
+    private void replaceSchedule(UUID instId, Scenario scenario, List<Integer> slots) {
+        List<ReplaceScheduleRequest.ScheduleInput> entries = List.of(1, 2, 3, 4, 5).stream()
+                .map(day -> new ReplaceScheduleRequest.ScheduleInput(scenario.shiftId(), day, slots))
+                .toList();
         ResponseEntity<String> response = restTemplate.exchange(
-                "/academic-periods/" + periodId + "/laboratories/" + labId + "/schedule",
+                "/academic-periods/" + scenario.periodId() + "/laboratories/" + scenario.labId() + "/schedule",
                 HttpMethod.PUT,
-                new HttpEntity<>(request, headersFor(instId)),
+                new HttpEntity<>(new ReplaceScheduleRequest(entries), headersFor(instId)),
                 String.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
     }
 
-    private void replaceHolidays(UUID instId, UUID periodId, List<HolidayDTO> holidays) {
-        ReplaceHolidaysRequest request = new ReplaceHolidaysRequest(holidays);
-        ResponseEntity<List<HolidayDTO>> response = restTemplate.exchange(
-                "/academic-periods/" + periodId + "/holidays",
-                HttpMethod.PUT,
-                new HttpEntity<>(request, headersFor(instId)),
-                new ParameterizedTypeReference<>() {});
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-    }
-
-    private void createEmissionFactor(UUID instId, YearMonth month, String value) {
-        CreateEmissionFactorRequest request = new CreateEmissionFactorRequest(
-                month, new BigDecimal(value), "MCTI — SIN " + month);
-        ResponseEntity<String> response = restTemplate.exchange(
-                "/emission-factors", HttpMethod.POST,
-                new HttpEntity<>(request, headersFor(instId)), String.class);
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-    }
-
-    private String registerAndGetToken(String email) {
-        // Invite the email first to get a token
-        InviteRequest inviteReq = new InviteRequest(email, "RESEARCHER");
+    private String registerResearcherAndGetToken(String email) {
         ResponseEntity<UserMemberDTO> inviteResp = restTemplate.exchange(
                 "/users/invite", HttpMethod.POST,
-                new HttpEntity<>(inviteReq, headersFor(institutionId)), UserMemberDTO.class);
+                new HttpEntity<>(new InviteRequest(email, "RESEARCHER"), headersFor(institutionId)),
+                UserMemberDTO.class);
         assertEquals(HttpStatus.CREATED, inviteResp.getStatusCode());
         String rawToken = inviteResp.getBody().inviteLink().replace("/register?token=", "");
 
-        // Accept the invite
-        AcceptInviteRequest acceptReq = new AcceptInviteRequest("Pesquisador Teste", "Senha-123!");
         ResponseEntity<AuthResponse> response = restTemplate.postForEntity(
-                "/auth/invitations/{token}/accept", acceptReq, AuthResponse.class, rawToken);
+                "/auth/invitations/{token}/accept",
+                new AcceptInviteRequest("Pesquisador Teste", "Senha-123!"), AuthResponse.class, rawToken);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         return response.getBody().accessToken();
     }
 
-    private void inviteMember(UUID instId, String email, String role) {
-        InviteRequest request = new InviteRequest(email, role);
-        ResponseEntity<String> response = restTemplate.exchange(
-                "/users/invite", HttpMethod.POST,
-                new HttpEntity<>(request, headersFor(instId)), String.class);
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+    private List<SnapshotAggregateDTO> getSnapshots(UUID instId, String granularity) {
+        return getSnapshots(instId, adminToken, granularity, null, null);
     }
 
     private List<SnapshotAggregateDTO> getSnapshots(UUID instId, String token, String granularity,
             LocalDate startDate, LocalDate endDate) {
         StringBuilder url = new StringBuilder("/snapshots?granularity=").append(granularity);
-        if (startDate != null) {
-            url.append("&startDate=").append(startDate);
-        }
-        if (endDate != null) {
-            url.append("&endDate=").append(endDate);
-        }
+        if (startDate != null) url.append("&startDate=").append(startDate);
+        if (endDate != null) url.append("&endDate=").append(endDate);
         ResponseEntity<List<SnapshotAggregateDTO>> response = restTemplate.exchange(
                 url.toString(), HttpMethod.GET,
                 new HttpEntity<>(headersFor(instId, token)),
@@ -317,200 +250,206 @@ class EmissionSnapshotIntegrationTest {
         return response.getBody();
     }
 
-    private <T> T runTenantScoped(UUID instId, java.util.function.Supplier<T> work) {
-        TransactionTemplate tx = new TransactionTemplate(transactionManager);
-        return tx.execute(status -> {
-            jdbcTemplate.queryForObject(
-                    "SELECT set_config('app.current_institution', ?, true)", String.class, instId.toString());
-            return work.get();
-        });
+    private BigDecimal periodTotal(UUID instId) {
+        List<SnapshotAggregateDTO> periods = getSnapshots(instId, "period");
+        assertEquals(1, periods.size());
+        return periods.get(0).totalEmissionKg();
     }
 
-    private EmissionSnapshot seedSnapshot(UUID instId, UUID periodId, LocalDate date,
-            String emissionKg, String energyKwh, String factor, boolean schoolDay, int stationCount) {
-        return runTenantScoped(instId, () -> {
-            Institution institution = institutionRepository.findById(instId).orElseThrow();
-            AcademicPeriod period = academicPeriodRepository.findById(periodId).orElseThrow();
-            EmissionSnapshot snapshot = EmissionSnapshot.builder()
-                    .institution(institution)
-                    .academicPeriod(period)
-                    .snapshotDate(date)
-                    .dayOfWeek(date.getDayOfWeek())
-                    .schoolDay(schoolDay)
-                    .dailyEmissionKg(new BigDecimal(emissionKg))
-                    .dailyEnergyKwh(new BigDecimal(energyKwh))
-                    .emissionFactorValue(new BigDecimal(factor))
-                    .stationCount(stationCount)
-                    .build();
-            return snapshotRepository.save(snapshot);
-        });
+    private static BigDecimal total(List<SnapshotAggregateDTO> buckets) {
+        return buckets.stream().map(SnapshotAggregateDTO::totalEmissionKg).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    private Optional<EmissionSnapshot> fetchSnapshot(UUID instId, LocalDate date) {
-        return runTenantScoped(instId, () -> snapshotRepository
-                .findAll(EmissionSnapshotSpecification.withinDateRange(date, date), Sort.unsorted())
-                .stream().findFirst());
+    private int capture(UUID instId) {
+        return periodSnapshotService.captureEndedPeriods(instId, LocalDate.now(clock));
     }
 
-    private boolean snapshotExists(UUID instId, LocalDate date) {
-        return Boolean.TRUE.equals(runTenantScoped(instId, () -> snapshotRepository.existsBySnapshotDate(date)));
+    private Scenario endedMarch2025(UUID instId) {
+        LocalDate start = LocalDate.of(2025, 3, 1);
+        LocalDate end = LocalDate.of(2025, 3, 31);
+        createEmissionFactors(instId, start, end, "0.0500");
+        return createScenario(instId, start, end);
     }
+
+    // ========================= Live and frozen series =========================
+
+    // @spec:AC-171 Período em andamento é calculado sob demanda e reflete alterações na grade
+    @Test
+    void devePeriodoEmAndamentoRefletirAlteracaoNaGrade() {
+        LocalDate today = LocalDate.now(clock);
+        LocalDate start = today.minusDays(21);
+        LocalDate end = today.plusDays(60);
+        createEmissionFactors(institutionId, start, end, "0.0500");
+        Scenario scenario = createScenario(institutionId, start, end);
+
+        BigDecimal fullGrid = periodTotal(institutionId);
+        assertTrue(fullGrid.signum() > 0);
+
+        replaceSchedule(institutionId, scenario, List.of(1));
+
+        BigDecimal reducedGrid = periodTotal(institutionId);
+        assertEquals(fullGrid.doubleValue() / 5, reducedGrid.doubleValue(), 0.01, "one of five classes left");
+        assertEquals(0, capture(institutionId), "a running period is never frozen");
+    }
+
+    // @spec:AC-172 Período encerrado é congelado e alterações posteriores não mudam a série
+    @Test
+    void devePeriodoEncerradoFicarCongeladoAposOSnapshot() {
+        Scenario scenario = endedMarch2025(institutionId);
+        BigDecimal beforeSnapshot = periodTotal(institutionId);
+
+        assertEquals(1, capture(institutionId));
+        assertEquals(0, beforeSnapshot.compareTo(periodTotal(institutionId)));
+
+        replaceSchedule(institutionId, scenario, List.of(1));
+
+        assertEquals(0, beforeSnapshot.compareTo(periodTotal(institutionId)));
+    }
+
+    // @spec:AC-173 Congelamento é adiado enquanto faltar fator de emissão de algum mês do período
+    @Test
+    void deveAdiarSnapshotQuandoFaltaFatorDeEmissao() {
+        LocalDate start = LocalDate.of(2025, 3, 1);
+        LocalDate end = LocalDate.of(2025, 4, 30);
+        createEmissionFactors(institutionId, start, start, "0.0500");
+        createScenario(institutionId, start, end);
+
+        assertEquals(0, capture(institutionId));
+
+        createEmissionFactors(institutionId, end, end, "0.0500");
+
+        assertEquals(1, capture(institutionId));
+    }
+
+    // @spec:AC-174 Congelamento é idempotente
+    @Test
+    void deveSnapshotSerIdempotente() {
+        endedMarch2025(institutionId);
+
+        assertEquals(1, capture(institutionId));
+        assertEquals(0, capture(institutionId));
+    }
+
+    // @spec:AC-175 Granularidades são derivadas dos mesmos dias, congelados ou calculados
+    @Test
+    void deveGranularidadesSomaremOMesmoTotal() {
+        endedMarch2025(institutionId);
+        capture(institutionId);
+
+        BigDecimal periodTotal = periodTotal(institutionId);
+        assertEquals(0, periodTotal.compareTo(total(getSnapshots(institutionId, "monthly"))));
+        assertEquals(0, periodTotal.compareTo(total(getSnapshots(institutionId, "weekly"))));
+        assertEquals(0, periodTotal.compareTo(total(getSnapshots(institutionId, "daily"))));
+    }
+
+    // ========================= Aggregation =========================
 
     // @spec:AC-136 Agregação mensal soma corretamente dias do mesmo mês
     @Test
     void deveAgregarMensalmenteSomandoDiasDoMesmoMes() {
-        UUID periodId = createPeriod(institutionId, "2025.2-" + System.nanoTime(),
-                LocalDate.of(2025, 8, 1), LocalDate.of(2025, 12, 15));
+        endedMarch2025(institutionId);
 
-        int[] values = {100, 120, 90, 110, 130};
-        LocalDate day = LocalDate.of(2025, 10, 6);
-        for (int v : values) {
-            seedSnapshot(institutionId, periodId, day, String.valueOf(v), String.valueOf(v * 20),
-                    "0.0500", true, 10);
-            day = day.plusDays(1);
-        }
+        List<SnapshotAggregateDTO> daily = getSnapshots(institutionId, "daily");
+        List<SnapshotAggregateDTO> monthly = getSnapshots(institutionId, "monthly");
 
-        List<SnapshotAggregateDTO> result = getSnapshots(institutionId, adminToken, "monthly", null, null);
-
-        assertEquals(1, result.size());
-        SnapshotAggregateDTO october = result.get(0);
-        assertEquals(0, new BigDecimal("550").compareTo(october.totalEmissionKg()));
-        assertEquals(5, october.schoolDays());
+        assertEquals(1, monthly.size());
+        assertEquals(0, total(daily).compareTo(monthly.get(0).totalEmissionKg()));
+        assertEquals(daily.size(), monthly.get(0).schoolDays());
     }
 
     // @spec:AC-137 Agregação por período letivo soma todos os dias do período
     @Test
     void deveAgregarPorPeriodoSomandoTodosOsDias() {
-        UUID periodId = createPeriod(institutionId, "2025.2-" + System.nanoTime(),
-                LocalDate.of(2025, 8, 1), LocalDate.of(2025, 12, 15));
+        Scenario scenario = endedMarch2025(institutionId);
 
-        BigDecimal expectedTotal = BigDecimal.ZERO;
-        LocalDate[] dates = {
-                LocalDate.of(2025, 8, 10), LocalDate.of(2025, 9, 15),
-                LocalDate.of(2025, 10, 20), LocalDate.of(2025, 11, 25), LocalDate.of(2025, 12, 1)
-        };
-        for (LocalDate date : dates) {
-            seedSnapshot(institutionId, periodId, date, "50", "1000", "0.0500", true, 10);
-            expectedTotal = expectedTotal.add(new BigDecimal("50"));
-        }
+        List<SnapshotAggregateDTO> periods = getSnapshots(institutionId, "period");
 
-        List<SnapshotAggregateDTO> result = getSnapshots(institutionId, adminToken, "period", null, null);
-
-        assertEquals(1, result.size());
-        SnapshotAggregateDTO period = result.get(0);
-        assertEquals(periodId, period.periodId());
-        assertEquals(0, expectedTotal.compareTo(period.totalEmissionKg()));
+        assertEquals(1, periods.size());
+        assertEquals(scenario.periodId(), periods.get(0).periodId());
+        assertEquals(0, total(getSnapshots(institutionId, "daily")).compareTo(periods.get(0).totalEmissionKg()));
     }
 
     // @spec:AC-138 Agregação semanal agrupa por semana ISO
     @Test
     void deveAgregarSemanalmentePorSemanaIso() {
-        UUID periodId = createPeriod(institutionId, "2025.W-" + System.nanoTime(),
-                LocalDate.of(2025, 11, 1), LocalDate.of(2025, 11, 30));
+        endedMarch2025(institutionId);
 
-        LocalDate monday = LocalDate.of(2025, 11, 3);
-        for (int i = 0; i < 5; i++) {
-            seedSnapshot(institutionId, periodId, monday.plusDays(i), "20", "400", "0.0500", true, 10);
+        List<SnapshotAggregateDTO> weekly = getSnapshots(institutionId, "weekly");
+
+        assertFalse(weekly.isEmpty());
+        for (SnapshotAggregateDTO week : weekly) {
+            assertEquals(DayOfWeek.MONDAY, week.startDate().getDayOfWeek());
+            assertEquals(week.startDate().plusDays(6), week.endDate());
+            assertTrue(week.schoolDays() <= 5);
         }
-
-        List<SnapshotAggregateDTO> result = getSnapshots(institutionId, adminToken, "weekly", null, null);
-
-        assertEquals(1, result.size());
-        assertEquals(0, new BigDecimal("100").compareTo(result.get(0).totalEmissionKg()));
     }
 
-    // @spec:AC-139 Granularidade diária retorna um registro por snapshot_date
+    // @spec:AC-139 Granularidade diária retorna um registro por dia letivo
     @Test
-    void deveRetornarUmRegistroPorDataNaGranularidadeDiaria() {
-        UUID periodId = createPeriod(institutionId, "2025.D-" + System.nanoTime(),
-                LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 31));
+    void deveRetornarUmRegistroPorDiaNaGranularidadeDiaria() {
+        endedMarch2025(institutionId);
 
-        Set<LocalDate> expectedDates = Set.of(
-                LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 2), LocalDate.of(2025, 12, 3));
-        for (LocalDate date : expectedDates) {
-            seedSnapshot(institutionId, periodId, date, "40", "800", "0.0500", true, 10);
+        List<SnapshotAggregateDTO> daily = getSnapshots(institutionId, "daily");
+
+        assertFalse(daily.isEmpty());
+        assertEquals(daily.size(), daily.stream().map(SnapshotAggregateDTO::startDate).distinct().count());
+        for (SnapshotAggregateDTO day : daily) {
+            assertEquals(day.startDate(), day.endDate());
+            assertTrue(day.startDate().getDayOfWeek().getValue() <= 5);
         }
-
-        List<SnapshotAggregateDTO> result = getSnapshots(institutionId, adminToken, "daily", null, null);
-
-        assertEquals(3, result.size());
-        Set<LocalDate> actualDates = result.stream()
-                .map(SnapshotAggregateDTO::startDate)
-                .collect(Collectors.toSet());
-        assertEquals(expectedDates, actualDates);
     }
 
     // @spec:AC-140 variationPct calculado em relação ao registro imediatamente anterior
-    @Test
-    void deveCalcularVariationPctEmRelacaoAoRegistroAnterior() {
-        UUID periodId = createPeriod(institutionId, "2025.V-" + System.nanoTime(),
-                LocalDate.of(2025, 9, 1), LocalDate.of(2025, 10, 31));
-
-        seedSnapshot(institutionId, periodId, LocalDate.of(2025, 9, 15), "1000", "20000", "0.0500", true, 10);
-        seedSnapshot(institutionId, periodId, LocalDate.of(2025, 10, 15), "1120", "22400", "0.0500", true, 10);
-
-        List<SnapshotAggregateDTO> result = getSnapshots(institutionId, adminToken, "monthly", null, null);
-
-        assertEquals(2, result.size());
-        SnapshotAggregateDTO october = result.get(1);
-        assertNotNull(october.variationPct());
-        assertEquals(12.0, october.variationPct().doubleValue(), 0.01);
-    }
-
     // @spec:AC-141 Primeiro registro da série tem variationPct null
     @Test
-    void devePrimeiroRegistroDaSerieTerVariationPctNulo() {
-        UUID periodId = createPeriod(institutionId, "2025.F-" + System.nanoTime(),
-                LocalDate.of(2025, 11, 1), LocalDate.of(2025, 11, 30));
+    void deveCalcularVariationPctEmRelacaoAoRegistroAnterior() {
+        endedMarch2025(institutionId);
 
-        seedSnapshot(institutionId, periodId, LocalDate.of(2025, 11, 10), "300", "6000", "0.0500", true, 10);
+        List<SnapshotAggregateDTO> weekly = getSnapshots(institutionId, "weekly");
 
-        List<SnapshotAggregateDTO> result = getSnapshots(institutionId, adminToken, "monthly", null, null);
-
-        assertEquals(1, result.size());
-        assertNull(result.get(0).variationPct());
+        assertTrue(weekly.size() > 1);
+        assertNull(weekly.get(0).variationPct());
+        SnapshotAggregateDTO previous = weekly.get(0);
+        SnapshotAggregateDTO current = weekly.get(1);
+        double expected = (current.totalEmissionKg().doubleValue() - previous.totalEmissionKg().doubleValue())
+                / previous.totalEmissionKg().doubleValue() * 100;
+        assertNotNull(current.variationPct());
+        assertEquals(expected, current.variationPct().doubleValue(), 0.01);
     }
 
     // @spec:AC-142 RLS: snapshots de outra instituição não são retornados
     @Test
     void deveIsolarSnapshotsPorInstituicaoViaRls() {
-        InstitutionDTO otherInstitution = createInstitution("OTH-" + System.nanoTime());
-        UUID otherPeriodId = createPeriod(otherInstitution.id(), "2025.O-" + System.nanoTime(),
-                LocalDate.of(2025, 11, 1), LocalDate.of(2025, 11, 30));
-        seedSnapshot(otherInstitution.id(), otherPeriodId, LocalDate.of(2025, 11, 10),
-                "500", "10000", "0.0500", true, 10);
+        UUID otherInstitutionId = createInstitution("OTH-" + System.nanoTime()).id();
+        endedMarch2025(otherInstitutionId);
+        capture(otherInstitutionId);
 
-        List<SnapshotAggregateDTO> result = getSnapshots(institutionId, adminToken, "monthly", null, null);
-
-        assertTrue(result.isEmpty());
+        assertFalse(getSnapshots(otherInstitutionId, "monthly").isEmpty());
+        assertTrue(getSnapshots(institutionId, "monthly").isEmpty());
     }
 
     // @spec:AC-143 Filtro startDate/endDate exclui registros fora do intervalo
     @Test
     void deveFiltrarPorStartDateEEndDateExcluindoForaDoIntervalo() {
-        UUID periodId = createPeriod(institutionId, "2025.R-" + System.nanoTime(),
-                LocalDate.of(2025, 3, 1), LocalDate.of(2025, 5, 31));
-
-        seedSnapshot(institutionId, periodId, LocalDate.of(2025, 3, 10), "100", "2000", "0.0500", true, 10);
-        seedSnapshot(institutionId, periodId, LocalDate.of(2025, 4, 10), "200", "4000", "0.0500", true, 10);
-        seedSnapshot(institutionId, periodId, LocalDate.of(2025, 5, 10), "300", "6000", "0.0500", true, 10);
+        LocalDate start = LocalDate.of(2025, 3, 1);
+        LocalDate end = LocalDate.of(2025, 5, 31);
+        createEmissionFactors(institutionId, start, end, "0.0500");
+        createScenario(institutionId, start, end);
 
         List<SnapshotAggregateDTO> result = getSnapshots(institutionId, adminToken, "monthly",
                 LocalDate.of(2025, 4, 1), LocalDate.of(2025, 4, 30));
 
         assertEquals(1, result.size());
-        assertEquals(0, new BigDecimal("200").compareTo(result.get(0).totalEmissionKg()));
+        assertEquals(YearMonth.of(2025, 4), YearMonth.from(result.get(0).startDate()));
     }
 
     // @spec:AC-144 RESEARCHER consegue consultar snapshots
     @Test
     void deveResearcherConseguirConsultarSnapshots() {
-        String email = "researcher-" + System.nanoTime() + "@example.com";
-        String researcherToken = registerAndGetToken(email);
+        String researcherToken = registerResearcherAndGetToken("researcher-" + System.nanoTime() + "@example.com");
 
         List<SnapshotAggregateDTO> result = getSnapshots(institutionId, researcherToken, "monthly", null, null);
 
         assertNotNull(result);
     }
-
 }

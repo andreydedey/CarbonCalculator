@@ -21,7 +21,7 @@ BEGIN
 END $$;
 
 -- Reset everything (order respects FK constraints)
-TRUNCATE emission_snapshot,
+TRUNCATE emission_snapshot, emission_period_snapshot,
          emission_factor, consumption_measurement,
          class_occurrence, laboratory_schedule, academic_period_shift, academic_period_holiday, academic_period,
          laboratory_equipment, configuration, operating_system, monitor, equipment_model,
@@ -800,87 +800,3 @@ INSERT INTO emission_factor (reference_month, value, source, institution_id) VAL
   ('2026-12-01', 0.0375, 'MCTI — Fator médio SIN, dez/2026', '22222222-2222-2222-2222-222222222222'),
   -- FACOMP — only current month
   ('2026-10-01', 0.0425, 'MCTI — Fator médio SIN, out/2026', '5eed0000-0000-0000-0000-000000000001');
-
-DO $$
-DECLARE
-  d          DATE;
-  dow        INT;
-  factor_val NUMERIC(10,6);
-  energy_kwh NUMERIC(12,4);
-  station_cnt INT;
-  rec        RECORD;
-  holidays   DATE[];
-BEGIN
-  PERFORM set_config('app.current_institution', '11111111-1111-1111-1111-111111111111', true);
-  FOR rec IN
-    SELECT id, start_date, end_date FROM academic_period
-    WHERE institution_id = '11111111-1111-1111-1111-111111111111'
-    ORDER BY start_date
-  LOOP
-    SELECT array_agg(date) INTO holidays
-    FROM academic_period_holiday WHERE academic_period_id = rec.id;
-
-    d := rec.start_date;
-    WHILE d <= rec.end_date AND d < CURRENT_DATE LOOP
-      dow := EXTRACT(ISODOW FROM d)::INT;
-      IF dow IN (6, 7) OR (holidays IS NOT NULL AND d = ANY(holidays)) THEN
-        d := d + 1; CONTINUE;
-      END IF;
-      SELECT value INTO factor_val FROM emission_factor
-      WHERE institution_id = '11111111-1111-1111-1111-111111111111'
-        AND reference_month = DATE_TRUNC('month', d)::DATE;
-      IF factor_val IS NULL THEN d := d + 1; CONTINUE; END IF;
-
-      energy_kwh  := 24.5833;
-      station_cnt := 55;
-
-      INSERT INTO emission_snapshot
-        (institution_id, academic_period_id, snapshot_date, day_of_week,
-         daily_energy_kwh, daily_emission_kg, emission_factor_value, station_count, is_school_day)
-      VALUES
-        ('11111111-1111-1111-1111-111111111111', rec.id, d, dow::SMALLINT,
-         energy_kwh, ROUND(energy_kwh * factor_val, 4), factor_val, station_cnt, true)
-      ON CONFLICT (institution_id, snapshot_date) DO NOTHING;
-      d := d + 1;
-    END LOOP;
-  END LOOP;
-
-  PERFORM set_config('app.current_institution', '22222222-2222-2222-2222-222222222222', true);
-  FOR rec IN
-    SELECT id, start_date, end_date FROM academic_period
-    WHERE institution_id = '22222222-2222-2222-2222-222222222222'
-    ORDER BY start_date
-  LOOP
-    SELECT array_agg(date) INTO holidays
-    FROM academic_period_holiday WHERE academic_period_id = rec.id;
-
-    d := rec.start_date;
-    WHILE d <= rec.end_date AND d < CURRENT_DATE LOOP
-      dow := EXTRACT(ISODOW FROM d)::INT;
-      IF dow IN (6, 7) OR (holidays IS NOT NULL AND d = ANY(holidays)) THEN
-        d := d + 1; CONTINUE;
-      END IF;
-      SELECT value INTO factor_val FROM emission_factor
-      WHERE institution_id = '22222222-2222-2222-2222-222222222222'
-        AND reference_month = DATE_TRUNC('month', d)::DATE;
-      IF factor_val IS NULL THEN d := d + 1; CONTINUE; END IF;
-
-      IF dow IN (1, 3, 5) THEN
-        energy_kwh  := 31.9667;
-        station_cnt := 60;
-      ELSE
-        energy_kwh  := 27.0000;
-        station_cnt := 40;
-      END IF;
-
-      INSERT INTO emission_snapshot
-        (institution_id, academic_period_id, snapshot_date, day_of_week,
-         daily_energy_kwh, daily_emission_kg, emission_factor_value, station_count, is_school_day)
-      VALUES
-        ('22222222-2222-2222-2222-222222222222', rec.id, d, dow::SMALLINT,
-         energy_kwh, ROUND(energy_kwh * factor_val, 4), factor_val, station_cnt, true)
-      ON CONFLICT (institution_id, snapshot_date) DO NOTHING;
-      d := d + 1;
-    END LOOP;
-  END LOOP;
-END $$;
