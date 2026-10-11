@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useSyncExternalStore } from 'react'
+import { useCallback, useSyncExternalStore } from 'react'
 
 type Theme = 'light' | 'dark' | 'system'
 
@@ -14,14 +14,28 @@ function getStoredTheme(): Theme {
   return 'system'
 }
 
-function applyTheme(theme: Theme) {
-  const root = document.documentElement
-  const resolved = theme === 'system'
-    ? window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-    : theme
-
-  root.classList.toggle('dark', resolved === 'dark')
+function resolveTheme(theme: Theme): 'light' | 'dark' {
+  if (theme === 'system') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  }
+  return theme
 }
+
+function applyTheme(theme: Theme) {
+  document.documentElement.classList.toggle('dark', resolveTheme(theme) === 'dark')
+}
+
+// Apply the stored theme immediately on module load — no useEffect needed,
+// the class is set before React renders anything.
+applyTheme(getStoredTheme())
+
+// Re-apply when the OS preference changes (only matters when theme === 'system').
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  if (getStoredTheme() === 'system') {
+    applyTheme('system')
+    for (const l of listeners) l()
+  }
+})
 
 let listeners: Array<() => void> = []
 
@@ -32,23 +46,8 @@ function subscribe(listener: () => void) {
   }
 }
 
-function getSnapshot(): Theme {
-  return getStoredTheme()
-}
-
 export function useTheme() {
-  const theme = useSyncExternalStore(subscribe, getSnapshot, () => 'system' as Theme)
-
-  useEffect(() => {
-    applyTheme(theme)
-
-    if (theme === 'system') {
-      const mql = window.matchMedia('(prefers-color-scheme: dark)')
-      const handler = () => applyTheme('system')
-      mql.addEventListener('change', handler)
-      return () => mql.removeEventListener('change', handler)
-    }
-  }, [theme])
+  const theme = useSyncExternalStore(subscribe, getStoredTheme, () => 'system' as Theme)
 
   const setTheme = useCallback((next: Theme) => {
     try {
@@ -60,9 +59,5 @@ export function useTheme() {
     for (const l of listeners) l()
   }, [])
 
-  const resolvedTheme = theme === 'system'
-    ? (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-    : theme
-
-  return { theme, resolvedTheme, setTheme } as const
+  return { theme, resolvedTheme: resolveTheme(theme), setTheme } as const
 }
