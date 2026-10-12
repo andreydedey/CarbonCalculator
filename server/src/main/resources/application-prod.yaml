@@ -5,6 +5,9 @@ spring:
   flyway:
     locations: classpath:db/migration
 
+server:
+  forward-headers-strategy: native
+
 management:
   endpoints:
     web:
