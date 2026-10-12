@@ -18,7 +18,6 @@ type AuthState = {
   isLoading: boolean
   login: (payload: LoginPayload) => Promise<void>
   acceptInvite: (token: string, payload: AcceptInvitePayload) => Promise<void>
-  setUserFromOAuth: (user: UserProfile) => void
   logout: () => void
 }
 
@@ -49,10 +48,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [handleAuthResponse],
   )
 
-  const setUserFromOAuth = useCallback((user: UserProfile) => {
-    setUser(user)
-  }, [])
-
   const logout = useCallback(() => {
     apiLogout().catch(() => {})
     delete api.defaults.headers.common.Authorization
@@ -73,10 +68,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isLoading,
       login,
       acceptInvite,
-      setUserFromOAuth,
       logout,
     }),
-    [user, isLoading, login, acceptInvite, setUserFromOAuth, logout],
+    [user, isLoading, login, acceptInvite, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

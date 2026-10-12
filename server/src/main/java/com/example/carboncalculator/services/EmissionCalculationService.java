@@ -576,6 +576,10 @@ public class EmissionCalculationService {
     }
 
     private String escapeCsv(String value) {
+        // A leading =, +, - or @ makes spreadsheets evaluate the cell as a formula (CSV injection)
+        if (!value.isEmpty() && "=+-@\t\r".indexOf(value.charAt(0)) >= 0) {
+            value = "'" + value;
+        }
         if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
             return "\"" + value.replace("\"", "\"\"") + "\"";
         }

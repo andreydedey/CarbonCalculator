@@ -741,6 +741,22 @@ class EmissionCalculationIntegrationTest {
 
     // @spec:AC-099 CSV tem Content-Type e nome de arquivo corretos
     @Test
+    void deveExportarCsvSemPermitirInjecaoDeFormula() {
+        setupStandardScenario();
+        createLab("=HYPERLINK(\"http://example.com\")");
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/academic-periods/" + periodId + "/emissions/export",
+                HttpMethod.GET,
+                new HttpEntity<>(headersFor(institutionId)),
+                String.class);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(response.getBody().contains("\n\"'=HYPERLINK(\"\"http://example.com\"\")\","));
+        assertFalse(response.getBody().contains("\n=HYPERLINK"));
+    }
+
+    @Test
     void deveCsvTerContentTypeCorreto() {
         setupStandardScenario();
 

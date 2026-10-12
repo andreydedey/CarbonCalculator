@@ -15,6 +15,10 @@ public final class InstitutionSpecification {
 
     private InstitutionSpecification() {}
 
+    public static Specification<Institution> hasId(UUID id) {
+        return (root, query, cb) -> cb.equal(root.get("id"), id);
+    }
+
     public static Specification<Institution> hasActiveMember(UUID userId) {
         return (root, query, cb) -> {
             Subquery<UUID> memberships = query.subquery(UUID.class);

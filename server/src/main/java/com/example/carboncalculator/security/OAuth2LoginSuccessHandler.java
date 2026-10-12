@@ -44,6 +44,12 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                                         Authentication authentication) throws IOException {
         OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
         String email = oidcUser.getEmail();
+        // Invites and accounts are matched by e-mail, so only a verified address may claim them
+        if (email == null || !Boolean.TRUE.equals(oidcUser.getEmailVerified())) {
+            log.info("OAuth login rejected — unverified email={}", email);
+            response.sendRedirect(loginUrl() + "?error=email_not_verified");
+            return;
+        }
         String name = oidcUser.getFullName();
         if (name == null || name.isBlank()) {
             name = email.split("@")[0];
@@ -57,8 +63,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
             if (pendingInvites.isEmpty()) {
                 log.info("OAuth login rejected — no account or invite for email={}", email);
-                response.sendRedirect(frontendRedirectUrl.replace("/oauth/callback", "/login")
-                        + "?error=no_invite");
+                response.sendRedirect(loginUrl() + "?error=no_invite");
                 return;
             }
 
@@ -83,8 +88,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
             if (!hasAccess) {
                 log.info("OAuth login rejected — no active membership for email={}", email);
-                response.sendRedirect(frontendRedirectUrl.replace("/oauth/callback", "/login")
-                        + "?error=no_invite");
+                response.sendRedirect(loginUrl() + "?error=no_invite");
                 return;
             }
 
@@ -95,7 +99,8 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             log.info("User logged in via Google OAuth: id={}, email={}", user.getId(), email);
         }
 
-        String accessToken = jwtService.generateAccessToken(user);
+        // Only the refresh cookie is issued here; the SPA exchanges it for an access token at
+        // /auth/refresh, so no token travels in the redirect URL (history, logs, Referer)
         String refreshToken = jwtService.generateRefreshToken(user);
 
         ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refreshToken)
@@ -107,8 +112,11 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-        String redirectUrl = frontendRedirectUrl + "?token=" + accessToken;
-        response.sendRedirect(redirectUrl);
+        response.sendRedirect(frontendRedirectUrl);
+    }
+
+    private String loginUrl() {
+        return frontendRedirectUrl.replace("/oauth/callback", "/login");
     }
 
     /**
