@@ -23,7 +23,7 @@ export function ReadinessCheck({ readiness }: ReadinessCheckProps) {
       className={
         isBlocking
           ? 'flex flex-col gap-2 rounded-lg border border-red-300 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950/30'
-          : 'flex flex-col gap-2 rounded-lg border border-amber-400 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30'
+          : 'flex flex-col gap-2 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30'
       }
     >
       <div
