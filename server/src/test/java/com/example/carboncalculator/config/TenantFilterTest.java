@@ -29,6 +29,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 
 import com.example.carboncalculator.entities.AppUser;
+import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.UserInstitutionRepository;
 
 import jakarta.servlet.FilterChain;
@@ -45,8 +46,9 @@ class TenantFilterTest {
     private final TransactionStatus transactionStatus = mock(TransactionStatus.class);
 
     private final UserInstitutionRepository membershipRepository = mock(UserInstitutionRepository.class);
+    private final InstitutionRepository institutionRepository = mock(InstitutionRepository.class);
 
-    private final TenantFilter filter = new TenantFilter(dataSource, transactionManager, membershipRepository);
+    private final TenantFilter filter = new TenantFilter(dataSource, transactionManager, membershipRepository, institutionRepository);
 
     // Admin users bypass the membership check, keeping these tests focused on tenant propagation.
     @BeforeEach

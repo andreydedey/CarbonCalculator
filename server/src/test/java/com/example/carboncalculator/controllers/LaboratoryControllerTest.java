@@ -34,6 +34,7 @@ import com.example.carboncalculator.config.TenantFilter;
 import com.example.carboncalculator.dto.CreateLaboratoryRequest;
 import com.example.carboncalculator.dto.LaboratoryDTO;
 import com.example.carboncalculator.entities.AppUser;
+import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.UserInstitutionRepository;
 import com.example.carboncalculator.services.LaboratoryService;
 
@@ -49,7 +50,8 @@ class LaboratoryControllerTest {
     private final DataSource dataSource = mock(DataSource.class);
     private final PlatformTransactionManager transactionManager = mock(PlatformTransactionManager.class);
     private final UserInstitutionRepository membershipRepository = mock(UserInstitutionRepository.class);
-    private final TenantFilter tenantFilter = new TenantFilter(dataSource, transactionManager, membershipRepository);
+    private final InstitutionRepository institutionRepository = mock(InstitutionRepository.class);
+    private final TenantFilter tenantFilter = new TenantFilter(dataSource, transactionManager, membershipRepository, institutionRepository);
 
     private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new LaboratoryController(laboratoryService))
             .addFilters(tenantFilter)
