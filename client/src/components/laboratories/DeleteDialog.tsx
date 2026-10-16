@@ -35,9 +35,7 @@ export const DeleteDialog: React.FC<DeleteDialogProps> = ({
       toast.success('Laboratório excluído.')
     },
     onError: (error) => {
-      toast.error(
-        isApiError(error) ? error.message : 'Não foi possível excluir o laboratório.',
-      )
+      toast.error(isApiError(error) ? error.message : 'Não foi possível excluir o laboratório.')
     },
   })
 

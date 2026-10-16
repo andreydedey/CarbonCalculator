@@ -156,8 +156,18 @@ class InviteRegistrationIntegrationTest {
 
     @Test
     void inviteExistingUser_noInviteLink() {
-        // admin@admin.com already exists
-        UserMemberDTO result = invite("admin@admin.com", "RESEARCHER");
+        // Create an existing (non-admin) user via invite+accept in a temporary institution
+        InstitutionDTO tempInst = createInstitution("TEMP-" + System.nanoTime());
+        String existingEmail = "existing-" + System.nanoTime() + "@test.com";
+        UserMemberDTO pending = inviteInInstitution(existingEmail, "RESEARCHER", tempInst.id());
+        String rawToken = pending.inviteLink().replace("/register?token=", "");
+        restTemplate.postForEntity(
+                "/auth/invitations/{token}/accept",
+                new AcceptInviteRequest("Existing User", "Senha-123!"),
+                AuthResponse.class, rawToken);
+
+        // Invite the now-existing user into the main institution (no membership there yet)
+        UserMemberDTO result = invite(existingEmail, "RESEARCHER");
 
         assertEquals("ACTIVE", result.status());
         assertNull(result.inviteLink());

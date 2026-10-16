@@ -92,14 +92,39 @@ export const PeriodSummary: React.FC<PeriodSummaryProps> = ({ periodId }) => {
 function formatMonth(ym: string): string {
   const [year, month] = ym.split('-')
   const months = [
-    '', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+    '',
+    'Janeiro',
+    'Fevereiro',
+    'Março',
+    'Abril',
+    'Maio',
+    'Junho',
+    'Julho',
+    'Agosto',
+    'Setembro',
+    'Outubro',
+    'Novembro',
+    'Dezembro',
   ]
   return `${months[Number(month)]} ${year}`
 }
 
 function shortMonth(ym: string): string {
   const [, month] = ym.split('-')
-  const short = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+  const short = [
+    '',
+    'Jan',
+    'Fev',
+    'Mar',
+    'Abr',
+    'Mai',
+    'Jun',
+    'Jul',
+    'Ago',
+    'Set',
+    'Out',
+    'Nov',
+    'Dez',
+  ]
   return short[Number(month)]
 }

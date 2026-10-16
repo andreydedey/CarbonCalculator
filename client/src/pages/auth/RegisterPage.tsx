@@ -27,7 +27,7 @@ export const RegisterPage: React.FC = () => {
     isError,
   } = useQuery({
     queryKey: ['invite-validation', token],
-    queryFn: () => validateInvite(token!),
+    queryFn: () => validateInvite(token ?? ''),
     enabled: !!token,
     retry: false,
   })

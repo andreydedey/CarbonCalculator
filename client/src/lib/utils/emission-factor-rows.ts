@@ -40,9 +40,10 @@ export function computeEmissionFactorRows(
   }, null)
 
   const factorRows: EmissionFactorRow[] = factors.map((f) => ({
-    status: mostRecentUpToNow && f.referenceMonth === mostRecentUpToNow.referenceMonth
-      ? 'em-uso'
-      : 'anterior',
+    status:
+      mostRecentUpToNow && f.referenceMonth === mostRecentUpToNow.referenceMonth
+        ? 'em-uso'
+        : 'anterior',
     referenceMonth: f.referenceMonth,
     factor: f,
   }))

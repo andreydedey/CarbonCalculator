@@ -69,11 +69,7 @@ export function InviteDialog({
               )}
             />
           </div>
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={!form.formState.isDirty || isPending}
-          >
+          <Button type="submit" className="w-full" disabled={!form.formState.isDirty || isPending}>
             {isPending && <Loader2 className="size-4 animate-spin" />}
             {isPending ? 'Enviando...' : 'Enviar Convite'}
           </Button>

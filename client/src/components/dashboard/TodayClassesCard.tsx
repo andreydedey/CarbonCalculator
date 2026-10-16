@@ -9,7 +9,6 @@ import { StatusBadge } from '@/components/academic-periods/OccurrencesView'
 import { StationsField } from '@/components/academic-periods/StationsField'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { TableSkeleton } from '@/components/ui/skeletons'
 import { FieldError } from '@/components/ui/field-error'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
@@ -19,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { TableSkeleton } from '@/components/ui/skeletons'
 import { DAY_SHORT_LABELS, SHIFT_LABELS } from '@/lib/academic-period-constants'
 import type { AcademicPeriod } from '@/lib/api/academic-periods'
 import { isApiError } from '@/lib/api/client'
@@ -387,7 +387,9 @@ export function TodayClassesCard({
                           size="icon"
                           className="size-8"
                           aria-label={
-                            c.status === 'EXTRA' ? 'Remover aula extra' : 'Voltar ao padrão da grade'
+                            c.status === 'EXTRA'
+                              ? 'Remover aula extra'
+                              : 'Voltar ao padrão da grade'
                           }
                           onClick={() => resetMutation.mutate(c)}
                         >
@@ -406,7 +408,9 @@ export function TodayClassesCard({
               className="w-full text-muted-foreground"
               onClick={() => setExpanded(!expanded)}
             >
-              <ChevronDown className={`size-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                className={`size-4 transition-transform ${expanded ? 'rotate-180' : ''}`}
+              />
               {expanded ? 'Mostrar menos' : `Ver mais ${classes.length - VISIBLE_LIMIT} aulas`}
             </Button>
           )}

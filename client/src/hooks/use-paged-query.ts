@@ -1,4 +1,4 @@
-import { useInfiniteQuery, type QueryKey } from '@tanstack/react-query'
+import { type QueryKey, useInfiniteQuery } from '@tanstack/react-query'
 import type { PageResponse } from '@/lib/api/types'
 
 interface UsePagedQueryOptions<T> {

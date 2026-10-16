@@ -35,9 +35,7 @@ export const DeactivateDialog: React.FC<DeactivateDialogProps> = ({
       toast.success('Laboratório desativado.')
     },
     onError: (error) => {
-      toast.error(
-        isApiError(error) ? error.message : 'Não foi possível desativar o laboratório.',
-      )
+      toast.error(isApiError(error) ? error.message : 'Não foi possível desativar o laboratório.')
     },
   })
 

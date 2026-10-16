@@ -267,7 +267,10 @@ export const AcademicPeriodsPage: React.FC = () => {
           periodName={deleteDialog.data.name}
           open={deleteDialog.open}
           onOpenChange={(open) => !open && deleteDialog.closeDialog()}
-          onConfirm={() => deleteMutation.mutate(deleteDialog.data!.id)}
+          onConfirm={() => {
+            const data = deleteDialog.data
+            if (data) deleteMutation.mutate(data.id)
+          }}
           isPending={deleteMutation.isPending}
         />
       )}
