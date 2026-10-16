@@ -1,7 +1,6 @@
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 
-// biome-ignore lint/suspicious/noArrayIndexKey: skeleton placeholders are static and never reorder
 const k = (prefix: string, i: number) => `${prefix}-${i}`
 
 export function CardListSkeleton({ count = 3 }: { count?: number }) {

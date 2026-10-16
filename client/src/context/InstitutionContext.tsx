@@ -1,16 +1,6 @@
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from 'react'
+import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
-import {
-  readStoredInstitutionId,
-  writeStoredInstitutionId,
-} from '@/lib/context/institutionStorage'
+import { readStoredInstitutionId, writeStoredInstitutionId } from '@/lib/context/institutionStorage'
 
 export interface InstitutionContextValue {
   institutionId: string | null

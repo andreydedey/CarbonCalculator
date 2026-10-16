@@ -99,9 +99,7 @@ export function DashboardPage() {
             <TreePine className="size-8 text-primary" />
           </div>
           <div className="flex flex-col items-center gap-2 max-w-md text-center">
-            <h2 className="text-xl font-semibold">
-              Bem-vindo ao Carbon Calculator
-            </h2>
+            <h2 className="text-xl font-semibold">Bem-vindo ao Carbon Calculator</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Acompanhe e reduza a pegada de carbono dos laboratórios de informática da sua
               instituição. Para começar, cadastre um período letivo — é ele que define o intervalo
@@ -109,15 +107,24 @@ export function DashboardPage() {
             </p>
           </div>
           <div className="grid grid-cols-3 gap-4 w-full max-w-lg pt-2">
-            <Link to="/academic-periods" className="flex flex-col items-center gap-1.5 rounded-lg border p-4 transition-colors hover:bg-accent">
+            <Link
+              to="/academic-periods"
+              className="flex flex-col items-center gap-1.5 rounded-lg border p-4 transition-colors hover:bg-accent"
+            >
               <CalendarDays className="size-5 text-primary" />
               <span className="text-xs font-medium text-center">Cadastrar período letivo</span>
             </Link>
-            <Link to="/emission-factors" className="flex flex-col items-center gap-1.5 rounded-lg border p-4 transition-colors hover:bg-accent">
+            <Link
+              to="/emission-factors"
+              className="flex flex-col items-center gap-1.5 rounded-lg border p-4 transition-colors hover:bg-accent"
+            >
               <Leaf className="size-5 text-primary" />
               <span className="text-xs font-medium text-center">Registrar fatores de emissão</span>
             </Link>
-            <Link to="/emissions" className="flex flex-col items-center gap-1.5 rounded-lg border p-4 transition-colors hover:bg-accent">
+            <Link
+              to="/emissions"
+              className="flex flex-col items-center gap-1.5 rounded-lg border p-4 transition-colors hover:bg-accent"
+            >
               <Zap className="size-5 text-primary" />
               <span className="text-xs font-medium text-center">Visualizar emissões</span>
             </Link>

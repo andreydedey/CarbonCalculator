@@ -70,17 +70,10 @@ export const LabCard: React.FC<LabCardProps> = ({
   onDeactivate,
   onDelete,
 }) => (
-  <div
-    role="button"
-    tabIndex={0}
+  <button
+    type="button"
     className="w-full rounded-[10px] border border-border bg-card cursor-pointer transition-colors hover:bg-muted/40 text-left"
     onClick={() => onEdit(laboratory)}
-    onKeyDown={(e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault()
-        onEdit(laboratory)
-      }
-    }}
   >
     {/* Top */}
     <div className="flex items-center justify-between px-6 py-5">
@@ -108,13 +101,31 @@ export const LabCard: React.FC<LabCardProps> = ({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {laboratory.active ? (
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDeactivate(laboratory) }}>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDeactivate(laboratory)
+                }}
+              >
                 Desativar
               </DropdownMenuItem>
             ) : (
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onActivate(laboratory) }}>Ativar</DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onActivate(laboratory)
+                }}
+              >
+                Ativar
+              </DropdownMenuItem>
             )}
-            <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(laboratory) }}>
+            <DropdownMenuItem
+              className="text-destructive"
+              onClick={(e) => {
+                e.stopPropagation()
+                onDelete(laboratory)
+              }}
+            >
               Excluir
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -160,5 +171,5 @@ export const LabCard: React.FC<LabCardProps> = ({
         <Progress value={emission?.pct ?? 0} className="h-1 w-[100px]" />
       </div>
     </div>
-  </div>
+  </button>
 )

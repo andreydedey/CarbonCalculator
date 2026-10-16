@@ -3,8 +3,8 @@ import { describe, test } from 'node:test'
 import {
   computeKpiCards,
   EMPTY_STATE_MESSAGE,
-  getVariationColor,
   GRANULARITY_OPTIONS,
+  getVariationColor,
   KPI_GRANULARITY,
   type SnapshotAggregateDTO,
 } from './LongitudinalPage.logic.ts'
@@ -64,7 +64,11 @@ describe('LongitudinalPage', () => {
       const average = cards.find((c) => c.label === 'Média Mensal')
 
       assert.ok(average, 'deve existir o card Média Mensal')
-      assert.equal(average?.value, 100, 'o outlier fora dos últimos 12 meses não deve afetar a média')
+      assert.equal(
+        average?.value,
+        100,
+        'o outlier fora dos últimos 12 meses não deve afetar a média',
+      )
     })
   })
 

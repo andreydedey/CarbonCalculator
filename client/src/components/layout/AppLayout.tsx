@@ -172,7 +172,11 @@ export const AppLayout: React.FC = () => {
                 onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
                 title={resolvedTheme === 'dark' ? 'Modo claro' : 'Modo escuro'}
               >
-                {resolvedTheme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                {resolvedTheme === 'dark' ? (
+                  <Moon className="h-4 w-4" />
+                ) : (
+                  <Sun className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </header>

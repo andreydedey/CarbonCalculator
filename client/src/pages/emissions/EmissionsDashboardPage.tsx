@@ -7,9 +7,8 @@ import { EquivalenceCards } from '@/components/emissions/EquivalenceCards'
 import { ExportButton } from '@/components/emissions/ExportButton'
 import { ReadinessCheck } from '@/components/emissions/ReadinessCheck'
 import { Badge } from '@/components/ui/badge'
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
-import { MetricCardSkeleton, TableSkeleton } from '@/components/ui/skeletons'
 import { Card, CardContent } from '@/components/ui/card'
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Progress } from '@/components/ui/progress'
 import {
   Select,
@@ -18,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { MetricCardSkeleton, TableSkeleton } from '@/components/ui/skeletons'
 import {
   Table,
   TableBody,
@@ -350,7 +350,8 @@ export function EmissionsDashboardPage() {
             </EmptyMedia>
             <EmptyTitle>Nenhum período letivo cadastrado</EmptyTitle>
             <EmptyDescription>
-              Cadastre um período letivo para começar a calcular as emissões de carbono da sua instituição.
+              Cadastre um período letivo para começar a calcular as emissões de carbono da sua
+              instituição.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>

@@ -6,7 +6,6 @@ import { toast } from 'sonner'
 import { InstitutionCard } from '@/components/institutions/InstitutionCard'
 import { InstitutionFormDialog } from '@/components/institutions/InstitutionFormDialog'
 import { SwitchInstitutionDialog } from '@/components/institutions/SwitchInstitutionDialog'
-import { CardGridSkeleton } from '@/components/ui/skeletons'
 import { Button } from '@/components/ui/button'
 import {
   Empty,
@@ -18,6 +17,7 @@ import {
 } from '@/components/ui/empty'
 import { Input } from '@/components/ui/input'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
+import { CardGridSkeleton } from '@/components/ui/skeletons'
 import { useAuth } from '@/context/AuthContext'
 import { useInstitution } from '@/context/InstitutionContext'
 import { useDialog } from '@/hooks/use-dialog'
@@ -33,11 +33,17 @@ export const InstitutionsPage: React.FC = () => {
 
   const [search, debouncedSearch, setSearch] = useSearchParam()
 
-  const { items: institutions, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    usePagedQuery({
-      queryKey: ['institutions', debouncedSearch],
-      queryFn: (page) => listInstitutions({ search: debouncedSearch, page }),
-    })
+  const {
+    items: institutions,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = usePagedQuery({
+    queryKey: ['institutions', debouncedSearch],
+    queryFn: (page) => listInstitutions({ search: debouncedSearch, page }),
+  })
 
   const selectMutation = useMutation({
     mutationFn: (institution: Institution) => getInstitution(institution.id),

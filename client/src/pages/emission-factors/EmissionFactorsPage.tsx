@@ -7,7 +7,6 @@ import { toast } from 'sonner'
 import { EmissionFactorFormDialog } from '@/components/emission-factors/EmissionFactorFormDialog'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
-import { TableSkeleton } from '@/components/ui/skeletons'
 import {
   Select,
   SelectContent,
@@ -15,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { TableSkeleton } from '@/components/ui/skeletons'
 import {
   Table,
   TableBody,
@@ -424,7 +424,9 @@ export function EmissionFactorsPage() {
                               variant="ghost"
                               size="icon"
                               className="size-7 text-muted-foreground hover:text-foreground"
-                              onClick={() => openEdit(row.factor!)}
+                              onClick={() => {
+                                if (row.factor) openEdit(row.factor)
+                              }}
                               disabled={modalOpen}
                             >
                               <Pencil className="size-3.5" />

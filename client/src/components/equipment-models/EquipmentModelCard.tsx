@@ -26,17 +26,10 @@ export const EquipmentModelCard: React.FC<EquipmentModelCardProps> = ({
   onEdit,
   onDelete,
 }) => (
-  <div
-    role="button"
-    tabIndex={0}
+  <button
+    type="button"
     className="w-full rounded-[10px] border border-border bg-card cursor-pointer transition-colors hover:bg-muted/40 text-left"
     onClick={() => onEdit(model)}
-    onKeyDown={(e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault()
-        onEdit(model)
-      }
-    }}
   >
     <div className="flex items-center justify-between px-6 py-5">
       <div className="flex items-center gap-4">
@@ -77,8 +70,21 @@ export const EquipmentModelCard: React.FC<EquipmentModelCardProps> = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(model) }}>Editar</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(model) }}>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation()
+                onEdit(model)
+              }}
+            >
+              Editar
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-destructive"
+              onClick={(e) => {
+                e.stopPropagation()
+                onDelete(model)
+              }}
+            >
               Excluir
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -112,5 +118,5 @@ export const EquipmentModelCard: React.FC<EquipmentModelCardProps> = ({
         </div>
       )}
     </div>
-  </div>
+  </button>
 )

@@ -21,7 +21,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { CardGridSkeleton } from '@/components/ui/skeletons'
 import {
   Empty,
   EmptyContent,
@@ -31,6 +30,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
+import { CardGridSkeleton } from '@/components/ui/skeletons'
 import { useDialog } from '@/hooks/use-dialog'
 import { usePagedQuery } from '@/hooks/use-paged-query'
 import {
@@ -50,11 +50,17 @@ export const AcademicPeriodsPage: React.FC = () => {
   const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null)
   const [addHolidayOpen, setAddHolidayOpen] = useState(false)
 
-  const { items: periods, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    usePagedQuery({
-      queryKey: ['academic-periods'],
-      queryFn: (page) => listAcademicPeriods(page),
-    })
+  const {
+    items: periods,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = usePagedQuery({
+    queryKey: ['academic-periods'],
+    queryFn: (page) => listAcademicPeriods(page),
+  })
 
   const resolvedPeriodId = useMemo(() => {
     if (selectedPeriodId && periods.some((p) => p.id === selectedPeriodId)) {
@@ -246,7 +252,10 @@ export const AcademicPeriodsPage: React.FC = () => {
           periodName={deleteDialog.data.name}
           open={deleteDialog.open}
           onOpenChange={(open) => !open && deleteDialog.closeDialog()}
-          onConfirm={() => deleteMutation.mutate(deleteDialog.data!.id)}
+          onConfirm={() => {
+            const data = deleteDialog.data
+            if (data) deleteMutation.mutate(data.id)
+          }}
           isPending={deleteMutation.isPending}
         />
       )}
