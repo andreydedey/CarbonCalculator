@@ -107,11 +107,18 @@ export const LaboratoryList: React.FC = () => {
     )
   }, [emissionResult])
 
-  const { items: laboratories, data: laboratoriesData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    usePagedQuery({
-      queryKey: ['laboratories', debouncedSearch, statusFilter],
-      queryFn: (page) => listLaboratories({ status: statusFilter, search: debouncedSearch, page }),
-    })
+  const {
+    items: laboratories,
+    data: laboratoriesData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = usePagedQuery({
+    queryKey: ['laboratories', debouncedSearch, statusFilter],
+    queryFn: (page) => listLaboratories({ status: statusFilter, search: debouncedSearch, page }),
+  })
 
   const activateMutation = useMutation({
     mutationFn: (lab: Laboratory) => activateLaboratory(lab.id),

@@ -18,9 +18,7 @@ export type ListMonitorsOptions = {
   size?: number
 }
 
-export function listMonitors(
-  options: ListMonitorsOptions = {},
-): Promise<PageResponse<Monitor>> {
+export function listMonitors(options: ListMonitorsOptions = {}): Promise<PageResponse<Monitor>> {
   const { name, page = 0, size = 10 } = options
   return api
     .get('/monitors', {

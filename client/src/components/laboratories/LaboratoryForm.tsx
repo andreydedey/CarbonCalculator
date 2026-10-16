@@ -58,9 +58,7 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
       toast.success(mode === 'edit' ? 'Laboratório atualizado.' : 'Laboratório criado.')
     },
     onError: (error) => {
-      toast.error(
-        isApiError(error) ? error.message : 'Não foi possível salvar o laboratório.',
-      )
+      toast.error(isApiError(error) ? error.message : 'Não foi possível salvar o laboratório.')
     },
   })
 

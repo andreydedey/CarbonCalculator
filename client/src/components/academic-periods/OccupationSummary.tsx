@@ -105,8 +105,12 @@ function LabRow({
             <Skeleton className="h-4 w-full" />
           </td>
         ))}
-        <td className="px-3 py-2.5"><Skeleton className="h-4 w-8 mx-auto" /></td>
-        <td className="px-3 py-2.5"><Skeleton className="h-4 w-16 ml-auto" /></td>
+        <td className="px-3 py-2.5">
+          <Skeleton className="h-4 w-8 mx-auto" />
+        </td>
+        <td className="px-3 py-2.5">
+          <Skeleton className="h-4 w-16 ml-auto" />
+        </td>
       </tr>
     )
   }

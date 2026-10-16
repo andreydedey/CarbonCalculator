@@ -2,7 +2,6 @@ import { Monitor as MonitorIcon, Search } from 'lucide-react'
 import type React from 'react'
 import { DeleteMonitorDialog } from '@/components/monitors/DeleteMonitorDialog'
 import { MonitorCard } from '@/components/monitors/MonitorCard'
-import { CardListSkeleton } from '@/components/ui/skeletons'
 import { MonitorForm } from '@/components/monitors/MonitorForm'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,6 +14,7 @@ import {
 } from '@/components/ui/empty'
 import { Input } from '@/components/ui/input'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
+import { CardListSkeleton } from '@/components/ui/skeletons'
 import { useDialog, useFormDialog } from '@/hooks/use-dialog'
 import { usePagedQuery } from '@/hooks/use-paged-query'
 import { useSearchParam } from '@/hooks/use-search-param'
@@ -34,11 +34,17 @@ export const MonitorList: React.FC<MonitorListProps> = ({ formOpen, onFormOpenCh
 
   const [search, debouncedSearch, setSearch] = useSearchParam()
 
-  const { items: monitors, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    usePagedQuery({
-      queryKey: ['monitors', debouncedSearch],
-      queryFn: (page) => listMonitors({ name: debouncedSearch, page }),
-    })
+  const {
+    items: monitors,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = usePagedQuery({
+    queryKey: ['monitors', debouncedSearch],
+    queryFn: (page) => listMonitors({ name: debouncedSearch, page }),
+  })
 
   function handleSaved() {
     formDialog.close()

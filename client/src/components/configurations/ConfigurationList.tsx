@@ -4,7 +4,6 @@ import type React from 'react'
 import { toast } from 'sonner'
 import { ConfigurationForm } from '@/components/configurations/ConfigurationForm'
 import { Badge } from '@/components/ui/badge'
-import { TableSkeleton } from '@/components/ui/skeletons'
 import { Button } from '@/components/ui/button'
 import {
   Empty,
@@ -15,6 +14,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
+import { TableSkeleton } from '@/components/ui/skeletons'
 import { useFormDialog } from '@/hooks/use-dialog'
 import { usePagedQuery } from '@/hooks/use-paged-query'
 import { isApiError } from '@/lib/api/client'
@@ -46,11 +46,18 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
     onCreateOpenChange: onFormOpenChange,
   })
 
-  const { items: configurations, data: configurationsData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    usePagedQuery({
-      queryKey: ['configurations'],
-      queryFn: (page) => listConfigurations({ page }),
-    })
+  const {
+    items: configurations,
+    data: configurationsData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = usePagedQuery({
+    queryKey: ['configurations'],
+    queryFn: (page) => listConfigurations({ page }),
+  })
 
   const deleteMutation = useMutation({
     mutationFn: deleteConfiguration,

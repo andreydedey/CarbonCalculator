@@ -46,8 +46,8 @@ export const RevokeAccessDialog: React.FC<RevokeAccessDialogProps> = ({
           <AlertDialogTitle>Revogar acesso</AlertDialogTitle>
           <AlertDialogDescription>
             Revogar o acesso de{' '}
-            <span className="font-medium text-foreground">{member.name ?? member.email}</span>?
-            Esta ação é irreversível e o membro perderá o acesso imediatamente.
+            <span className="font-medium text-foreground">{member.name ?? member.email}</span>? Esta
+            ação é irreversível e o membro perderá o acesso imediatamente.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

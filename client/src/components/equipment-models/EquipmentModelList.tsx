@@ -2,7 +2,6 @@ import { Cpu, Search } from 'lucide-react'
 import type React from 'react'
 import { DeleteEquipmentModelDialog } from '@/components/equipment-models/DeleteEquipmentModelDialog'
 import { EquipmentModelCard } from '@/components/equipment-models/EquipmentModelCard'
-import { CardListSkeleton } from '@/components/ui/skeletons'
 import { EquipmentModelForm } from '@/components/equipment-models/EquipmentModelForm'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,6 +14,7 @@ import {
 } from '@/components/ui/empty'
 import { Input } from '@/components/ui/input'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
+import { CardListSkeleton } from '@/components/ui/skeletons'
 import { useDialog, useFormDialog } from '@/hooks/use-dialog'
 import { usePagedQuery } from '@/hooks/use-paged-query'
 import { useSearchParam } from '@/hooks/use-search-param'
@@ -37,11 +37,17 @@ export const EquipmentModelList: React.FC<EquipmentModelListProps> = ({
 
   const [search, debouncedSearch, setSearch] = useSearchParam()
 
-  const { items: models, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    usePagedQuery({
-      queryKey: ['equipment-models', debouncedSearch],
-      queryFn: (page) => listEquipmentModels({ name: debouncedSearch, page }),
-    })
+  const {
+    items: models,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = usePagedQuery({
+    queryKey: ['equipment-models', debouncedSearch],
+    queryFn: (page) => listEquipmentModels({ name: debouncedSearch, page }),
+  })
 
   function handleSaved() {
     formDialog.close()

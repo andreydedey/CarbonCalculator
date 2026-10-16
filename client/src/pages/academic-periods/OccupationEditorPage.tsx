@@ -11,7 +11,6 @@ import { OccurrencesView } from '@/components/academic-periods/OccurrencesView'
 import { StationsField } from '@/components/academic-periods/StationsField'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { TableSkeleton } from '@/components/ui/skeletons'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Progress } from '@/components/ui/progress'
 import {
@@ -21,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { TableSkeleton } from '@/components/ui/skeletons'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useCanManage } from '@/hooks/useCanManage'
 import {
@@ -148,7 +148,7 @@ export const OccupationEditorPage: React.FC = () => {
 
   const { data: period, isLoading: periodLoading } = useQuery({
     queryKey: ['academic-period', id],
-    queryFn: () => getAcademicPeriod(id!),
+    queryFn: () => getAcademicPeriod(id ?? ''),
     enabled: !!id,
   })
 
@@ -172,7 +172,7 @@ export const OccupationEditorPage: React.FC = () => {
     refetch: refetchSchedule,
   } = useQuery({
     queryKey: ['schedule', id, resolvedLabId],
-    queryFn: () => getSchedule(id!, resolvedLabId!),
+    queryFn: () => getSchedule(id ?? '', resolvedLabId ?? ''),
     enabled: !!id && !!resolvedLabId,
   })
 
@@ -273,7 +273,7 @@ export const OccupationEditorPage: React.FC = () => {
   )
 
   const saveMutation = useMutation({
-    mutationFn: () => replaceSchedule(id!, resolvedLabId!, occupancyToInputs(occupancy)),
+    mutationFn: () => replaceSchedule(id ?? '', resolvedLabId ?? '', occupancyToInputs(occupancy)),
     onSuccess: () => {
       refetchSchedule()
       queryClient.invalidateQueries({ queryKey: ['period-summary', id] })
@@ -345,10 +345,7 @@ export const OccupationEditorPage: React.FC = () => {
               Alterações não salvas na grade de ocupação
             </span>
           </div>
-          <Button
-            disabled={saveMutation.isPending}
-            onClick={() => saveMutation.mutate()}
-          >
+          <Button disabled={saveMutation.isPending} onClick={() => saveMutation.mutate()}>
             <Save className="size-4" />
             Salvar Ocupação
           </Button>
@@ -436,7 +433,8 @@ export const OccupationEditorPage: React.FC = () => {
                 <div className="flex flex-col">
                   <h2 className="text-base font-semibold">{lab.name}</h2>
                   <p className="text-xs text-muted-foreground">
-                    {lab.totalStations} estações · {mode === 'grid' ? 'Grade semanal' : 'Ocorrências por data'}
+                    {lab.totalStations} estações ·{' '}
+                    {mode === 'grid' ? 'Grade semanal' : 'Ocorrências por data'}
                   </p>
                 </div>
               </div>

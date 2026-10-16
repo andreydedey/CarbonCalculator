@@ -4,7 +4,6 @@ import type React from 'react'
 import { toast } from 'sonner'
 import { ConsumptionMeasurementForm } from '@/components/consumption-measurements/ConsumptionMeasurementForm'
 import { Badge } from '@/components/ui/badge'
-import { TableSkeleton } from '@/components/ui/skeletons'
 import { Button } from '@/components/ui/button'
 import {
   Empty,
@@ -15,6 +14,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
+import { TableSkeleton } from '@/components/ui/skeletons'
 import { useFormDialog } from '@/hooks/use-dialog'
 import { usePagedQuery } from '@/hooks/use-paged-query'
 import { isApiError } from '@/lib/api/client'
@@ -60,11 +60,18 @@ export const ConsumptionMeasurementList: React.FC<ConsumptionMeasurementListProp
     onCreateOpenChange: onFormOpenChange,
   })
 
-  const { items: measurements, data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    usePagedQuery({
-      queryKey: ['consumption-measurements'],
-      queryFn: (page) => listConsumptionMeasurements({ page }),
-    })
+  const {
+    items: measurements,
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = usePagedQuery({
+    queryKey: ['consumption-measurements'],
+    queryFn: (page) => listConsumptionMeasurements({ page }),
+  })
 
   const deleteMutation = useMutation({
     mutationFn: deleteConsumptionMeasurement,
