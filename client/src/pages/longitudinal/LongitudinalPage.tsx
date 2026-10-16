@@ -216,8 +216,8 @@ export function LongitudinalPage() {
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip
-                  formatter={(value: number) => [
-                    `${value.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} kg CO₂`,
+                  formatter={(value) => [
+                    `${Number(value).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} kg CO₂`,
                     'Emissão',
                   ]}
                 />
