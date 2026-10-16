@@ -51,8 +51,10 @@ public class InstitutionController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<InstitutionDTO> create(@RequestBody CreateInstitutionRequest request) {
-        InstitutionDTO response = institutionService.create(request);
+    public ResponseEntity<InstitutionDTO> create(
+            @RequestBody CreateInstitutionRequest request,
+            @AuthenticationPrincipal AppUser user) {
+        InstitutionDTO response = institutionService.create(request, user);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
