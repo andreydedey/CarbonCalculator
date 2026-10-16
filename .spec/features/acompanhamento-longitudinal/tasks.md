@@ -41,3 +41,8 @@
 - Refs: US-046, AC-151, AC-152, AC-153, AC-154
 - Arquivos: client/src/pages/longitudinal/LongitudinalPage.test.ts
 - Esforço: médio
+
+## T-060 — Série ao vivo e congelamento: serviço e testes de integração [concluida]
+- Refs: US-051, AC-171, AC-172, AC-173, AC-174, AC-175, AC-176
+- Arquivos: server/src/main/java/com/example/carboncalculator/services/EmissionSnapshotQueryService.java, server/src/test/java/com/example/carboncalculator/EmissionSnapshotIntegrationTest.java
+- Esforço: alto
