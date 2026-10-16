@@ -462,3 +462,5 @@ export function EmissionFactorsPage() {
     </div>
   )
 }
+
+export default EmissionFactorsPage

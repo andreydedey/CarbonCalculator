@@ -169,3 +169,5 @@ export const InstitutionsPage: React.FC = () => {
     </div>
   )
 }
+
+export default InstitutionsPage

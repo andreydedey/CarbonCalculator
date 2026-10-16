@@ -539,3 +539,5 @@ export const OccupationEditorPage: React.FC = () => {
     </div>
   )
 }
+
+export default OccupationEditorPage

@@ -22,3 +22,5 @@ export const OAuthCallbackPage: React.FC = () => {
     </div>
   )
 }
+
+export default OAuthCallbackPage

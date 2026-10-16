@@ -409,3 +409,5 @@ export function EmissionsDashboardPage() {
     </div>
   )
 }
+
+export default EmissionsDashboardPage
