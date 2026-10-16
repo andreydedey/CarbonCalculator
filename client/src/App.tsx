@@ -1,5 +1,5 @@
 import type React from 'react'
-import { Suspense, lazy } from 'react'
+import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
@@ -19,13 +19,12 @@ const AcademicPeriodsPage = lazy(() => import('@/pages/academic-periods/Academic
 const AcademicPeriodDetailPage = lazy(
   () => import('@/pages/academic-periods/AcademicPeriodDetailPage'),
 )
-const OccupationEditorPage = lazy(
-  () => import('@/pages/academic-periods/OccupationEditorPage'),
-)
+const OccupationEditorPage = lazy(() => import('@/pages/academic-periods/OccupationEditorPage'))
 const EmissionsDashboardPage = lazy(() => import('@/pages/emissions/EmissionsDashboardPage'))
 const EmissionFactorsPage = lazy(() => import('@/pages/emission-factors/EmissionFactorsPage'))
 const LongitudinalPage = lazy(() => import('@/pages/longitudinal/LongitudinalPage'))
 const UsersPage = lazy(() => import('@/pages/users/UsersPage'))
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
 
 export const App: React.FC = () => (
   <ErrorBoundary>
@@ -45,17 +44,14 @@ export const App: React.FC = () => (
                 <Route path="/equipment-models" element={<EquipmentModelsPage />} />
                 <Route path="/academic-periods" element={<AcademicPeriodsPage />} />
                 <Route path="/academic-periods/:id" element={<AcademicPeriodDetailPage />} />
-                <Route
-                  path="/academic-periods/:id/occupation"
-                  element={<OccupationEditorPage />}
-                />
+                <Route path="/academic-periods/:id/occupation" element={<OccupationEditorPage />} />
                 <Route path="/emissions" element={<EmissionsDashboardPage />} />
                 <Route path="/longitudinal" element={<LongitudinalPage />} />
                 <Route path="/emission-factors" element={<EmissionFactorsPage />} />
                 <Route path="/users" element={<UsersPage />} />
               </Route>
             </Route>
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
         <Toaster position="bottom-right" />
