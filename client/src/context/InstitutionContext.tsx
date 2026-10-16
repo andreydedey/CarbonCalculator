@@ -24,7 +24,10 @@ export const InstitutionContext = createContext<InstitutionContextValue | undefi
 function resolveInstitutionId(
   stored: string | null,
   memberships: { institutionId: string; status: string }[] | undefined,
+  isAdmin: boolean,
 ): string | null {
+  // Global admins can access any institution — trust the stored ID
+  if (isAdmin && stored) return stored
   if (!memberships) return stored
   const active = memberships.filter((m) => m.status === 'ACTIVE')
   if (stored && active.some((m) => m.institutionId === stored)) return stored
@@ -36,8 +39,8 @@ export const InstitutionProvider: React.FC<{ children: ReactNode }> = ({ childre
   const [rawId, setRawId] = useState<string | null>(readStoredInstitutionId)
 
   const institutionId = useMemo(
-    () => resolveInstitutionId(rawId, user?.institutions),
-    [rawId, user?.institutions],
+    () => resolveInstitutionId(rawId, user?.institutions, user?.admin ?? false),
+    [rawId, user?.institutions, user?.admin],
   )
 
   // Keep cookie in sync — pure derivation, write on every render where it changed

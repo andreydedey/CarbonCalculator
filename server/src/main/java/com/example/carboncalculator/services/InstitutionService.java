@@ -17,11 +17,15 @@ import com.example.carboncalculator.dto.InstitutionDTO;
 import com.example.carboncalculator.dto.UpdateInstitutionRequest;
 import com.example.carboncalculator.entities.AppUser;
 import com.example.carboncalculator.entities.Institution;
+import com.example.carboncalculator.entities.InstitutionRole;
+import com.example.carboncalculator.entities.MembershipStatus;
+import com.example.carboncalculator.entities.UserInstitution;
 import com.example.carboncalculator.exceptions.DuplicateAcronymException;
 import com.example.carboncalculator.exceptions.InstitutionNotFoundException;
 import com.example.carboncalculator.exceptions.InvalidStateException;
 import com.example.carboncalculator.mappers.InstitutionMapper;
 import com.example.carboncalculator.repositories.InstitutionRepository;
+import com.example.carboncalculator.repositories.UserInstitutionRepository;
 import com.example.carboncalculator.specifications.InstitutionSpecification;
 
 import lombok.RequiredArgsConstructor;
@@ -38,6 +42,7 @@ public class InstitutionService {
             "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO");
 
     private final InstitutionRepository institutionRepository;
+    private final UserInstitutionRepository membershipRepository;
 
     @Transactional(readOnly = true)
     public Page<InstitutionDTO> listForUser(AppUser user, String search, Pageable pageable) {
@@ -63,13 +68,21 @@ public class InstitutionService {
     }
 
     @Transactional
-    public InstitutionDTO create(CreateInstitutionRequest request) {
+    public InstitutionDTO create(CreateInstitutionRequest request, AppUser creator) {
         validateState(request.state());
         validateAcronymNotDuplicate(request.acronym());
 
         Institution institution = institutionRepository.save(InstitutionMapper.toEntity(request));
 
-        log.info("Institution created: id={}, acronym={}", institution.getId(), institution.getAcronym());
+        membershipRepository.save(UserInstitution.builder()
+                .user(creator)
+                .institution(institution)
+                .role(InstitutionRole.MANAGER)
+                .status(MembershipStatus.ACTIVE)
+                .build());
+
+        log.info("Institution created: id={}, acronym={}, creator={}", institution.getId(), institution.getAcronym(),
+                creator.getId());
         return InstitutionMapper.toDTO(institution);
     }
 

@@ -22,7 +22,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.example.carboncalculator.entities.AppUser;
+import com.example.carboncalculator.entities.InstitutionRole;
 import com.example.carboncalculator.entities.MembershipStatus;
+import com.example.carboncalculator.entities.UserInstitution;
+import com.example.carboncalculator.repositories.InstitutionRepository;
 import com.example.carboncalculator.repositories.UserInstitutionRepository;
 
 import jakarta.servlet.FilterChain;
@@ -44,12 +47,15 @@ public class TenantFilter extends OncePerRequestFilter {
     private final JdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
     private final UserInstitutionRepository membershipRepository;
+    private final InstitutionRepository institutionRepository;
 
     public TenantFilter(DataSource dataSource, PlatformTransactionManager transactionManager,
-                        UserInstitutionRepository membershipRepository) {
+                        UserInstitutionRepository membershipRepository,
+                        InstitutionRepository institutionRepository) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.membershipRepository = membershipRepository;
+        this.institutionRepository = institutionRepository;
     }
 
     @Override
@@ -89,10 +95,6 @@ public class TenantFilter extends OncePerRequestFilter {
             return false;
         }
 
-        if (user.isAdmin()) {
-            return true;
-        }
-
         UUID instId;
         try {
             instId = UUID.fromString(institutionId);
@@ -100,9 +102,29 @@ public class TenantFilter extends OncePerRequestFilter {
             return false;
         }
 
+        if (user.isAdmin()) {
+            ensureAdminMembership(user, instId);
+            return true;
+        }
+
         return membershipRepository.findByUserIdAndInstitutionId(user.getId(), instId)
                 .filter(m -> m.getStatus() == MembershipStatus.ACTIVE)
                 .isPresent();
+    }
+
+    private void ensureAdminMembership(AppUser admin, UUID institutionId) {
+        if (membershipRepository.existsByUserIdAndInstitutionId(admin.getId(), institutionId)) {
+            return;
+        }
+        institutionRepository.findById(institutionId).ifPresent(institution -> {
+            membershipRepository.save(UserInstitution.builder()
+                    .user(admin)
+                    .institution(institution)
+                    .role(InstitutionRole.MANAGER)
+                    .status(MembershipStatus.ACTIVE)
+                    .build());
+            log.info("Auto-created MANAGER membership for admin {} on institution {}", admin.getId(), institutionId);
+        });
     }
 
     private void addInstitutionRolesToAuth(String institutionId) {

@@ -109,18 +109,18 @@ export function DashboardPage() {
             </p>
           </div>
           <div className="grid grid-cols-3 gap-4 w-full max-w-lg pt-2">
-            <div className="flex flex-col items-center gap-1.5 rounded-lg border p-4">
+            <Link to="/academic-periods" className="flex flex-col items-center gap-1.5 rounded-lg border p-4 transition-colors hover:bg-accent">
               <CalendarDays className="size-5 text-primary" />
               <span className="text-xs font-medium text-center">Cadastrar período letivo</span>
-            </div>
-            <div className="flex flex-col items-center gap-1.5 rounded-lg border p-4 opacity-50">
-              <Leaf className="size-5 text-muted-foreground" />
-              <span className="text-xs font-medium text-muted-foreground text-center">Registrar fatores de emissão</span>
-            </div>
-            <div className="flex flex-col items-center gap-1.5 rounded-lg border p-4 opacity-50">
-              <Zap className="size-5 text-muted-foreground" />
-              <span className="text-xs font-medium text-muted-foreground text-center">Visualizar emissões</span>
-            </div>
+            </Link>
+            <Link to="/emission-factors" className="flex flex-col items-center gap-1.5 rounded-lg border p-4 transition-colors hover:bg-accent">
+              <Leaf className="size-5 text-primary" />
+              <span className="text-xs font-medium text-center">Registrar fatores de emissão</span>
+            </Link>
+            <Link to="/emissions" className="flex flex-col items-center gap-1.5 rounded-lg border p-4 transition-colors hover:bg-accent">
+              <Zap className="size-5 text-primary" />
+              <span className="text-xs font-medium text-center">Visualizar emissões</span>
+            </Link>
           </div>
         </div>
       ) : (
