@@ -139,6 +139,12 @@ entre unidades do mesmo modelo.
 - **Quando** registro uma nova medição que difere mais de 50% da média delas
 - **Então** a medição é registrada e a resposta traz um alerta com o desvio e a média existente
 
+#### AC-177 — Pesquisador registra, edita e exclui medições
+
+- **Dado** que sou PESQUISADOR da instituição
+- **Quando** registro, edito ou excluo uma medição de consumo
+- **Então** a operação é aceita, enquanto os demais cadastros (equipamentos, laboratórios, configurações) continuam somente leitura para mim
+
 ### US-043 — Isolar medições e sistemas operacionais por instituição
 
 Como gestor de uma instituição, quero que medições e sistemas operacionais cadastrados sejam só da

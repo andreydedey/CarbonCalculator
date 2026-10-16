@@ -56,9 +56,9 @@ interface LabCardProps {
   statusLabel: string
   emission?: { emissionKg: number; pct: number }
   onEdit: (lab: Laboratory) => void
-  onActivate: (lab: Laboratory) => void
-  onDeactivate: (lab: Laboratory) => void
-  onDelete: (lab: Laboratory) => void
+  onActivate?: (lab: Laboratory) => void
+  onDeactivate?: (lab: Laboratory) => void
+  onDelete?: (lab: Laboratory) => void
 }
 
 export const LabCard: React.FC<LabCardProps> = ({
@@ -88,48 +88,50 @@ export const LabCard: React.FC<LabCardProps> = ({
       </div>
       <div className="flex items-center gap-2.5">
         <StatusBadge active={laboratory.active} label={statusLabel} />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <EllipsisVertical className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {laboratory.active ? (
+        {onActivate && onDeactivate && onDelete && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-8"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <EllipsisVertical className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {laboratory.active ? (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDeactivate(laboratory)
+                  }}
+                >
+                  Desativar
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onActivate(laboratory)
+                  }}
+                >
+                  Ativar
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
+                className="text-destructive"
                 onClick={(e) => {
                   e.stopPropagation()
-                  onDeactivate(laboratory)
+                  onDelete(laboratory)
                 }}
               >
-                Desativar
+                Excluir
               </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onActivate(laboratory)
-                }}
-              >
-                Ativar
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={(e) => {
-                e.stopPropagation()
-                onDelete(laboratory)
-              }}
-            >
-              Excluir
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </div>
 

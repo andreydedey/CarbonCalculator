@@ -8,8 +8,8 @@ interface AcademicPeriodCardProps {
   period: AcademicPeriod
   selected?: boolean
   onSelect: (period: AcademicPeriod) => void
-  onEdit: (period: AcademicPeriod) => void
-  onConfigureShifts: (period: AcademicPeriod) => void
+  onEdit?: (period: AcademicPeriod) => void
+  onConfigureShifts?: (period: AcademicPeriod) => void
 }
 
 function formatDate(dateStr: string): string {
@@ -68,27 +68,29 @@ export const AcademicPeriodCard: React.FC<AcademicPeriodCardProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation()
-              onEdit(period)
-            }}
-          >
-            Editar
-          </Button>
-          <Button
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation()
-              onConfigureShifts(period)
-            }}
-          >
-            Configurar Turnos
-          </Button>
-        </div>
+        {onEdit && onConfigureShifts && (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation()
+                onEdit(period)
+              }}
+            >
+              Editar
+            </Button>
+            <Button
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation()
+                onConfigureShifts(period)
+              }}
+            >
+              Configurar Turnos
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

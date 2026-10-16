@@ -27,6 +27,7 @@ interface LaboratoryFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSaved?: (laboratory: Laboratory) => void
+  readOnly?: boolean
 }
 
 export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
@@ -34,6 +35,7 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
   open,
   onOpenChange,
   onSaved,
+  readOnly = false,
 }) => {
   const mode = laboratory ? 'edit' : 'create'
   const {
@@ -63,6 +65,7 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
   })
 
   function onSubmit(values: LaboratoryFormValues) {
+    if (readOnly) return
     const payload: CreateLaboratoryPayload = {
       name: values.name.trim(),
       ...(values.description?.trim() ? { description: values.description.trim() } : {}),
@@ -83,10 +86,12 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
       <DialogContent className="sm:max-w-3xl max-h-[85vh] flex flex-col gap-0 p-0">
         <DialogHeader className="px-7 pt-5 pb-4 shrink-0">
           <DialogTitle className="text-base font-semibold">
-            {mode === 'edit' ? 'Editar Laboratório' : 'Novo Laboratório'}
+            {readOnly ? 'Laboratório' : mode === 'edit' ? 'Editar Laboratório' : 'Novo Laboratório'}
           </DialogTitle>
           <DialogDescription>
-            Informe os dados básicos e vincule os equipamentos deste laboratório.
+            {readOnly
+              ? 'Dados básicos e equipamentos deste laboratório.'
+              : 'Informe os dados básicos e vincule os equipamentos deste laboratório.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -98,6 +103,7 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
                 id="laboratory-name"
                 placeholder="Ex: Laboratório de Computação 01"
                 aria-invalid={!!errors.name}
+                readOnly={readOnly}
                 {...register('name')}
               />
               <FieldError message={errors.name?.message} />
@@ -109,6 +115,7 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
                 id="laboratory-description"
                 placeholder="Descrição do laboratório (opcional)"
                 rows={3}
+                readOnly={readOnly}
                 {...register('description')}
               />
             </div>
@@ -116,7 +123,7 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
             <div className="h-px bg-border" />
 
             {laboratory ? (
-              <LaboratoryEquipmentSection labId={laboratory.id} />
+              <LaboratoryEquipmentSection labId={laboratory.id} readOnly={readOnly} />
             ) : (
               <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between">
@@ -142,11 +149,13 @@ export const LaboratoryForm: React.FC<LaboratoryFormProps> = ({
 
           <DialogFooter className="mx-0 mb-0 shrink-0">
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
-              Cancelar
+              {readOnly ? 'Fechar' : 'Cancelar'}
             </Button>
-            <Button type="submit" disabled={!isDirty || mutation.isPending}>
-              {mode === 'edit' ? 'Salvar alterações' : 'Criar Laboratório'}
-            </Button>
+            {!readOnly && (
+              <Button type="submit" disabled={!isDirty || mutation.isPending}>
+                {mode === 'edit' ? 'Salvar alterações' : 'Criar Laboratório'}
+              </Button>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>

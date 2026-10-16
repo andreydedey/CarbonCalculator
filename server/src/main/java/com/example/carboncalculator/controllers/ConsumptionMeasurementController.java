@@ -37,7 +37,7 @@ public class ConsumptionMeasurementController {
     private final ConsumptionMeasurementService service;
 
     @PostMapping
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasRole('RESEARCHER')")
     public ResponseEntity<ConsumptionMeasurementResponse> create(
             @Valid @RequestBody CreateConsumptionMeasurementRequest request) {
         ConsumptionMeasurementResponse response = service.create(request);
@@ -62,7 +62,7 @@ public class ConsumptionMeasurementController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasRole('RESEARCHER')")
     public ResponseEntity<ConsumptionMeasurementResponse> update(
             @PathVariable UUID id,
             @Valid @RequestBody CreateConsumptionMeasurementRequest request) {
@@ -70,7 +70,7 @@ public class ConsumptionMeasurementController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasRole('RESEARCHER')")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         service.delete(id);
         return ResponseEntity.noContent().build();

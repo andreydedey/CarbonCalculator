@@ -18,6 +18,7 @@ import { CardListSkeleton } from '@/components/ui/skeletons'
 import { useDialog, useFormDialog } from '@/hooks/use-dialog'
 import { usePagedQuery } from '@/hooks/use-paged-query'
 import { useSearchParam } from '@/hooks/use-search-param'
+import { useCanManage } from '@/hooks/useCanManage'
 import { listMonitors, type Monitor } from '@/lib/api/monitors'
 
 interface MonitorListProps {
@@ -26,6 +27,7 @@ interface MonitorListProps {
 }
 
 export const MonitorList: React.FC<MonitorListProps> = ({ formOpen, onFormOpenChange }) => {
+  const canManage = useCanManage()
   const formDialog = useFormDialog<Monitor>({
     createOpen: formOpen,
     onCreateOpenChange: onFormOpenChange,
@@ -97,11 +99,17 @@ export const MonitorList: React.FC<MonitorListProps> = ({ formOpen, onFormOpenCh
                 <MonitorIcon className="size-6 text-muted-foreground" />
               </EmptyMedia>
               <EmptyTitle>Nenhum monitor cadastrado</EmptyTitle>
-              <EmptyDescription>Comece cadastrando o primeiro monitor.</EmptyDescription>
+              <EmptyDescription>
+                {canManage
+                  ? 'Comece cadastrando o primeiro monitor.'
+                  : 'Os registros aparecerão aqui quando um gestor cadastrá-los.'}
+              </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button onClick={() => onFormOpenChange?.(true)}>Cadastrar Monitor</Button>
-            </EmptyContent>
+            {canManage && (
+              <EmptyContent>
+                <Button onClick={() => onFormOpenChange?.(true)}>Cadastrar Monitor</Button>
+              </EmptyContent>
+            )}
           </Empty>
         )
       ) : (
@@ -110,8 +118,10 @@ export const MonitorList: React.FC<MonitorListProps> = ({ formOpen, onFormOpenCh
             <MonitorCard
               key={monitor.id}
               monitor={monitor}
-              onEdit={(m) => formDialog.openEdit(m)}
-              onDelete={(m) => deleteDialog.openDialog(m)}
+              {...(canManage && {
+                onEdit: (m: Monitor) => formDialog.openEdit(m),
+                onDelete: (m: Monitor) => deleteDialog.openDialog(m),
+              })}
             />
           ))}
         </div>

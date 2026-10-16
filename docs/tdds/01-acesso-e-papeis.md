@@ -182,7 +182,7 @@ Sem autenticação, o `X-Institution-Id` é confiado cegamente — qualquer clie
 | ------------ | ------------ | ----------------------------------------------------------------------- |
 | `ADMIN`      | Global       | CRUD de instituições, edição de fatores de emissão, convite de gestores |
 | `MANAGER`    | Instituição  | CRUD de labs, equipamentos, medições, calendário; convite/revogação de membros |
-| `RESEARCHER` | Instituição  | Somente leitura de todos os dados da instituição; acesso a simulações e resultados |
+| `RESEARCHER` | Instituição  | Somente leitura de todos os dados da instituição, exceto medições de consumo, que também registra, edita e exclui; acesso a simulações e resultados |
 
 **Hierarquia de papéis (Spring Security `RoleHierarchy`):**
 
@@ -192,7 +192,7 @@ ADMIN > MANAGER > RESEARCHER
 
 - **ADMIN** herda todas as permissões de MANAGER e RESEARCHER. Pode operar em qualquer instituição sem vínculo explícito.
 - **MANAGER** herda as permissões de RESEARCHER. Pode ler e também criar/editar/excluir dados da sua instituição.
-- **RESEARCHER** é o papel base. Somente leitura dos dados da instituição à qual está vinculado.
+- **RESEARCHER** é o papel base. Somente leitura dos dados da instituição à qual está vinculado, com uma exceção: registra, edita e exclui medições de consumo (PRD 04 — "como pesquisador, quero manter várias medições da mesma configuração"), já que medir com o wattímetro é trabalho de pesquisa de campo.
 
 A hierarquia é configurada como bean no Spring Security:
 

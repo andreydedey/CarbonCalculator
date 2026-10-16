@@ -258,11 +258,11 @@ O `ConsumptionResolver` recebe a lista de todas as medições da instituição e
 
 | Método | Rota                                      | Descrição                                     | Acesso     |
 | ------ | ----------------------------------------- | --------------------------------------------- | ---------- |
-| POST   | `/api/v1/consumption-measurements`        | Registrar medição                             | MANAGER    |
+| POST   | `/api/v1/consumption-measurements`        | Registrar medição                             | RESEARCHER    |
 | GET    | `/api/v1/consumption-measurements`        | Listar medições (filtros + paginação)         | RESEARCHER |
 | GET    | `/api/v1/consumption-measurements/{id}`   | Obter medição por ID                          | RESEARCHER |
-| PUT    | `/api/v1/consumption-measurements/{id}`   | Atualizar medição                             | MANAGER    |
-| DELETE | `/api/v1/consumption-measurements/{id}`   | Excluir medição                               | MANAGER    |
+| PUT    | `/api/v1/consumption-measurements/{id}`   | Atualizar medição                             | RESEARCHER    |
+| DELETE | `/api/v1/consumption-measurements/{id}`   | Excluir medição                               | RESEARCHER    |
 
 Parâmetros de filtro em `GET /api/v1/consumption-measurements`:
 - `targetType=COMPUTER|MONITOR|COMBINED`

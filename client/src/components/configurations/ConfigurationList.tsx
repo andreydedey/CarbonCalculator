@@ -17,6 +17,7 @@ import { LoadMoreButton } from '@/components/ui/load-more-button'
 import { TableSkeleton } from '@/components/ui/skeletons'
 import { useFormDialog } from '@/hooks/use-dialog'
 import { usePagedQuery } from '@/hooks/use-paged-query'
+import { useCanManage } from '@/hooks/useCanManage'
 import { isApiError } from '@/lib/api/client'
 import {
   type Configuration,
@@ -41,6 +42,7 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
   formOpen,
   onFormOpenChange,
 }) => {
+  const canManage = useCanManage()
   const formDialog = useFormDialog<Configuration>({
     createOpen: formOpen,
     onCreateOpenChange: onFormOpenChange,
@@ -100,12 +102,16 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
             </EmptyMedia>
             <EmptyTitle>Nenhuma configuração cadastrada</EmptyTitle>
             <EmptyDescription>
-              Comece cadastrando a primeira configuração de estação.
+              {canManage
+                ? 'Comece cadastrando a primeira configuração de estação.'
+                : 'Os registros aparecerão aqui quando um gestor cadastrá-los.'}
             </EmptyDescription>
           </EmptyHeader>
-          <EmptyContent>
-            <Button onClick={() => onFormOpenChange?.(true)}>Cadastrar Configuração</Button>
-          </EmptyContent>
+          {canManage && (
+            <EmptyContent>
+              <Button onClick={() => onFormOpenChange?.(true)}>Cadastrar Configuração</Button>
+            </EmptyContent>
+          )}
         </Empty>
       ) : (
         <>
@@ -117,7 +123,7 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
                   <th className="px-4 py-2 text-left font-medium">SISTEMA OP.</th>
                   <th className="px-4 py-2 text-left font-medium">MONITOR</th>
                   <th className="px-4 py-2 text-left font-medium">EM USO EM</th>
-                  <th className="px-4 py-2 text-right font-medium">AÇÕES</th>
+                  {canManage && <th className="px-4 py-2 text-right font-medium">AÇÕES</th>}
                 </tr>
               </thead>
               <tbody>
@@ -143,33 +149,35 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
                     >
                       {usageLabel(config)}
                     </td>
-                    <td className="px-4 py-2 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-7"
-                          onClick={() => formDialog.openEdit(config)}
-                          title="Editar configuração"
-                        >
-                          <Pencil className="size-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-7 text-destructive"
-                          onClick={() => deleteMutation.mutate(config.id)}
-                          disabled={config.usageLabCount > 0}
-                          title={
-                            config.usageLabCount > 0
-                              ? 'Remova de todos os laboratórios antes de excluir'
-                              : 'Excluir configuração'
-                          }
-                        >
-                          <Trash2 className="size-3.5" />
-                        </Button>
-                      </div>
-                    </td>
+                    {canManage && (
+                      <td className="px-4 py-2 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7"
+                            onClick={() => formDialog.openEdit(config)}
+                            title="Editar configuração"
+                          >
+                            <Pencil className="size-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 text-destructive"
+                            onClick={() => deleteMutation.mutate(config.id)}
+                            disabled={config.usageLabCount > 0}
+                            title={
+                              config.usageLabCount > 0
+                                ? 'Remova de todos os laboratórios antes de excluir'
+                                : 'Excluir configuração'
+                            }
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

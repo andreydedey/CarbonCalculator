@@ -6,6 +6,7 @@ import { EquipmentModelList } from '@/components/equipment-models/EquipmentModel
 import { MonitorList } from '@/components/monitors/MonitorList'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useCanManage } from '@/hooks/useCanManage'
 
 const TAB_LABELS = {
   computadores: 'Novo Computador',
@@ -18,6 +19,8 @@ type TabValue = keyof typeof TAB_LABELS
 
 export function EquipmentModelsPage() {
   const [tab, setTab] = useState<TabValue>('computadores')
+  // Researchers record measurements; the rest of the registry is managed by managers
+  const canAdd = useCanManage() || tab === 'medicoes'
   const [computerFormOpen, setComputerFormOpen] = useState(false)
   const [monitorFormOpen, setMonitorFormOpen] = useState(false)
   const [configFormOpen, setConfigFormOpen] = useState(false)
@@ -34,10 +37,12 @@ export function EquipmentModelsPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl font-bold">Equipamentos</h1>
-        <Button onClick={handleAdd}>
-          <Plus className="size-4" />
-          {TAB_LABELS[tab]}
-        </Button>
+        {canAdd && (
+          <Button onClick={handleAdd}>
+            <Plus className="size-4" />
+            {TAB_LABELS[tab]}
+          </Button>
+        )}
       </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as TabValue)}>

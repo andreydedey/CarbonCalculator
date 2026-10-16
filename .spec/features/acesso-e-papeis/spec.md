@@ -84,6 +84,7 @@ Como administrador ou gestor, quero que cada endpoint tenha controle de acesso b
 - **Dado** que sou PESQUISADOR da instituição UFPA
 - **Quando** tento criar, editar ou excluir um laboratório
 - **Então** a operação é negada (resposta 403), mas consigo listar e visualizar os dados
+- A única exceção são as medições de consumo, que o pesquisador também registra, edita e exclui (AC-177)
 
 #### AC-024 — Usuário sem vínculo não acessa dados da instituição
 
