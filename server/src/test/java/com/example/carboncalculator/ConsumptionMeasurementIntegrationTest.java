@@ -36,6 +36,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import com.example.carboncalculator.dto.AcceptInviteRequest;
 import com.example.carboncalculator.dto.AuthResponse;
 import com.example.carboncalculator.dto.CreateAcademicPeriodRequest;
 import com.example.carboncalculator.dto.CreateConfigurationRequest;
@@ -48,10 +49,12 @@ import com.example.carboncalculator.dto.CreateLaboratoryRequest;
 import com.example.carboncalculator.dto.CreateMonitorRequest;
 import com.example.carboncalculator.dto.CreateOperatingSystemRequest;
 import com.example.carboncalculator.dto.InstitutionDTO;
+import com.example.carboncalculator.dto.InviteRequest;
 import com.example.carboncalculator.dto.LoginRequest;
 import com.example.carboncalculator.dto.ReplaceScheduleRequest;
 import com.example.carboncalculator.dto.ReplaceShiftsRequest;
 import com.example.carboncalculator.dto.ShiftDTO;
+import com.example.carboncalculator.dto.UserMemberDTO;
 import com.example.carboncalculator.entities.ShiftType;
 import com.example.carboncalculator.entities.TargetType;
 
@@ -240,6 +243,35 @@ class ConsumptionMeasurementIntegrationTest {
         createOperatingSystem("Windows 10");
     }
 
+    // ========================= PERMISSIONS =========================
+
+    // @spec:AC-177
+    @Test
+    void devePesquisadorRegistrarEditarEExcluirMedicoesMasNaoOutrosCadastros() {
+        HttpHeaders researcher = researcherHeaders();
+        CreateConsumptionMeasurementRequest request = new CreateConsumptionMeasurementRequest(
+                TargetType.COMPUTER, modelId, osId, null, new BigDecimal("90"), 12, 4, MEASURED_ON, null);
+
+        ResponseEntity<String> created = restTemplate.exchange("/consumption-measurements", HttpMethod.POST,
+                new HttpEntity<>(request, researcher), String.class);
+        assertEquals(HttpStatus.CREATED, created.getStatusCode(), created.getBody());
+        String id = read(created.getBody()).get("measurement").get("id").asText();
+
+        CreateConsumptionMeasurementRequest edited = new CreateConsumptionMeasurementRequest(
+                TargetType.COMPUTER, modelId, osId, null, new BigDecimal("95"), 12, 4, MEASURED_ON, null);
+        ResponseEntity<String> updated = restTemplate.exchange("/consumption-measurements/" + id, HttpMethod.PUT,
+                new HttpEntity<>(edited, researcher), String.class);
+        assertEquals(HttpStatus.OK, updated.getStatusCode(), updated.getBody());
+
+        ResponseEntity<String> deleted = restTemplate.exchange("/consumption-measurements/" + id, HttpMethod.DELETE,
+                new HttpEntity<>(researcher), String.class);
+        assertEquals(HttpStatus.NO_CONTENT, deleted.getStatusCode(), deleted.getBody());
+
+        ResponseEntity<String> otherRegistry = restTemplate.exchange("/monitors", HttpMethod.POST,
+                new HttpEntity<>(new CreateMonitorRequest("Monitor-" + System.nanoTime(), 20), researcher), String.class);
+        assertEquals(HttpStatus.FORBIDDEN, otherRegistry.getStatusCode());
+    }
+
     // ========================= HELPERS =========================
 
     private JsonNode createMeasurement(TargetType type, UUID model, UUID os, UUID monitor, String watts,
@@ -312,6 +344,22 @@ class ConsumptionMeasurementIntegrationTest {
 
     private UUID createConfiguration(UUID model, UUID os, UUID monitor) {
         return UUID.fromString(post("/configurations", new CreateConfigurationRequest(model, os, monitor)).get("id").asText());
+    }
+
+    private HttpHeaders researcherHeaders() {
+        ResponseEntity<UserMemberDTO> invite = restTemplate.exchange("/users/invite", HttpMethod.POST,
+                new HttpEntity<>(new InviteRequest("researcher-" + System.nanoTime() + "@example.com", "RESEARCHER"),
+                        headers()),
+                UserMemberDTO.class);
+        assertEquals(HttpStatus.CREATED, invite.getStatusCode());
+        String rawToken = invite.getBody().inviteLink().replace("/register?token=", "");
+        ResponseEntity<AuthResponse> accepted = restTemplate.postForEntity("/auth/invitations/{token}/accept",
+                new AcceptInviteRequest("Pesquisador", "Senha-123!"), AuthResponse.class, rawToken);
+        assertEquals(HttpStatus.CREATED, accepted.getStatusCode());
+
+        HttpHeaders headers = headers();
+        headers.setBearerAuth(accepted.getBody().accessToken());
+        return headers;
     }
 
     private HttpHeaders headers() {
