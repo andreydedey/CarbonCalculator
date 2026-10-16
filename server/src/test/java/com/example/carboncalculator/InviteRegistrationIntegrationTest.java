@@ -156,7 +156,12 @@ class InviteRegistrationIntegrationTest {
 
     @Test
     void inviteExistingUser_noInviteLink() {
-        // admin@admin.com already exists
+        // admin@admin.com already exists but is also a member of this institution
+        // (auto-added as MANAGER by createInstitution). Remove that membership first.
+        jdbcTemplate.update(
+                "DELETE FROM user_institution WHERE institution_id = ?::uuid AND user_id = (SELECT id FROM app_user WHERE email = 'admin@admin.com')",
+                institutionId.toString());
+
         UserMemberDTO result = invite("admin@admin.com", "RESEARCHER");
 
         assertEquals("ACTIVE", result.status());
