@@ -104,7 +104,7 @@ public class UserService {
             inviteLink = token.link();
         }
 
-        UserInstitution membership = membershipRepository.save(builder.build());
+        UserInstitution membership = membershipRepository.saveAndFlush(builder.build());
         log.info("User invited: email={}, role={}, admin={}, pending={}", email, role, isAdminInvite, isPending);
 
         return UserMemberMapper.toDTO(membership, inviteLink);
