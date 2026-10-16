@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import type { EquipmentModel } from '@/lib/api/equipment-models'
+import { cn } from '@/lib/utils'
 
 function cpuLabel(model: EquipmentModel): string {
   const parts = [model.processor, model.tdpWatts ? `${model.tdpWatts}W` : null].filter(Boolean)
@@ -17,8 +18,8 @@ function cpuLabel(model: EquipmentModel): string {
 
 interface EquipmentModelCardProps {
   model: EquipmentModel
-  onEdit: (model: EquipmentModel) => void
-  onDelete: (model: EquipmentModel) => void
+  onEdit?: (model: EquipmentModel) => void
+  onDelete?: (model: EquipmentModel) => void
 }
 
 export const EquipmentModelCard: React.FC<EquipmentModelCardProps> = ({
@@ -27,16 +28,21 @@ export const EquipmentModelCard: React.FC<EquipmentModelCardProps> = ({
   onDelete,
 }) => (
   <div
-    role="button"
-    tabIndex={0}
-    className="w-full rounded-[10px] border border-border bg-card cursor-pointer transition-colors hover:bg-muted/40 text-left"
-    onClick={() => onEdit(model)}
-    onKeyDown={(e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault()
-        onEdit(model)
-      }
-    }}
+    {...(onEdit && {
+      role: 'button',
+      tabIndex: 0,
+      onClick: () => onEdit(model),
+      onKeyDown: (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onEdit(model)
+        }
+      },
+    })}
+    className={cn(
+      'w-full rounded-[10px] border border-border bg-card text-left',
+      onEdit && 'cursor-pointer transition-colors hover:bg-muted/40',
+    )}
   >
     <div className="flex items-center justify-between px-6 py-5">
       <div className="flex items-center gap-4">
@@ -65,24 +71,39 @@ export const EquipmentModelCard: React.FC<EquipmentModelCardProps> = ({
             GPU: {model.gpuModel}
           </Badge>
         )}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <EllipsisVertical className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(model) }}>Editar</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(model) }}>
-              Excluir
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {onEdit && onDelete && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-8"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <EllipsisVertical className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEdit(model)
+                }}
+              >
+                Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDelete(model)
+                }}
+              >
+                Excluir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </div>
 

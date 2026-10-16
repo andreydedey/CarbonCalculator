@@ -33,6 +33,7 @@ interface HolidayEditorProps {
   period: AcademicPeriod
   addDialogOpen?: boolean
   onAddDialogOpenChange?: (open: boolean) => void
+  readOnly?: boolean
 }
 
 const HOLIDAY_TYPE_LABELS: Record<HolidayType, string> = {
@@ -58,6 +59,7 @@ export const HolidayEditor: React.FC<HolidayEditorProps> = ({
   period,
   addDialogOpen: externalOpen,
   onAddDialogOpenChange,
+  readOnly = false,
 }) => {
   const queryClient = useQueryClient()
   const [internalOpen, setInternalOpen] = useState(false)
@@ -151,14 +153,16 @@ export const HolidayEditor: React.FC<HolidayEditorProps> = ({
                 >
                   {HOLIDAY_TYPE_LABELS[holiday.type]}
                 </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => removeHoliday(holiday.date)}
-                >
-                  <Trash2 className="size-3 text-destructive" />
-                </Button>
+                {!readOnly && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => removeHoliday(holiday.date)}
+                  >
+                    <Trash2 className="size-3 text-destructive" />
+                  </Button>
+                )}
               </div>
             </div>
           ))}

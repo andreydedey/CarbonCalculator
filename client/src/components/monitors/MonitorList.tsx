@@ -2,7 +2,6 @@ import { Monitor as MonitorIcon, Search } from 'lucide-react'
 import type React from 'react'
 import { DeleteMonitorDialog } from '@/components/monitors/DeleteMonitorDialog'
 import { MonitorCard } from '@/components/monitors/MonitorCard'
-import { CardListSkeleton } from '@/components/ui/skeletons'
 import { MonitorForm } from '@/components/monitors/MonitorForm'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,9 +14,11 @@ import {
 } from '@/components/ui/empty'
 import { Input } from '@/components/ui/input'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
+import { CardListSkeleton } from '@/components/ui/skeletons'
 import { useDialog, useFormDialog } from '@/hooks/use-dialog'
 import { usePagedQuery } from '@/hooks/use-paged-query'
 import { useSearchParam } from '@/hooks/use-search-param'
+import { useCanManage } from '@/hooks/useCanManage'
 import { listMonitors, type Monitor } from '@/lib/api/monitors'
 
 interface MonitorListProps {
@@ -26,6 +27,7 @@ interface MonitorListProps {
 }
 
 export const MonitorList: React.FC<MonitorListProps> = ({ formOpen, onFormOpenChange }) => {
+  const canManage = useCanManage()
   const formDialog = useFormDialog<Monitor>({
     createOpen: formOpen,
     onCreateOpenChange: onFormOpenChange,
@@ -34,11 +36,17 @@ export const MonitorList: React.FC<MonitorListProps> = ({ formOpen, onFormOpenCh
 
   const [search, debouncedSearch, setSearch] = useSearchParam()
 
-  const { items: monitors, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    usePagedQuery({
-      queryKey: ['monitors', debouncedSearch],
-      queryFn: (page) => listMonitors({ name: debouncedSearch, page }),
-    })
+  const {
+    items: monitors,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = usePagedQuery({
+    queryKey: ['monitors', debouncedSearch],
+    queryFn: (page) => listMonitors({ name: debouncedSearch, page }),
+  })
 
   function handleSaved() {
     formDialog.close()
@@ -91,11 +99,17 @@ export const MonitorList: React.FC<MonitorListProps> = ({ formOpen, onFormOpenCh
                 <MonitorIcon className="size-6 text-muted-foreground" />
               </EmptyMedia>
               <EmptyTitle>Nenhum monitor cadastrado</EmptyTitle>
-              <EmptyDescription>Comece cadastrando o primeiro monitor.</EmptyDescription>
+              <EmptyDescription>
+                {canManage
+                  ? 'Comece cadastrando o primeiro monitor.'
+                  : 'Os registros aparecerão aqui quando um gestor cadastrá-los.'}
+              </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button onClick={() => onFormOpenChange?.(true)}>Cadastrar Monitor</Button>
-            </EmptyContent>
+            {canManage && (
+              <EmptyContent>
+                <Button onClick={() => onFormOpenChange?.(true)}>Cadastrar Monitor</Button>
+              </EmptyContent>
+            )}
           </Empty>
         )
       ) : (
@@ -104,8 +118,10 @@ export const MonitorList: React.FC<MonitorListProps> = ({ formOpen, onFormOpenCh
             <MonitorCard
               key={monitor.id}
               monitor={monitor}
-              onEdit={(m) => formDialog.openEdit(m)}
-              onDelete={(m) => deleteDialog.openDialog(m)}
+              {...(canManage && {
+                onEdit: (m: Monitor) => formDialog.openEdit(m),
+                onDelete: (m: Monitor) => deleteDialog.openDialog(m),
+              })}
             />
           ))}
         </div>

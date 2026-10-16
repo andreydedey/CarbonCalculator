@@ -8,25 +8,31 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import type { Monitor } from '@/lib/api/monitors'
+import { cn } from '@/lib/utils'
 
 interface MonitorCardProps {
   monitor: Monitor
-  onEdit: (monitor: Monitor) => void
-  onDelete: (monitor: Monitor) => void
+  onEdit?: (monitor: Monitor) => void
+  onDelete?: (monitor: Monitor) => void
 }
 
 export const MonitorCard: React.FC<MonitorCardProps> = ({ monitor, onEdit, onDelete }) => (
   <div
-    role="button"
-    tabIndex={0}
-    className="w-full rounded-[10px] border border-border bg-card cursor-pointer transition-colors hover:bg-muted/40 text-left"
-    onClick={() => onEdit(monitor)}
-    onKeyDown={(e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault()
-        onEdit(monitor)
-      }
-    }}
+    {...(onEdit && {
+      role: 'button',
+      tabIndex: 0,
+      onClick: () => onEdit(monitor),
+      onKeyDown: (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onEdit(monitor)
+        }
+      },
+    })}
+    className={cn(
+      'w-full rounded-[10px] border border-border bg-card text-left',
+      onEdit && 'cursor-pointer transition-colors hover:bg-muted/40',
+    )}
   >
     <div className="flex items-center justify-between px-6 py-5">
       <div className="flex items-center gap-4">
@@ -41,24 +47,39 @@ export const MonitorCard: React.FC<MonitorCardProps> = ({ monitor, onEdit, onDel
         </div>
       </div>
       <div className="flex items-center gap-2.5">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <EllipsisVertical className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(monitor) }}>Editar</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(monitor) }}>
-              Excluir
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {onEdit && onDelete && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-8"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <EllipsisVertical className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEdit(monitor)
+                }}
+              >
+                Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDelete(monitor)
+                }}
+              >
+                Excluir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </div>
   </div>

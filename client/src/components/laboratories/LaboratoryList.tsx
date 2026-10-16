@@ -31,6 +31,7 @@ import { useInstitution } from '@/context/InstitutionContext'
 import { useDialog } from '@/hooks/use-dialog'
 import { usePagedQuery } from '@/hooks/use-paged-query'
 import { useSearchParam } from '@/hooks/use-search-param'
+import { useCanManage } from '@/hooks/useCanManage'
 import { listAcademicPeriods } from '@/lib/api/academic-periods'
 import { getEmissions } from '@/lib/api/emissions'
 import { getInstitution } from '@/lib/api/institutions'
@@ -58,6 +59,7 @@ export const LaboratoryList: React.FC = () => {
   const form = useDialog<Laboratory>()
   const deactivateDialog = useDialog<Laboratory>()
   const deleteDialog = useDialog<Laboratory>()
+  const canManage = useCanManage()
 
   const [search, debouncedSearch, setSearch] = useSearchParam()
   const statusFilter = (searchParams.get('status') ?? 'all') as LabStatusFilter
@@ -107,11 +109,18 @@ export const LaboratoryList: React.FC = () => {
     )
   }, [emissionResult])
 
-  const { items: laboratories, data: laboratoriesData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    usePagedQuery({
-      queryKey: ['laboratories', debouncedSearch, statusFilter],
-      queryFn: (page) => listLaboratories({ status: statusFilter, search: debouncedSearch, page }),
-    })
+  const {
+    items: laboratories,
+    data: laboratoriesData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = usePagedQuery({
+    queryKey: ['laboratories', debouncedSearch, statusFilter],
+    queryFn: (page) => listLaboratories({ status: statusFilter, search: debouncedSearch, page }),
+  })
 
   const activateMutation = useMutation({
     mutationFn: (lab: Laboratory) => activateLaboratory(lab.id),
@@ -146,10 +155,12 @@ export const LaboratoryList: React.FC = () => {
         <h1 className="font-heading text-2xl font-bold">
           Laboratórios{institutionName ? ` — ${institutionName}` : ''}
         </h1>
-        <Button onClick={() => form.openDialog()}>
-          <Plus className="size-4" />
-          Novo Laboratório
-        </Button>
+        {canManage && (
+          <Button onClick={() => form.openDialog()}>
+            <Plus className="size-4" />
+            Novo Laboratório
+          </Button>
+        )}
       </div>
 
       <LaboratoryForm
@@ -157,6 +168,7 @@ export const LaboratoryList: React.FC = () => {
         open={form.open}
         onOpenChange={(open) => !open && form.closeDialog()}
         onSaved={handleSaved}
+        readOnly={!canManage}
       />
 
       {isLoading ? (
@@ -234,11 +246,17 @@ export const LaboratoryList: React.FC = () => {
                 <Cpu className="size-6 text-muted-foreground" />
               </EmptyMedia>
               <EmptyTitle>Nenhum laboratório cadastrado</EmptyTitle>
-              <EmptyDescription>Comece cadastrando o primeiro laboratório.</EmptyDescription>
+              <EmptyDescription>
+                {canManage
+                  ? 'Comece cadastrando o primeiro laboratório.'
+                  : 'Os laboratórios aparecerão aqui quando um gestor cadastrá-los.'}
+              </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button onClick={() => form.openDialog()}>Cadastrar Laboratório</Button>
-            </EmptyContent>
+            {canManage && (
+              <EmptyContent>
+                <Button onClick={() => form.openDialog()}>Cadastrar Laboratório</Button>
+              </EmptyContent>
+            )}
           </Empty>
         )
       ) : (
@@ -250,9 +268,11 @@ export const LaboratoryList: React.FC = () => {
               statusLabel={statusLabel(laboratory)}
               emission={emissionByLab.get(laboratory.id)}
               onEdit={(lab) => form.openDialog(lab)}
-              onActivate={(lab) => activateMutation.mutate(lab)}
-              onDeactivate={(lab) => deactivateDialog.openDialog(lab)}
-              onDelete={(lab) => deleteDialog.openDialog(lab)}
+              {...(canManage && {
+                onActivate: (lab: Laboratory) => activateMutation.mutate(lab),
+                onDeactivate: (lab: Laboratory) => deactivateDialog.openDialog(lab),
+                onDelete: (lab: Laboratory) => deleteDialog.openDialog(lab),
+              })}
             />
           ))}
         </div>

@@ -32,6 +32,7 @@ import {
 
 interface LaboratoryEquipmentSectionProps {
   labId: string
+  readOnly?: boolean
 }
 
 function configLabel(config: {
@@ -48,6 +49,7 @@ type EditingState = null | { mode: 'add' } | { mode: 'edit'; item: LaboratoryEqu
 
 export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProps> = ({
   labId,
+  readOnly = false,
 }) => {
   const [editing, setEditing] = useState<EditingState>(null)
 
@@ -146,15 +148,17 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <span className="text-sm font-semibold">Equipamentos do Laboratório</span>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={openAdd}
-          disabled={editing !== null}
-        >
-          Adicionar Configuração
-        </Button>
+        {!readOnly && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={openAdd}
+            disabled={editing !== null}
+          >
+            Adicionar Configuração
+          </Button>
+        )}
       </div>
 
       {editing && (
@@ -257,7 +261,7 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
                   <th className="px-4 py-2 text-left font-medium">Monitor</th>
                   <th className="px-4 py-2 text-left font-medium">Sistema Op.</th>
                   <th className="px-4 py-2 text-right font-medium">Qtd.</th>
-                  <th className="px-4 py-2 text-right font-medium">Ações</th>
+                  {!readOnly && <th className="px-4 py-2 text-right font-medium">Ações</th>}
                 </tr>
               </thead>
               <tbody>
@@ -305,30 +309,32 @@ export const LaboratoryEquipmentSection: React.FC<LaboratoryEquipmentSectionProp
                         )}
                       </td>
                       <td className="px-4 py-2 text-right font-mono text-xs">{item.quantity}</td>
-                      <td className="px-4 py-2 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="size-7"
-                            onClick={() => openEdit(item)}
-                            disabled={editing !== null}
-                          >
-                            <Pencil className="size-3.5" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="size-7 text-destructive"
-                            onClick={() => unlinkMutation.mutate(item.id)}
-                            disabled={editing !== null}
-                          >
-                            <Trash2 className="size-3.5" />
-                          </Button>
-                        </div>
-                      </td>
+                      {!readOnly && (
+                        <td className="px-4 py-2 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="size-7"
+                              onClick={() => openEdit(item)}
+                              disabled={editing !== null}
+                            >
+                              <Pencil className="size-3.5" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="size-7 text-destructive"
+                              onClick={() => unlinkMutation.mutate(item.id)}
+                              disabled={editing !== null}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   )
                 })}

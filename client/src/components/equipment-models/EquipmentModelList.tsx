@@ -2,7 +2,6 @@ import { Cpu, Search } from 'lucide-react'
 import type React from 'react'
 import { DeleteEquipmentModelDialog } from '@/components/equipment-models/DeleteEquipmentModelDialog'
 import { EquipmentModelCard } from '@/components/equipment-models/EquipmentModelCard'
-import { CardListSkeleton } from '@/components/ui/skeletons'
 import { EquipmentModelForm } from '@/components/equipment-models/EquipmentModelForm'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,9 +14,11 @@ import {
 } from '@/components/ui/empty'
 import { Input } from '@/components/ui/input'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
+import { CardListSkeleton } from '@/components/ui/skeletons'
 import { useDialog, useFormDialog } from '@/hooks/use-dialog'
 import { usePagedQuery } from '@/hooks/use-paged-query'
 import { useSearchParam } from '@/hooks/use-search-param'
+import { useCanManage } from '@/hooks/useCanManage'
 import { type EquipmentModel, listEquipmentModels } from '@/lib/api/equipment-models'
 
 interface EquipmentModelListProps {
@@ -29,6 +30,7 @@ export const EquipmentModelList: React.FC<EquipmentModelListProps> = ({
   formOpen,
   onFormOpenChange,
 }) => {
+  const canManage = useCanManage()
   const formDialog = useFormDialog<EquipmentModel>({
     createOpen: formOpen,
     onCreateOpenChange: onFormOpenChange,
@@ -37,11 +39,17 @@ export const EquipmentModelList: React.FC<EquipmentModelListProps> = ({
 
   const [search, debouncedSearch, setSearch] = useSearchParam()
 
-  const { items: models, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    usePagedQuery({
-      queryKey: ['equipment-models', debouncedSearch],
-      queryFn: (page) => listEquipmentModels({ name: debouncedSearch, page }),
-    })
+  const {
+    items: models,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = usePagedQuery({
+    queryKey: ['equipment-models', debouncedSearch],
+    queryFn: (page) => listEquipmentModels({ name: debouncedSearch, page }),
+  })
 
   function handleSaved() {
     formDialog.close()
@@ -95,12 +103,16 @@ export const EquipmentModelList: React.FC<EquipmentModelListProps> = ({
               </EmptyMedia>
               <EmptyTitle>Nenhum modelo cadastrado</EmptyTitle>
               <EmptyDescription>
-                Comece cadastrando o primeiro modelo de equipamento.
+                {canManage
+                  ? 'Comece cadastrando o primeiro modelo de equipamento.'
+                  : 'Os registros aparecerão aqui quando um gestor cadastrá-los.'}
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button onClick={() => onFormOpenChange?.(true)}>Cadastrar Modelo</Button>
-            </EmptyContent>
+            {canManage && (
+              <EmptyContent>
+                <Button onClick={() => onFormOpenChange?.(true)}>Cadastrar Modelo</Button>
+              </EmptyContent>
+            )}
           </Empty>
         )
       ) : (
@@ -109,8 +121,10 @@ export const EquipmentModelList: React.FC<EquipmentModelListProps> = ({
             <EquipmentModelCard
               key={model.id}
               model={model}
-              onEdit={(m) => formDialog.openEdit(m)}
-              onDelete={(m) => deleteDialog.openDialog(m)}
+              {...(canManage && {
+                onEdit: (m: EquipmentModel) => formDialog.openEdit(m),
+                onDelete: (m: EquipmentModel) => deleteDialog.openDialog(m),
+              })}
             />
           ))}
         </div>

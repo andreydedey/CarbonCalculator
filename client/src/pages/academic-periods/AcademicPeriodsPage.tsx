@@ -21,7 +21,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { CardGridSkeleton } from '@/components/ui/skeletons'
 import {
   Empty,
   EmptyContent,
@@ -31,8 +30,10 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
+import { CardGridSkeleton } from '@/components/ui/skeletons'
 import { useDialog } from '@/hooks/use-dialog'
 import { usePagedQuery } from '@/hooks/use-paged-query'
+import { useCanManage } from '@/hooks/useCanManage'
 import {
   type AcademicPeriod,
   deleteAcademicPeriod,
@@ -42,6 +43,7 @@ import { isApiError } from '@/lib/api/client'
 
 export const AcademicPeriodsPage: React.FC = () => {
   const navigate = useNavigate()
+  const canManage = useCanManage()
   const queryClient = useQueryClient()
   const form = useDialog<AcademicPeriod>()
   const deleteDialog = useDialog<AcademicPeriod>()
@@ -50,11 +52,17 @@ export const AcademicPeriodsPage: React.FC = () => {
   const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null)
   const [addHolidayOpen, setAddHolidayOpen] = useState(false)
 
-  const { items: periods, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    usePagedQuery({
-      queryKey: ['academic-periods'],
-      queryFn: (page) => listAcademicPeriods(page),
-    })
+  const {
+    items: periods,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = usePagedQuery({
+    queryKey: ['academic-periods'],
+    queryFn: (page) => listAcademicPeriods(page),
+  })
 
   const resolvedPeriodId = useMemo(() => {
     if (selectedPeriodId && periods.some((p) => p.id === selectedPeriodId)) {
@@ -97,10 +105,12 @@ export const AcademicPeriodsPage: React.FC = () => {
         <div className="flex flex-col gap-0.5">
           <h1 className="font-heading text-2xl font-bold">Calendário Letivo</h1>
         </div>
-        <Button onClick={() => form.openDialog()}>
-          <Plus className="size-4" />
-          Novo Período
-        </Button>
+        {canManage && (
+          <Button onClick={() => form.openDialog()}>
+            <Plus className="size-4" />
+            Novo Período
+          </Button>
+        )}
       </div>
 
       {/* Period cards — 2 column grid */}
@@ -113,11 +123,17 @@ export const AcademicPeriodsPage: React.FC = () => {
               <Calendar className="size-6 text-muted-foreground" />
             </EmptyMedia>
             <EmptyTitle>Nenhum período letivo cadastrado</EmptyTitle>
-            <EmptyDescription>Comece cadastrando o primeiro período letivo.</EmptyDescription>
+            <EmptyDescription>
+              {canManage
+                ? 'Comece cadastrando o primeiro período letivo.'
+                : 'Os períodos aparecerão aqui quando um gestor cadastrá-los.'}
+            </EmptyDescription>
           </EmptyHeader>
-          <EmptyContent>
-            <Button onClick={() => form.openDialog()}>Criar Período</Button>
-          </EmptyContent>
+          {canManage && (
+            <EmptyContent>
+              <Button onClick={() => form.openDialog()}>Criar Período</Button>
+            </EmptyContent>
+          )}
         </Empty>
       ) : (
         <>
@@ -128,8 +144,10 @@ export const AcademicPeriodsPage: React.FC = () => {
                 period={period}
                 selected={period.id === resolvedPeriodId}
                 onSelect={handleSelect}
-                onEdit={(p) => form.openDialog(p)}
-                onConfigureShifts={(p) => setShiftModalPeriod(p)}
+                {...(canManage && {
+                  onEdit: (p: AcademicPeriod) => form.openDialog(p),
+                  onConfigureShifts: (p: AcademicPeriod) => setShiftModalPeriod(p),
+                })}
               />
             ))}
           </div>
@@ -169,7 +187,7 @@ export const AcademicPeriodsPage: React.FC = () => {
                       size="sm"
                       onClick={() => navigate(`/academic-periods/${selectedPeriod.id}/occupation`)}
                     >
-                      Configurar Ocupação
+                      {canManage ? 'Configurar Ocupação' : 'Ver Ocupação'}
                     </Button>
                   </CardAction>
                 </CardHeader>
@@ -185,18 +203,21 @@ export const AcademicPeriodsPage: React.FC = () => {
                   <CardDescription>
                     Dias não letivos que serão descontados do cálculo de emissões
                   </CardDescription>
-                  <CardAction className="self-center">
-                    <Button variant="outline" onClick={() => setAddHolidayOpen(true)}>
-                      <Plus className="size-4" />
-                      Adicionar
-                    </Button>
-                  </CardAction>
+                  {canManage && (
+                    <CardAction className="self-center">
+                      <Button variant="outline" onClick={() => setAddHolidayOpen(true)}>
+                        <Plus className="size-4" />
+                        Adicionar
+                      </Button>
+                    </CardAction>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <HolidayEditor
                     period={selectedPeriod}
                     addDialogOpen={addHolidayOpen}
                     onAddDialogOpenChange={setAddHolidayOpen}
+                    readOnly={!canManage}
                   />
                 </CardContent>
               </Card>
