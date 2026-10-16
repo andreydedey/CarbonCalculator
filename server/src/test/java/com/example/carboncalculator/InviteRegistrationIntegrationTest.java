@@ -156,13 +156,18 @@ class InviteRegistrationIntegrationTest {
 
     @Test
     void inviteExistingUser_noInviteLink() {
-        // admin@admin.com already exists but is also a member of this institution
-        // (auto-added as MANAGER by createInstitution). Remove that membership first.
-        jdbcTemplate.update(
-                "DELETE FROM user_institution WHERE institution_id = ?::uuid AND user_id = (SELECT id FROM app_user WHERE email = 'admin@admin.com')",
-                institutionId.toString());
+        // Create an existing (non-admin) user via invite+accept in a temporary institution
+        InstitutionDTO tempInst = createInstitution("TEMP-" + System.nanoTime());
+        String existingEmail = "existing-" + System.nanoTime() + "@test.com";
+        UserMemberDTO pending = inviteInInstitution(existingEmail, "RESEARCHER", tempInst.id());
+        String rawToken = pending.inviteLink().replace("/register?token=", "");
+        restTemplate.postForEntity(
+                "/auth/invitations/{token}/accept",
+                new AcceptInviteRequest("Existing User", "Senha-123!"),
+                AuthResponse.class, rawToken);
 
-        UserMemberDTO result = invite("admin@admin.com", "RESEARCHER");
+        // Invite the now-existing user into the main institution (no membership there yet)
+        UserMemberDTO result = invite(existingEmail, "RESEARCHER");
 
         assertEquals("ACTIVE", result.status());
         assertNull(result.inviteLink());
