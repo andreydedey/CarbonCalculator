@@ -66,3 +66,5 @@ export function EquipmentModelsPage() {
     </div>
   )
 }
+
+export default EquipmentModelsPage

@@ -283,3 +283,5 @@ export function LongitudinalPage() {
     </div>
   )
 }
+
+export default LongitudinalPage

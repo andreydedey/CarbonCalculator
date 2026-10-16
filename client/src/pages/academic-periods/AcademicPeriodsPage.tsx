@@ -253,3 +253,5 @@ export const AcademicPeriodsPage: React.FC = () => {
     </div>
   )
 }
+
+export default AcademicPeriodsPage

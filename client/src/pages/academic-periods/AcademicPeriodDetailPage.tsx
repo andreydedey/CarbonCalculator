@@ -5,3 +5,5 @@ export const AcademicPeriodDetailPage: React.FC = () => {
   const { id: _id } = useParams<{ id: string }>()
   return <Navigate to="/academic-periods" replace />
 }
+
+export default AcademicPeriodDetailPage
