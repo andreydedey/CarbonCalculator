@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { Layers, Pencil, Trash2 } from 'lucide-react'
 import type React from 'react'
 import { toast } from 'sonner'
@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/empty'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
 import { useFormDialog } from '@/hooks/use-dialog'
+import { usePagedQuery } from '@/hooks/use-paged-query'
 import { isApiError } from '@/lib/api/client'
 import {
   type Configuration,
@@ -45,22 +46,11 @@ export const ConfigurationList: React.FC<ConfigurationListProps> = ({
     onCreateOpenChange: onFormOpenChange,
   })
 
-  const {
-    data: configurationsData,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    refetch,
-  } = useInfiniteQuery({
-    queryKey: ['configurations'],
-    queryFn: ({ pageParam }) => listConfigurations({ page: pageParam }),
-    initialPageParam: 0,
-    getNextPageParam: (lastPage) =>
-      lastPage.page + 1 < lastPage.totalPages ? lastPage.page + 1 : undefined,
-  })
-
-  const configurations = configurationsData?.pages.flatMap((p) => p.content) ?? []
+  const { items: configurations, data: configurationsData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
+    usePagedQuery({
+      queryKey: ['configurations'],
+      queryFn: (page) => listConfigurations({ page }),
+    })
 
   const deleteMutation = useMutation({
     mutationFn: deleteConfiguration,

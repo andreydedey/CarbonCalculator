@@ -38,8 +38,8 @@ public class TenantFilter extends OncePerRequestFilter {
     public static final String TENANT_HEADER = "X-Institution-Id";
 
     // Paths that bypass tenant filtering — these endpoints are global resources
-    // that don't belong to a specific institution (e.g. auth, institution listing).
-    private static final List<String> EXCLUDED_PATH_PREFIXES = List.of("/institutions", "/auth");
+    // that don't belong to a specific institution (e.g. auth, institution listing, health check).
+    private static final List<String> EXCLUDED_PATH_PREFIXES = List.of("/institutions", "/auth", "/actuator");
 
     private final JdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
@@ -178,13 +178,13 @@ public class TenantFilter extends OncePerRequestFilter {
 
     private void respondMissingInstitutionHeader(HttpServletResponse response) throws IOException {
         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-        response.setContentType("application/json");
+        response.setContentType("application/json;charset=UTF-8");
         response.getWriter().write("{\"message\":\"Header " + TENANT_HEADER + " é obrigatório\"}");
     }
 
     private void respondForbidden(HttpServletResponse response) throws IOException {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        response.setContentType("application/json");
+        response.setContentType("application/json;charset=UTF-8");
         response.getWriter().write("{\"message\":\"Acesso negado a esta instituição\"}");
     }
 

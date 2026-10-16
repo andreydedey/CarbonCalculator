@@ -13,8 +13,8 @@ export function usageTier(stations: number, capacity: number): UsageTier {
 
 export const USAGE_TIER_CLASSES: Record<UsageTier, string> = {
   high: 'bg-primary text-primary-foreground',
-  medium: 'bg-[#7DB596] text-[#0F3D27]',
-  low: 'bg-[#CBE3D5] text-[#1C5A3C]',
+  medium: 'bg-primary/60 text-primary-foreground',
+  low: 'bg-primary/30 text-primary',
 }
 
 /** ISO date (yyyy-mm-dd) of a local date, without timezone shifts. */

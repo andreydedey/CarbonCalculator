@@ -1,33 +1,17 @@
 import type React from 'react'
 import { useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { api } from '@/lib/api/client'
-import { getProfile } from '@/lib/api/auth'
 
+// The OAuth redirect only sets the refresh cookie; AuthProvider exchanges it for a session on load
 export const OAuthCallbackPage: React.FC = () => {
-  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const { setUserFromOAuth } = useAuth()
+  const { isAuthenticated, isLoading } = useAuth()
 
   useEffect(() => {
-    const token = searchParams.get('token')
-    if (!token) {
-      navigate('/login', { replace: true })
-      return
-    }
-
-    api.defaults.headers.common.Authorization = `Bearer ${token}`
-    getProfile()
-      .then((user) => {
-        setUserFromOAuth(user)
-        navigate('/dashboard', { replace: true })
-      })
-      .catch(() => {
-        delete api.defaults.headers.common.Authorization
-        navigate('/login', { replace: true })
-      })
-  }, [searchParams, navigate, setUserFromOAuth])
+    if (isLoading) return
+    navigate(isAuthenticated ? '/dashboard' : '/login', { replace: true })
+  }, [isAuthenticated, isLoading, navigate])
 
   return (
     <div className="flex h-screen items-center justify-center">

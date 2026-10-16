@@ -43,8 +43,8 @@ public class InstitutionController {
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<InstitutionDTO> getById(@PathVariable UUID id) {
-        return institutionService.getById(id)
+    public ResponseEntity<InstitutionDTO> getById(@PathVariable UUID id, @AuthenticationPrincipal AppUser user) {
+        return institutionService.getById(id, user)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

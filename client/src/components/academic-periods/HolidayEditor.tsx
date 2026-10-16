@@ -43,10 +43,10 @@ const HOLIDAY_TYPE_LABELS: Record<HolidayType, string> = {
 }
 
 const HOLIDAY_TYPE_BADGE_STYLES: Record<HolidayType, string> = {
-  NATIONAL: 'bg-[#DEECE2] text-[#1B5238]',
-  STATE: 'bg-[#E0E7FF] text-[#3730A3]',
-  MUNICIPAL: 'bg-[#F0E4FF] text-[#6B21A8]',
-  RECESS: 'bg-[#FEF9C3] text-[#854D0E]',
+  NATIONAL: 'bg-accent text-primary',
+  STATE: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
+  MUNICIPAL: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+  RECESS: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
 }
 
 function formatDateShort(dateStr: string): string {

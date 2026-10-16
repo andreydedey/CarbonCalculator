@@ -1,0 +1,32 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# Node
+client/node_modules
+
+# Java build
+server/target
+
+# Docker compose (dev only)
+compose.yaml
+docker/init-db.sql
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Design / docs
+design/
+docs/
+*.md
+.spec/
+
+# Claude
+.claude/

@@ -33,12 +33,7 @@ export function EquipmentModelsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <div className="flex flex-col gap-1">
-          <p className="text-xs font-normal text-muted-foreground">
-            Cadastro &rsaquo; Equipamentos
-          </p>
-          <h1 className="font-heading text-2xl font-bold">Equipamentos</h1>
-        </div>
+        <h1 className="font-heading text-2xl font-bold">Equipamentos</h1>
         <Button onClick={handleAdd}>
           <Plus className="size-4" />
           {TAB_LABELS[tab]}

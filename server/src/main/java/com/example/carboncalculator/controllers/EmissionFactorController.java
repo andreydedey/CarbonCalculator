@@ -40,6 +40,7 @@ public class EmissionFactorController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('RESEARCHER')")
     public PageResponse<EmissionFactorDTO> list(
             @RequestParam(required = false) Integer year,
             @PageableDefault(sort = "referenceMonth", direction = Sort.Direction.DESC) Pageable pageable) {

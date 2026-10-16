@@ -350,7 +350,7 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
   return (
     <div className="flex flex-col gap-6">
       {hasUnsavedGrid && (
-        <p className="rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-900">
+        <p className="rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
           A grade semanal tem alterações não salvas. As ocorrências usam a grade salva.
         </p>
       )}
@@ -484,7 +484,7 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
             <span className="h-3 w-5 rounded-sm bg-primary" /> conforme a grade
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-3 w-5 rounded-sm bg-[#CBE3D5] ring-2 ring-primary ring-inset" />{' '}
+            <span className="h-3 w-5 rounded-sm bg-primary/30 ring-2 ring-primary ring-inset" />{' '}
             ajustada
           </span>
           <span className="inline-flex items-center gap-1.5">

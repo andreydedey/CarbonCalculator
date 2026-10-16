@@ -20,6 +20,7 @@ export type ListSnapshotsParams = {
   granularity: Granularity
   startDate?: string
   endDate?: string
+  laboratoryId?: string
 }
 
 export type ListSnapshotHistoryParams = ListSnapshotsParams & PageParams
@@ -28,10 +29,12 @@ function buildSnapshotQuery({
   granularity,
   startDate,
   endDate,
+  laboratoryId,
 }: ListSnapshotsParams): URLSearchParams {
   const query = new URLSearchParams({ granularity })
   if (startDate) query.set('startDate', startDate)
   if (endDate) query.set('endDate', endDate)
+  if (laboratoryId) query.set('laboratoryId', laboratoryId)
   return query
 }
 

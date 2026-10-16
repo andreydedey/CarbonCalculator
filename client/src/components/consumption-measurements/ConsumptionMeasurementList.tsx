@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { Pencil, Plug, Trash2 } from 'lucide-react'
 import type React from 'react'
 import { toast } from 'sonner'
@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/empty'
 import { LoadMoreButton } from '@/components/ui/load-more-button'
 import { useFormDialog } from '@/hooks/use-dialog'
+import { usePagedQuery } from '@/hooks/use-paged-query'
 import { isApiError } from '@/lib/api/client'
 import {
   type ConsumptionMeasurement,
@@ -59,16 +60,11 @@ export const ConsumptionMeasurementList: React.FC<ConsumptionMeasurementListProp
     onCreateOpenChange: onFormOpenChange,
   })
 
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    useInfiniteQuery({
+  const { items: measurements, data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
+    usePagedQuery({
       queryKey: ['consumption-measurements'],
-      queryFn: ({ pageParam }) => listConsumptionMeasurements({ page: pageParam }),
-      initialPageParam: 0,
-      getNextPageParam: (lastPage) =>
-        lastPage.page + 1 < lastPage.totalPages ? lastPage.page + 1 : undefined,
+      queryFn: (page) => listConsumptionMeasurements({ page }),
     })
-
-  const measurements = data?.pages.flatMap((p) => p.content) ?? []
 
   const deleteMutation = useMutation({
     mutationFn: deleteConsumptionMeasurement,

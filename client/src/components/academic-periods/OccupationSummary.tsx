@@ -60,7 +60,7 @@ function MiniStrip({
               <div
                 key={slot}
                 className={`h-[18px] w-[6px] rounded-[1px] ${
-                  occupied.has(slot) ? 'bg-primary' : 'bg-[#E4E9E4]'
+                  occupied.has(slot) ? 'bg-primary' : 'bg-muted'
                 }`}
               />
             ))}
@@ -214,7 +214,7 @@ export const OccupationSummary: React.FC<OccupationSummaryProps> = ({ periodId, 
             <span>aula ocupada</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="h-3 w-[6px] rounded-[1px] bg-[#E4E9E4]" />
+            <div className="h-3 w-[6px] rounded-[1px] bg-muted" />
             <span>
               aula livre — cada traço é uma aula de{' '}
               {shifts.find((s) => s.enabled)?.classDurationMinutes ?? 50} min, agrupadas em Manhã ·

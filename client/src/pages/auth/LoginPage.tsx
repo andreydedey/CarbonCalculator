@@ -68,6 +68,12 @@ export const LoginPage: React.FC = () => {
             </div>
           )}
 
+          {oauthError === 'email_not_verified' && (
+            <div className="rounded-md border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              Seu e-mail do Google não está verificado. Verifique-o no Google e tente novamente.
+            </div>
+          )}
+
           {errors.root && (
             <div className="rounded-md border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
               {errors.root.message}

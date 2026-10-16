@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { CalendarDays, Factory, FlaskConical, Leaf, Zap } from 'lucide-react'
+import { CalendarDays, Factory, FlaskConical, Leaf, TreePine, Zap } from 'lucide-react'
 import type React from 'react'
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
@@ -78,10 +78,7 @@ export function DashboardPage() {
   return (
     <div className="flex flex-col gap-7">
       <div className="flex items-center justify-between">
-        <div className="flex flex-col gap-1">
-          <p className="text-xs text-muted-foreground">Dashboard</p>
-          <h1 className="font-heading text-2xl font-bold">Visão Geral de Emissões</h1>
-        </div>
+        <h1 className="font-heading text-2xl font-bold">Visão Geral de Emissões</h1>
         {period && (
           <div className="flex items-center gap-1.5 rounded-md bg-accent px-3.5 py-1.5 text-xs font-medium text-primary">
             <CalendarDays className="size-3.5" />
@@ -97,10 +94,35 @@ export function DashboardPage() {
           <CardGridSkeleton count={3} columns={3} />
         </div>
       ) : !period ? (
-        <p className="text-sm text-muted-foreground italic">
-          Nenhum período letivo cadastrado. Cadastre um período no Calendário para acompanhar as
-          emissões.
-        </p>
+        <div className="flex flex-col items-center justify-center py-16 gap-6">
+          <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10">
+            <TreePine className="size-8 text-primary" />
+          </div>
+          <div className="flex flex-col items-center gap-2 max-w-md text-center">
+            <h2 className="text-xl font-semibold">
+              Bem-vindo ao Carbon Calculator
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Acompanhe e reduza a pegada de carbono dos laboratórios de informática da sua
+              instituição. Para começar, cadastre um período letivo — é ele que define o intervalo
+              de análise das emissões.
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-4 w-full max-w-lg pt-2">
+            <div className="flex flex-col items-center gap-1.5 rounded-lg border p-4">
+              <CalendarDays className="size-5 text-primary" />
+              <span className="text-xs font-medium text-center">Cadastrar período letivo</span>
+            </div>
+            <div className="flex flex-col items-center gap-1.5 rounded-lg border p-4 opacity-50">
+              <Leaf className="size-5 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground text-center">Registrar fatores de emissão</span>
+            </div>
+            <div className="flex flex-col items-center gap-1.5 rounded-lg border p-4 opacity-50">
+              <Zap className="size-5 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground text-center">Visualizar emissões</span>
+            </div>
+          </div>
+        </div>
       ) : (
         <>
           <div className="flex gap-4">

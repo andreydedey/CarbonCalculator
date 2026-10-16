@@ -77,8 +77,8 @@ export const EquipmentModelCard: React.FC<EquipmentModelCardProps> = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit(model)}>Editar</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive" onClick={() => onDelete(model)}>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(model) }}>Editar</DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(model) }}>
               Excluir
             </DropdownMenuItem>
           </DropdownMenuContent>

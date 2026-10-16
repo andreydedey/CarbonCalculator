@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, BookOpen, CalendarDays, Clock, Layers, Percent, Save } from 'lucide-react'
+import { ArrowLeft, BookOpen, CalendarDays, Clock, Cpu, Layers, Percent, Save } from 'lucide-react'
 import type React from 'react'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -330,24 +330,30 @@ export const OccupationEditorPage: React.FC = () => {
         <Button variant="ghost" size="icon" onClick={() => navigate(`/academic-periods/${id}`)}>
           <ArrowLeft className="size-4" />
         </Button>
-        <div className="flex flex-col gap-0.5">
-          <p className="text-xs font-normal text-muted-foreground">
-            Cadastro &rsaquo; Calendário Letivo &rsaquo; {period.name} &rsaquo; Ocupação
-          </p>
-          <h1 className="font-heading text-2xl font-bold">Ocupação dos Laboratórios</h1>
-        </div>
-        {mode === 'grid' && canManage && (
-          <div className="ml-auto">
-            <Button
-              disabled={!dirty || saveMutation.isPending}
-              onClick={() => saveMutation.mutate()}
-            >
-              <Save className="size-4" />
-              Salvar Ocupação
-            </Button>
-          </div>
-        )}
+        <h1 className="font-heading text-2xl font-bold">Ocupação dos Laboratórios</h1>
       </div>
+
+      {/* Sticky save bar — visible only when there are unsaved changes */}
+      {mode === 'grid' && canManage && dirty && (
+        <div className="sticky top-0 z-10 -mx-4 flex items-center justify-between border-b border-primary/30 bg-primary/10 px-6 py-3 backdrop-blur-sm">
+          <div className="flex items-center gap-2">
+            <span className="relative flex size-2">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-75" />
+              <span className="relative inline-flex size-2 rounded-full bg-primary" />
+            </span>
+            <span className="text-sm font-medium text-primary">
+              Alterações não salvas na grade de ocupação
+            </span>
+          </div>
+          <Button
+            disabled={saveMutation.isPending}
+            onClick={() => saveMutation.mutate()}
+          >
+            <Save className="size-4" />
+            Salvar Ocupação
+          </Button>
+        </div>
+      )}
 
       <p className="rounded-md bg-accent px-4 py-2.5 text-[13px] text-accent-foreground">
         Para cada aula, informe quantas estações costumam ser usadas. O cálculo de emissões
@@ -359,13 +365,26 @@ export const OccupationEditorPage: React.FC = () => {
       ) : (
         <Tabs value={resolvedLabId ?? undefined} onValueChange={handleLabChange}>
           <div className="flex items-center gap-4">
-            <TabsList>
-              {laboratories.map((lab) => (
-                <TabsTrigger key={lab.id} value={lab.id}>
-                  {lab.name}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+            <div className="flex gap-2">
+              {laboratories.map((lab) => {
+                const active = lab.id === resolvedLabId
+                return (
+                  <TabsList key={lab.id} className="h-auto bg-transparent p-0">
+                    <TabsTrigger
+                      value={lab.id}
+                      className={`flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${
+                        active
+                          ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                          : 'border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                      }`}
+                    >
+                      <Cpu className={`size-4 ${active ? 'text-primary' : ''}`} />
+                      {lab.name}
+                    </TabsTrigger>
+                  </TabsList>
+                )
+              })}
+            </div>
 
             {mode === 'grid' && canManage && laboratories.length > 1 && resolvedLabId && (
               <Select onValueChange={handleCopyFrom}>
@@ -396,9 +415,9 @@ export const OccupationEditorPage: React.FC = () => {
                 key={value}
                 type="button"
                 onClick={() => handleModeChange(value)}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                className={`flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-medium transition-colors ${
                   mode === value
-                    ? 'bg-background shadow-sm'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -410,6 +429,17 @@ export const OccupationEditorPage: React.FC = () => {
 
           {laboratories.map((lab) => (
             <TabsContent key={lab.id} value={lab.id} className="mt-4">
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary">
+                  <Cpu className="size-4 text-primary-foreground" />
+                </div>
+                <div className="flex flex-col">
+                  <h2 className="text-base font-semibold">{lab.name}</h2>
+                  <p className="text-xs text-muted-foreground">
+                    {lab.totalStations} estações · {mode === 'grid' ? 'Grade semanal' : 'Ocorrências por data'}
+                  </p>
+                </div>
+              </div>
               {scheduleLoading ? (
                 <TableSkeleton rows={6} columns={7} />
               ) : mode === 'occurrences' ? (

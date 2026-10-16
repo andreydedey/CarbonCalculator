@@ -53,8 +53,12 @@ public class InstitutionService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<InstitutionDTO> getById(UUID id) {
-        return institutionRepository.findById(id)
+    public Optional<InstitutionDTO> getById(UUID id, AppUser user) {
+        Specification<Institution> spec = InstitutionSpecification.hasId(id);
+        if (!user.isAdmin()) {
+            spec = spec.and(InstitutionSpecification.hasActiveMember(user.getId()));
+        }
+        return institutionRepository.findOne(spec)
                 .map(InstitutionMapper::toDTO);
     }
 
