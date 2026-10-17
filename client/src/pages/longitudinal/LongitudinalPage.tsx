@@ -24,6 +24,7 @@ import { usePagedQuery } from '@/hooks/use-paged-query'
 import { listAcademicPeriods } from '@/lib/api/academic-periods.ts'
 import { listLaboratories } from '@/lib/api/laboratories.ts'
 import { listSnapshotHistory, listSnapshots } from '@/lib/api/snapshots.ts'
+import { formatEmissionKg } from '@/lib/utils/format-emission'
 import {
   computeKpiCards,
   EMPTY_STATE_MESSAGE,
@@ -105,9 +106,7 @@ export function LongitudinalPage() {
             <div key={card.label} className="rounded-lg border bg-card p-4 flex flex-col gap-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">{card.label}</p>
               <p className="text-2xl font-bold font-mono">
-                {typeof card.value === 'number'
-                  ? card.value.toLocaleString('pt-BR', { maximumFractionDigits: 1 })
-                  : card.value}
+                {typeof card.value === 'number' ? formatEmissionKg(card.value) : card.value}
               </p>
               {typeof card.value === 'number' && (
                 <p className="text-xs text-muted-foreground">kg CO₂</p>
@@ -216,10 +215,7 @@ export function LongitudinalPage() {
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip
-                  formatter={(value) => [
-                    `${Number(value).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} kg CO₂`,
-                    'Emissão',
-                  ]}
+                  formatter={(value) => [`${formatEmissionKg(Number(value))} kg CO₂`, 'Emissão']}
                 />
                 <Bar dataKey="totalEmissionKg" fill="var(--chart-1)" radius={[3, 3, 0, 0]} />
               </BarChart>
@@ -247,7 +243,7 @@ export function LongitudinalPage() {
                     <TableRow key={row.label + row.startDate}>
                       <TableCell className="px-4 font-medium">{row.label}</TableCell>
                       <TableCell className="px-4 text-right font-mono text-xs">
-                        {row.totalEmissionKg.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
+                        {formatEmissionKg(row.totalEmissionKg)}
                       </TableCell>
                       <TableCell className="px-4 text-right font-mono text-xs">
                         {row.totalEnergyKwh.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}

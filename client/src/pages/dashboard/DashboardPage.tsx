@@ -12,11 +12,8 @@ import { useCanManage } from '@/hooks/useCanManage'
 import { type AcademicPeriod, listAcademicPeriods } from '@/lib/api/academic-periods'
 import { getEmissions } from '@/lib/api/emissions'
 import { listLaboratories } from '@/lib/api/laboratories'
+import { formatEmissionKg } from '@/lib/utils/format-emission'
 import { currentPeriod, formatDate, formatDayMonth, toIsoDate } from '@/lib/utils/occupation'
-
-function formatNumber(n: number): string {
-  return Math.round(n).toLocaleString('pt-BR')
-}
 
 function Metric({
   label,
@@ -137,7 +134,7 @@ export function DashboardPage() {
               highlighted
               icon={Leaf}
               label="EMISSÃO REALIZADA"
-              value={result ? `${formatNumber(result.totalEmissionKg)} kg CO₂` : '—'}
+              value={result ? `${formatEmissionKg(result.totalEmissionKg)} kg CO₂` : '—'}
               subtitle={
                 result?.realizedUntil
                   ? `${period.name} · até ${formatDate(result.realizedUntil)} · ${result.schoolDaysElapsed} de ${result.schoolDaysTotal} dias letivos`
@@ -156,7 +153,7 @@ export function DashboardPage() {
               value={topEmitter && topEmitter.emissionKg > 0 ? topEmitter.laboratoryName : '—'}
               subtitle={
                 topEmitter && topEmitter.emissionKg > 0
-                  ? `${formatNumber(topEmitter.emissionKg)} kg CO₂ no período`
+                  ? `${formatEmissionKg(topEmitter.emissionKg)} kg CO₂ no período`
                   : 'sem emissões realizadas ainda'
               }
             />
@@ -185,7 +182,7 @@ export function DashboardPage() {
                   <Card key={lab.laboratoryId} className="gap-3 p-5">
                     <span className="text-[15px] font-semibold">{lab.laboratoryName}</span>
                     <span className="font-mono text-lg font-semibold">
-                      {formatNumber(lab.emissionKg)} kg CO₂ no período
+                      {formatEmissionKg(lab.emissionKg)} kg CO₂ no período
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {lab.stationCount} estações · {lab.averageUsagePct.toFixed(0)}% de uso médio

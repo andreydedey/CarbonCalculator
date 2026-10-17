@@ -741,6 +741,27 @@ class EmissionCalculationIntegrationTest {
 
     // @spec:AC-099 CSV tem Content-Type e nome de arquivo corretos
     @Test
+    void deveManterEmissoesComTresCasasDecimais() {
+        setupStandardScenario();
+
+        // 10 stations x 86 W x 5 classes of 50 min x 21 weekdays = 75.25 kWh; x 0.0425 = 3.198125 kg
+        EmissionResultDTO result = getEmissions(periodId);
+
+        assertEquals(75.25, result.totalEnergyKwh(), 1e-9);
+        assertEquals(3.198, result.totalEmissionKg(), 1e-9);
+        assertEquals(3.198, result.byMonth().get(0).emissionKg(), 1e-9);
+        assertEquals(3.198, result.byLaboratory().stream()
+                .mapToDouble(EmissionResultDTO.LaboratoryEmission::emissionKg).sum(), 1e-9);
+
+        ResponseEntity<String> csv = restTemplate.exchange(
+                "/academic-periods/" + periodId + "/emissions/export",
+                HttpMethod.GET,
+                new HttpEntity<>(headersFor(institutionId)),
+                String.class);
+        assertTrue(csv.getBody().contains("2025-03,75.25,3.198,"), csv.getBody());
+    }
+
+    @Test
     void deveExportarCsvSemPermitirInjecaoDeFormula() {
         setupStandardScenario();
         createLab("=HYPERLINK(\"http://example.com\")");

@@ -40,6 +40,7 @@ import {
   type LabStatusFilter,
   listLaboratories,
 } from '@/lib/api/laboratories'
+import { formatEmissionKg } from '@/lib/utils/format-emission'
 import { currentPeriod, formatDate, toIsoDate } from '@/lib/utils/occupation'
 
 const STATUS_OPTIONS: { value: LabStatusFilter; label: string }[] = [
@@ -182,11 +183,7 @@ export const LaboratoryList: React.FC = () => {
             icon={<Monitor className="size-[18px] text-primary-foreground" />}
           />
           <SummaryCard
-            value={
-              emissionResult
-                ? `${Math.round(emissionResult.totalEmissionKg).toLocaleString('pt-BR')} kg`
-                : '-'
-            }
+            value={emissionResult ? `${formatEmissionKg(emissionResult.totalEmissionKg)} kg` : '-'}
             label={
               emissionResult?.realizedUntil
                 ? `Emissão realizada · ${period?.name} até ${formatDate(emissionResult.realizedUntil)}`

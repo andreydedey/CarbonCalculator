@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/table'
 import { listAcademicPeriods } from '@/lib/api/academic-periods'
 import { type EmissionResult, getEmissions, getReadiness } from '@/lib/api/emissions'
+import { formatEmissionKg } from '@/lib/utils/format-emission'
 import { formatDate } from '@/lib/utils/occupation'
 
 function MethodologyCard() {
@@ -113,7 +114,7 @@ function ResultMetrics({ result }: { result: EmissionResult }) {
             EMISSÃO REALIZADA
           </span>
           <span className="font-mono text-[26px] font-semibold">
-            {formatNumber(result.totalEmissionKg)} kg CO₂
+            {formatEmissionKg(result.totalEmissionKg)} kg CO₂
           </span>
           <span className="text-[11px] text-muted-foreground">
             {until
@@ -127,7 +128,7 @@ function ResultMetrics({ result }: { result: EmissionResult }) {
             PROJEÇÃO DO PERÍODO
           </span>
           <span className="font-mono text-[22px] font-semibold">
-            {formatNumber(result.projectedEmissionKg)} kg CO₂
+            {formatEmissionKg(result.projectedEmissionKg)} kg CO₂
           </span>
           <span className="text-[11px] text-muted-foreground">
             realizado + dias restantes pela grade
@@ -235,7 +236,7 @@ function LabDetailTable({ result }: { result: EmissionResult }) {
                   {formatNumber(row.lab.energyKwh)}
                 </TableCell>
                 <TableCell className="font-mono text-[13px] font-semibold">
-                  {formatNumber(row.lab.emissionKg)}
+                  {formatEmissionKg(row.lab.emissionKg)}
                 </TableCell>
                 <TableCell className="text-[13px] font-semibold text-primary text-right pr-6">
                   {row.pct.toFixed(1).replace('.', ',')}%
@@ -262,7 +263,7 @@ function LabDetailTable({ result }: { result: EmissionResult }) {
               {formatNumber(result.totalEnergyKwh)}
             </TableCell>
             <TableCell className="font-mono text-[13px] font-bold">
-              {formatNumber(result.totalEmissionKg)}
+              {formatEmissionKg(result.totalEmissionKg)}
             </TableCell>
             <TableCell className="text-[13px] font-bold text-primary text-right pr-6">
               100%
