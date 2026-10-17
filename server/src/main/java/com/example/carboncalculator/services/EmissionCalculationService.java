@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -228,37 +229,37 @@ public class EmissionCalculationService {
                 .map(m -> {
                     double[] vals = monthAgg.getOrDefault(m, new double[2]);
                     EmissionFactor factor = factorsByMonth.get(m);
-                    return new MonthEmission(m, round2(vals[0]), round2(vals[1]),
+                    return new MonthEmission(m, round2(vals[0]), round3(vals[1]),
                             factor != null ? factor.getValue() : null,
                             schoolDaysByMonth.getOrDefault(m, 0));
                 })
                 .toList();
 
         List<ShiftEmission> byShift = shiftAgg.entrySet().stream()
-                .map(e -> new ShiftEmission(e.getKey(), round2(e.getValue()[0]), round2(e.getValue()[1])))
+                .map(e -> new ShiftEmission(e.getKey(), round2(e.getValue()[0]), round3(e.getValue()[1])))
                 .toList();
 
         List<DayOfWeekEmission> byDayOfWeek = dowAgg.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 .map(e -> new DayOfWeekEmission(e.getKey(), DAY_LABELS[e.getKey()],
-                        round2(e.getValue()[0]), round2(e.getValue()[1])))
+                        round2(e.getValue()[0]), round3(e.getValue()[1])))
                 .toList();
 
         double total = realized.emissionKg;
         List<EquipmentModelEmission> byEquipmentModel = equipModelAgg.entrySet().stream()
                 .map(e -> new EquipmentModelEmission(e.getKey(), equipModelNames.get(e.getKey()),
-                        round2(e.getValue()[1]), pct(e.getValue()[1], total)))
+                        round3(e.getValue()[1]), pct(e.getValue()[1], total)))
                 .sorted(Comparator.comparingDouble(EquipmentModelEmission::emissionKg).reversed())
                 .toList();
 
         List<MonitorModelEmission> byMonitorModel = monitorModelAgg.entrySet().stream()
                 .map(e -> new MonitorModelEmission(e.getKey(), monitorModelNames.get(e.getKey()),
-                        round2(e.getValue()[1]), pct(e.getValue()[1], total)))
+                        round3(e.getValue()[1]), pct(e.getValue()[1], total)))
                 .sorted(Comparator.comparingDouble(MonitorModelEmission::emissionKg).reversed())
                 .toList();
 
         List<OperatingSystemEmission> byOS = osAgg.entrySet().stream()
-                .map(e -> new OperatingSystemEmission(e.getKey(), round2(e.getValue()[1]), pct(e.getValue()[1], total)))
+                .map(e -> new OperatingSystemEmission(e.getKey(), round3(e.getValue()[1]), pct(e.getValue()[1], total)))
                 .sorted(Comparator.comparingDouble(OperatingSystemEmission::emissionKg).reversed())
                 .toList();
 
@@ -306,8 +307,8 @@ public class EmissionCalculationService {
                 period.getStartDate().toString(), period.getEndDate().toString(),
                 anyRealized ? realizedEnd.toString() : null,
                 schoolDaysElapsed, schoolDaysTotal,
-                round2(realized.emissionKg), round2(realized.energyKwh),
-                round2(projected.emissionKg),
+                round3(realized.emissionKg), round2(realized.energyKwh),
+                round3(projected.emissionKg),
                 carKm, treesNeeded,
                 byMonth, byLaboratory, byShift, byDayOfWeek,
                 byEquipmentModel, byMonitorModel, byOS,
@@ -383,8 +384,8 @@ public class EmissionCalculationService {
 
         for (MonthEmission month : result.byMonth()) {
             sb.append(month.month()).append(',');
-            sb.append(String.format("%.2f", month.energyKwh())).append(',');
-            sb.append(String.format("%.2f", month.emissionKg())).append(',');
+            sb.append(String.format(Locale.ROOT, "%.2f", month.energyKwh())).append(',');
+            sb.append(String.format(Locale.ROOT, "%.3f", month.emissionKg())).append(',');
             sb.append(month.emissionFactor() != null ? month.emissionFactor().toPlainString() : "").append(',');
             sb.append(month.schoolDays()).append('\n');
         }
@@ -394,8 +395,8 @@ public class EmissionCalculationService {
         for (LaboratoryEmission lab : result.byLaboratory()) {
             sb.append(escapeCsv(lab.laboratoryName())).append(',');
             sb.append(lab.stationCount()).append(',');
-            sb.append(String.format("%.2f", lab.energyKwh())).append(',');
-            sb.append(String.format("%.2f", lab.emissionKg())).append('\n');
+            sb.append(String.format(Locale.ROOT, "%.2f", lab.energyKwh())).append(',');
+            sb.append(String.format(Locale.ROOT, "%.3f", lab.emissionKg())).append('\n');
         }
 
         return sb.toString();
@@ -525,11 +526,11 @@ public class EmissionCalculationService {
                         double[] vals = configAgg.getOrDefault(le.getId(), new double[2]);
                         Configuration config = le.getConfiguration();
                         return new ConfigurationEmission(config.getId(), configLabel(config), le.getQuantity(),
-                                wattsOf.apply(config).total(), round2(vals[0]), round2(vals[1]));
+                                wattsOf.apply(config).total(), round2(vals[0]), round3(vals[1]));
                     })
                     .toList();
             double usagePct = capacityHours > 0 ? round1(stationHours / capacityHours * 100) : 0;
-            return new LaboratoryEmission(lab.getId(), lab.getName(), round2(energyKwh), round2(emissionKg),
+            return new LaboratoryEmission(lab.getId(), lab.getName(), round2(energyKwh), round3(emissionKg),
                     capacity(), round1(stationHours), usagePct, cancelled, adjusted, extra, configs);
         }
     }
@@ -592,6 +593,11 @@ public class EmissionCalculationService {
 
     private static double round2(double value) {
         return Math.round(value * 100.0) / 100.0;
+    }
+
+    // Emissions keep grams (3 decimals of kg): a single-period case study can stay below 1 kg
+    private static double round3(double value) {
+        return Math.round(value * 1000.0) / 1000.0;
     }
 
     private static BigDecimal round4(double value) {
