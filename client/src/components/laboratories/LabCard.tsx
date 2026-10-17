@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Progress } from '@/components/ui/progress'
 import type { Laboratory } from '@/lib/api/laboratories'
+import { formatEmissionKg } from '@/lib/utils/format-emission'
 
 interface SummaryCardProps {
   value: string
@@ -160,7 +161,7 @@ export const LabCard: React.FC<LabCardProps> = ({
           Emissão:
         </span>
         <span className="text-xs font-semibold">
-          {emission ? `${Math.round(emission.emissionKg).toLocaleString('pt-BR')} kg CO₂` : '-'}
+          {emission ? `${formatEmissionKg(emission.emissionKg)} kg CO₂` : '-'}
         </span>
       </div>
 
